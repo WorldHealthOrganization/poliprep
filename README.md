@@ -1,6 +1,6 @@
 # poliprep
 
-## About The Packge
+## What is poliprep?
 
 `poliprep` is an R package developed by the Polio data team at The World Health Organisation Regional Office for Africa ([WHO AFRO](https://www.afro.who.int/)). It is designed to assist users who have access to and work with datasets related to the [Global Polio Eradication Initiative](https://polioeradication.org/).
 
