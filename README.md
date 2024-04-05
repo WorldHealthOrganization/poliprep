@@ -31,7 +31,7 @@ devtools::install_github("WorldHealthOrganization/poliprep")
 
 ## :incoming_envelope: Contacting the Authors
 
-For any issues or questions about `poliprep`, please contact Mo at [moyusuf\@who.int](mailto:moyusuf@who.int){.email}.
+For any issues or questions about `poliprep`, please contact Mo at [moyusuf\@who.int](mailto:moyusuf@who.int).
 
 ## :handshake: Contributing Standard Notice
 
