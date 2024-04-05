@@ -1,3 +1,7 @@
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+  
 # poliprep
 
 ## What is poliprep?
@@ -20,7 +24,7 @@ devtools::install_github("WorldHealthOrganization/poliprep")
 
 ## :globe_with_meridians: Roadmap
 
--   [ ] Add functionality to import and export different datasets (tabular, shapefiles, MDB, etc.).
+-   [x] Add functionality to import and export different datasets (tabular, shapefiles, MDB, etc.).
 -   [ ] Functionality to pull data from ONA etc.
 -   [ ] Functionality to process and validate Environmental Surveillance data.
 -   [ ] Functionality to process and validate AFP Surveillance data.
