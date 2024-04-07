@@ -67,12 +67,13 @@ read <- function(file_path, ...) {
   # If the file extension is unsupported
   if (file_ext %in% supported_formats_rio) {  # for tabular data
     return(rio::import(file_path, ...))
-  } else if (file_ext %in% c("shp", "json", "GeoJSON")) { # for shapefiles
+  } else if (
+    tolower(file_ext) %in% c("shp", "json", "geojson")) { # for shapefiles
     return(sf::read_sf(file_path, ...))
   } else {
     stop(
       paste0(
-        "File format '", file_ext, "' not supported by 'rio'. ",
+        "File format '", file_ext, "' not supported by 'rio' and 'sf'. ",
         "Please refer to the package documentation for a full list",
         "of supported formats."
       )

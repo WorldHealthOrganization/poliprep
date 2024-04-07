@@ -11,7 +11,7 @@ Authors@R: c(
   person("Derrick", "Demeveng", 
          role = "aut",
          email = "cheford@who.int")) 
-Description: A package by the Polio data team at `WHO AFRO`, designed to support 
+Description: A package by the Polio team at `WHO AFRO`, designed to support 
     GPEI data users in data processing and validation.
 License: CC BY 4.0
 URL: https://github.com/WorldHealthOrganization/poliprep

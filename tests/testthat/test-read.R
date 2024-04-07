@@ -57,7 +57,7 @@ testthat::test_that("Function throws error for unsupported file formats", {
   testthat::expect_error(
     poliprep::read(file_path),
     paste0(
-      "File format 'xyz' not supported by 'rio'. ",
+      "File format 'xyz' not supported by 'rio' and 'sf'. ",
       "Please refer to the package documentation for a full list",
       "of supported formats."
     )

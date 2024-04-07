@@ -70,7 +70,7 @@ save <- function(data, file_path, ...) {
     rio::export(data, file_path, ...)
   } else if (file_ext %in% c("shp")) { # shp shapefiles
     sf::write_sf(data, file_path, ...)
-  } else if (file_ext %in% c("json", "GeoJSON")) { # json shapefiles
+  } else if (tolower(file_ext) %in% c("json", "geojson")) { # json shapefiles
     sf::write_sf(data, file_path, driver = "GeoJSON", ...) 
   } else {
     stop(
