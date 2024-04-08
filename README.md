@@ -6,7 +6,7 @@
 
 ## What is poliprep?
 
-`poliprep` is an R package developed by the Polio data science team at The World Health Organisation Regional Office for Africa ([WHO AFRO](https://www.afro.who.int/)). It is designed to assist users who have access to and work with datasets related to the [Global Polio Eradication Initiative](https://polioeradication.org/).
+`poliprep` is an R package developed by the polio data science team at The World Health Organisation Regional Office for Africa ([WHO AFRO](https://www.afro.who.int/)). It is designed to assist users who have access to and work with datasets collected as part of the [Global Polio Eradication Initiative](https://polioeradication.org/).
 
 The package offers a number of functions for various tasks, including importing and exporting data, pulling data from relevant APIs, data processing and cleaning, as well as performing validations and checks. It also features the capability to generate reports or scorecards highlighting areas of concern identified during the validation process.
 
@@ -24,19 +24,22 @@ devtools::install_github("WorldHealthOrganization/poliprep")
 
 ## :globe_with_meridians: Roadmap
 
--   [x] Add functionality to import and export different datasets (tabular, shapefiles, etc.).
--   [ ] Functionality to pull data from ONA etc.,
--   [ ] Functionality to process and validate Environmental Surveillance data.
--   [ ] Functionality to process and validate AFP Surveillance data.
--   [ ] Functionality to process and validate Lab data.
--   [ ] Functionality to process and validate SIA data.
--   [ ] Functionality to process and validate eSURV data.
--   [ ] Functionality to produce reports and scorecards.
+We plan to add a number of functions which do the following: 
 
-## :incoming_envelope: Contacting the Authors
+- [x] Import and export different datasets (tabular, shapefiles, etc.). 
+- [ ] Pull data from ONA using an API. 
+- [ ] Clean and fix names of places including locations and sites. 
+- [ ] Process and validate Environmental Surveillance data. 
+- [ ] Process and validate AFP Surveillance data. 
+- [ ] Process and validate Lab data. 
+- [ ] Process and validate SIA data. 
+- [ ] Process and validate eSURV data. 
+- [ ] Process reports and scorecards. 
+
+## :incoming_envelope: Contacting us
 
 For any issues or questions about `poliprep`, please contact Mo at [moyusuf\@who.int](mailto:moyusuf@who.int).
 
-## :handshake: Contributing Standard Notice
+## :handshake: Guidance on making contributions
 
 We welcome contributions via forking and pull requests. For guidance and best practices, please follow [WHO's Contribution Guidelines](https://github.com/WorldHealthOrganization/open-source-communication-channel/blob/main/CONTRIBUTING.md). Additionally, before any contribution, please ensure you are familiar with WHO's [Contributor Covenant Code of Conduct](https://github.com/WorldHealthOrganization/open-source-communication-channel/tree/main?tab=coc-ov-file).
