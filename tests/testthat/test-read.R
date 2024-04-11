@@ -68,8 +68,9 @@ testthat::test_that("Function throws error for unsupported file formats", {
 testthat::test_that("Function imports data from URLs correctly", {
 
   # The raw URL for the mtcars.csv file from GitHub
-  github_url <- paste0("https://raw.githubusercontent.com/truenomad/",
-                       "epiCleanr/main/inst/extdata/test_data.csv")
+  github_url <- paste0("https://raw.githubusercontent.com/",
+                       "WorldHealthOrganization/poliprep/",
+                       "master/inst/extdata/test_data.csv")
 
   imprt_data <- poliprep::read(github_url)
 
