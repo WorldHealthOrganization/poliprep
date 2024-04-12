@@ -14,6 +14,7 @@
 #'
 #' @examples
 #' # handle_file_save(data_to_save, "path/to/default/location.csv")
+#'
 #' 
 #' @keywords internal
 #' @export
@@ -92,10 +93,10 @@ handle_file_save <- function(data_to_save, default_save_path = NULL) {
 #' @examples
 #' # calculate_match_stats(
 #' #      my_data, my_lookup, "country", "province", "district")
-#'  
+#'
 #' @keywords internal
 #' @export
-calculate_match_stats <- function(data, lookup_data, 
+calculate_match_stats <- function(data, lookup_data,
                                   adm0 = NULL, adm1 = NULL, adm2 = NULL) {
   
   # Calculate unique matches for each admn level -------------------------------
@@ -190,11 +191,13 @@ calculate_match_stats <- function(data, lookup_data,
 #' @examples
 #' # display_custom_menu("Choose an option:", c("Option 1", "Option 2"),
 #' #                   list(x = "Skip", y = "Save"), "Your choice:")
-#' 
+#'
 #' @keywords internal
 #' @export
-display_custom_menu <- function(title, options,
+display_custom_menu <- function(title, main_header, options,
                                 special_actions, prompt) {
+  cli::cli_h1(main_header)
+  
   # display the title using cli
   cli::cli_h2(title)
   
@@ -216,8 +219,11 @@ display_custom_menu <- function(title, options,
   choice <- NA
   repeat {
     choice <- tolower(readline(prompt = paste0(prompt)))
-    if (choice %in% c(as.character(options_nums), 
-                      tolower(special_actions_keys))) break
+    if (choice %in% c(
+      as.character(options_nums), tolower(special_actions_keys)
+    )) {
+      break
+    }
     cli::cli_alert_warning("Invalid choice, please try again.")
   }
   
@@ -242,8 +248,9 @@ display_custom_menu <- function(title, options,
 #' @examples
 #' calculate_string_distance(c("New York", "Los Angeles"),
 #'   c("New York", "Los Angeles", "Chicago"),
-#'   method = "lv")
-#'   
+#'   method = "lv"
+#' )
+#'
 #' @keywords internal
 #' @export
 calculate_string_distance <- function(
@@ -306,14 +313,15 @@ calculate_string_distance <- function(
 #'
 #' @examples
 #' # handle_user_interaction(my_data, "adm1", TRUE)
-#' 
+#'
 #' @keywords internal
 #' @export
-handle_user_interaction <- function(input_data, adm_level, 
+handle_user_interaction <- function(input_data, adm_level,
                                     clear_console = T, stratify) {
+  
   # Interactivity --------------------------------------------------------------
   
-  # set up the messageing prompts at the start of the funciton
+  # set up the messaging prompts at the start of the function
   prompts <- c(
     "What'll it be?:",
     "Your next move?:",
@@ -335,14 +343,26 @@ handle_user_interaction <- function(input_data, adm_level,
   
   # initialize empty lists to store user choices
   user_choices <- list()
+  user_choice <- NULL
   
   # loop through unmatched records in input_data
-  for (i in seq_along(unique_aliases)) {
+  # Initialize the index
+  i <- 1
+  while (i <= length(unique_aliases)) {
     # clear console
     if (clear_console) {
       cat("\014")
+      cat("\033[2J", "\033[H")
     }
     
+    # Define color using crayon function
+    red <- crayon::red
+    bl <- crayon::blue
+    gr <- crayon::green
+    b <- crayon::bold
+    p <- crayon::underline
+    
+    # set up choices -----------------------------------------------------------
     # select the alias to clean and suggested replacements
     alias_to_clean <- unique_aliases[i]
     replacement_alias <- input_data |>
@@ -351,102 +371,138 @@ handle_user_interaction <- function(input_data, adm_level,
           !is.na(MatchedNames)
       ) |>
       dplyr::distinct(MatchedNames) |>
-      dplyr::pull()
+      dplyr::pull() |>
+      stringr::str_to_title()
     
-    # Define color using crayon function
-    red <- crayon::red
-    bl <- crayon::blue
-    gr <- crayon::green
-    b <- crayon::bold
+    # # apply red highlight only to the last choice if going back
+    # if (!is.null(user_choice) && user_choice == "b") {
+    #   replacement_alias <- sapply(replacement_alias, function(x) {
+    #     if (x == stringr::str_to_title(last_choice)) b(red(x)) else x
+    #   })
+    # }
     
-    # set output title
+    # narrow down to top 25 if not stratified
+    if (!stratify) {
+      replacement_alias <- replacement_alias[1:20]
+    }
+    
+    # set output title ---------------------------------------------------------
+    
+    # set up main header to keep track
+    main_header <- glue::glue(
+      "{stringr::str_to_title(adm_level)} {i} of {length(unique_aliases)}"
+    )
+    
     if (adm_level %in% c("adm1", "province") && stratify) {
-      dot_name <- input_data$dot_name[i]
+      long_geo <- input_data$long_geo[i]
       str_alias <- stringr::str_to_title(alias_to_clean)
-      str_dot <- stringr::str_to_title(dot_name)
+      str_long_geo <- stringr::str_to_title(long_geo)
       title <- glue::glue(
         "Which province name would you like to replace {b(red(str_alias))}",
-        " with in {bl(str_dot)}?"
+        " with in {bl(str_long_geo)}?"
       )
     } else if (adm_level %in% c("adm2", "district") && stratify) {
-      dot_name <- input_data$dot_name[i]
-      dot_name_country <- stringr::str_to_title(
-        strsplit(dot_name, ":")[[1]][[1]]
+      long_geo <- input_data$long_geo[i]
+      long_geo_country <- stringr::str_to_title(
+        strsplit(long_geo, "_")[[1]][[1]]
       )
-      dot_name_province <- stringr::str_to_title(
-        strsplit(dot_name, ":")[[1]][[2]]
+      long_geo_province <- stringr::str_to_title(
+        strsplit(long_geo, "_")[[1]][[2]]
       )
       str_alias <- stringr::str_to_title(alias_to_clean)
       title <- glue::glue(
         "Which district name would you like to replace {b(red(str_alias))}",
-        " with in the {gr(dot_name_province)} province ",
-        "of {bl(dot_name_country)}?"
+        " with in the {gr(long_geo_province)} province ",
+        "of {bl(long_geo_country)}?"
       )
-    } else if (adm_level %in% c("adm0", "country") && stratify){
-      dot_name <- NULL
+    } else if (adm_level %in% c("adm0", "country") && stratify) {
+      long_geo <- NULL
       str_alias <- stringr::str_to_title(alias_to_clean)
       title <- glue::glue(
         "Which country name would you like to replace ",
         "{b(red(str_alias))} with?"
       )
     } else if (!stratify) {
-      dot_name <- NULL
+      long_geo <- NULL
       str_alias <- stringr::str_to_title(alias_to_clean)
       title <- glue::glue(
         "Which {adm_level} name would you like to replace ",
         "{b(red(str_alias))} with?"
-      ) 
+      )
     }
     
-    # special actions with emojis
+    # action set up ------------------------------------------------------------
     special_actions <- list(
-      "S" = "Save and exit",
-      "E" = "Skip this one",
+      "B" = "Go Back",
+      "S" = "Skip this one",
+      "E" = "Save and exit",
       "Q" = "Exit without saving"
     )
     
-    # norrow down to top 25
-    if(!stratify) { 
-      replacement_alias <- replacement_alias[1:20]}
-    
-    # Present the menu to the user
+    # present the menu to the user ---------------------------------------------
     user_choice <- display_custom_menu(
-      title, stringr::str_to_title(replacement_alias),
+      title, main_header,
+      replacement_alias,
       special_actions,
       prompt = prompt
     )
     
-    # present the menu to the user
-    # user_choice <- menu(title = title, choices = options)
-    
-    # handle user choice
-    if (tolower(user_choice) == "e") {
+    # handle user choices ------------------------------------------------------
+    if (user_choice == "b") { # Go Back
+      if (i > 1) {
+        i <- i - 1
+        
+        # # set up last choice for highlighting (if applicable)
+        # last_choice <- if (
+        #   length(user_choices) > 0) user_choices[[i]]$replacement else NULL
+        # 
+        # # inform user if there are no previous choices
+        # if (is.null(last_choice)) {
+        #   cli::cli_alert_warning(
+        #   "There are no previous choices to revert to.")
+        # } else {
+        #   cli::cli_alert_info("Reverted to previous decision.")
+        # }
+        next
+      } else {
+        cli::cli_alert_warning("You can't go back further.")
+      }
+    }  else if (user_choice == "s") { # Skip this one
       cli::cli_alert_info("You are skipping this one...")
-    } else if (tolower(user_choice) == "s") {
-      cli::cli_alert_success("Choice saved successfully. Exiting...")
-      break
-    } else if (tolower(user_choice) == "q") {
+      i <- i + 1
+      next
+    } else if (user_choice == "e") { # Save and exit
+      if (length(user_choices) > 0) {
+        # convert the list of user choices to a data frame before saving
+        cli::cli_alert_success("Choices saved successfully. Exiting...")
+      } else {
+        cli::cli_alert_warning("No choices to save.")
+      }
+      break # exit the loop entirely
+    } else if (user_choice == "q") { # Exit without saving
       confirm_exit <- tolower(
         readline("Are you sure you want to exit without saving? [y/n]: ")
       )
       if (confirm_exit == "y") {
         cli::cli_alert_danger("You have exited without saving...")
-        break # exit the loop without saving
+        # break # exit the loop without saving
+        return(NULL)
       } else {
         cli::cli_alert_info("Returning to menu...")
       }
     } else {
-      
       suppressWarnings({
         # handle replacement choice
-        replacement <- replacement_alias[as.integer(user_choice)]
+        replace_int <- toupper(replacement_alias[as.integer(user_choice)])
         user_choices[[length(user_choices) + 1]] <- data.frame(
           AdminToClean = alias_to_clean,
-          replacement = replacement,
-          name_alias = paste(input_data$dot_name[i], alias_to_clean, sep = ":"),
-          name_corrected = paste(input_data$dot_name[i], replacement,sep = ":"),
+          replacement = replace_int,
+          name_alias = paste(input_data$long_geo[i], alias_to_clean, sep = "_"),
+          name_corrected = paste(input_data$long_geo[i], replace_int,sep = "_"),
           level = adm_level
-        )})
+        )
+      })
+      i <- i + 1
     }
   }
   
@@ -455,12 +511,12 @@ handle_user_interaction <- function(input_data, adm_level,
   # clear console
   if (clear_console) {
     cat("\014")
+    cat("\033[2J", "\033[H")
   }
-  
   if (length(user_choices) != 0) {
-    # Combine user choices into a single dataframe
+    # Combine user choices into a single data frame
     user_choices_df <- dplyr::bind_rows(user_choices) |>
-      # fix dot_name for country
+      # fix long_geo for country
       dplyr::mutate(
         name_alias = dplyr::if_else(
           level == "country", alias_to_clean, name_alias
@@ -486,19 +542,20 @@ handle_user_interaction <- function(input_data, adm_level,
     ))
   }
 }
+
 #' Interactive Admin Name Cleaning and Matching
 #'
-#' This function streamlines the admin name cleaning process, leveraging both 
-#' algorithmic approaches and interactive user decisions. It is inspired by the 
-#' string distance matching of the 
+#' This function streamlines the admin name cleaning process, leveraging both
+#' algorithmic approaches and interactive user decisions. It is inspired by the
+#' string distance matching of the
 #' \code{\link[epiCleanr]{clean_admin_names}} function (by Mo
 #' Yusuf at WHO AFRO) and the interactivity of `alias_to_plias` in the `stanley`
 #' package by Steve Kroiss from BMGF. It combines string distance algorithms for
 #' initial matching and offers user interactivity for final decision-making,
-#' which are then saved for future reference and sharing. Although the function 
-#' does not require limiting name matching exclusively to upper-level admins, 
-#' optimal performance is achieved by confining to stricter 
-#' within-admin stratifications (through the use of stratify function option), 
+#' which are then saved for future reference and sharing. Although the function
+#' does not require limiting name matching exclusively to upper-level admins,
+#' optimal performance is achieved by confining to stricter
+#' within-admin stratifications (through the use of stratify function option),
 #' ensuring more accurate results.
 #'
 #'
@@ -515,14 +572,14 @@ handle_user_interaction <- function(input_data, adm_level,
 #'        data frame.
 #' @param method The string distance calculation method(s) to be used. Users
 #'        can specify one or more algorithms from the
-#'        \code{\link[stringdist]{stringdist}} package to compute 
+#'        \code{\link[stringdist]{stringdist}} package to compute
 #'        string distances between admin names. If left NULL, the function
 #'        defaults to using a comprehensive set of algorithms, applying them in
 #'        parallel to identify and rank the best matches based on closeness.
 #'        The default methods include: \code{"lv"} (Levenshtein), \code{"dl"}
 #'        (Damerau-Levenshtein), \code{"lcs"} (Longest Common Subsequence),
 #'        \code{"qgram"} (Q-Gram), \code{"jw"} (Jaro-Winkler), and
-#'        \code{"soundex"}. 
+#'        \code{"soundex"}.
 #' @param stratify Logical; if TRUE, performs cleaning stratified by
 #'        admin levels to maintain hierarchical consistency.
 #'
@@ -548,8 +605,8 @@ handle_user_interaction <- function(input_data, adm_level,
 #' @examples
 #' # results <- prep_geonames(
 #' #          target_df, lookup_df, "country", "province", "district")
-#' 
-#' @importFrom rlang := 
+#'
+#' @importFrom rlang :=
 #' @export
 prep_geonames <- function(target_df, lookup_df,
                           adm0 = NULL, adm1 = NULL, adm2 = NULL,
@@ -584,7 +641,9 @@ prep_geonames <- function(target_df, lookup_df,
   # load saved alias file
   if (!is.null(save_alias_df_path) && file.exists(save_alias_df_path)) {
     saved_alias_df <- utils::read.csv(
-      save_alias_df_path, fileEncoding = "UTF-8") 
+      save_alias_df_path,
+      fileEncoding = "UTF-8"
+    )
   } else {
     saved_alias_df <- data.frame()
     target_todo <- target_df
@@ -600,13 +659,13 @@ prep_geonames <- function(target_df, lookup_df,
         dplyr::left_join(
           saved_alias_df |>
             dplyr::filter(level == adm0) |>
-            dplyr::distinct(AdminToClean, country_dot),
+            dplyr::distinct(AdminToClean, country_prepped),
           relationship = "many-to-many",
           by = stats::setNames("AdminToClean", adm0)
         ) |>
         dplyr::mutate(
-          country = dplyr::coalesce(country_dot, country)
-        ) 
+          country = dplyr::coalesce(country_prepped, country)
+        )
     }
     
     if (!is.null(adm1)) {
@@ -614,13 +673,13 @@ prep_geonames <- function(target_df, lookup_df,
         dplyr::left_join(
           saved_alias_df |>
             dplyr::filter(level == adm1) |>
-            dplyr::distinct(AdminToClean, province_dot),
+            dplyr::distinct(AdminToClean, province_prepped),
           relationship = "many-to-many",
           by = stats::setNames("AdminToClean", adm1)
         ) |>
         dplyr::mutate(
-          province = dplyr::coalesce(province_dot, province)
-        ) 
+          province = dplyr::coalesce(province_prepped, province)
+        )
     }
     
     if (!is.null(adm2)) {
@@ -628,71 +687,82 @@ prep_geonames <- function(target_df, lookup_df,
         dplyr::left_join(
           saved_alias_df |>
             dplyr::filter(level == adm2) |>
-            dplyr::distinct(AdminToClean, district_dot),
+            dplyr::distinct(AdminToClean, district_prepped),
           relationship = "many-to-many",
           by = stats::setNames("AdminToClean", adm2)
         ) |>
         dplyr::mutate(
-          district = dplyr::coalesce(district_dot, district))
+          district = dplyr::coalesce(district_prepped, district)
+        )
     }
     
-    # remove dot columns
+    # remove prepped columns
     target_df <- target_df |>
-      dplyr::select(-matches("_dot$"))
+      dplyr::select(-matches("_prepped$"))
   }
   
   # Step 2: Filter out for those where there is a match ------------------------
   
-  # dynamically construct the dot names on target data
+  # dynamically construct the long geonames on target data
   target_df <- dplyr::rowwise(target_df)
   target_df <- target_df |>
-    dplyr::mutate(dot_name = {
-      # Dynamically construct the dot names based on non-NULL admin levels
+    dplyr::mutate(long_geo = {
       non_null_adms <- c()
       
-      if (!is.null(adm0) && 
-          !is.na(get(adm0))) non_null_adms <- c(non_null_adms, get(adm0))
-      if (!is.null(adm1) && 
-          !is.na(get(adm1))) non_null_adms <- c(non_null_adms, get(adm1))
-      if (!is.null(adm2) && 
-          !is.na(get(adm2))) non_null_adms <- c(non_null_adms, get(adm2))
+      if (!is.null(adm0) &&
+          !is.na(get(adm0))) {
+        non_null_adms <- c(non_null_adms, get(adm0))
+      }
+      if (!is.null(adm1) &&
+          !is.na(get(adm1))) {
+        non_null_adms <- c(non_null_adms, get(adm1))
+      }
+      if (!is.null(adm2) &&
+          !is.na(get(adm2))) {
+        non_null_adms <- c(non_null_adms, get(adm2))
+      }
       
-      paste(non_null_adms, collapse = ":")
-    }) 
+      paste(non_null_adms, collapse = "_")
+    })
   
-  target_df <- dplyr::ungroup(target_df) 
+  target_df <- dplyr::ungroup(target_df)
   
-  # dynamically construct the dot names on lookup data
+  # dynamically construct the prepped names on lookup data
   lookup_df <- dplyr::rowwise(lookup_df)
   lookup_df <- lookup_df |>
-    dplyr::mutate(dot_name = {
-      # Dynamically construct the dot names based on non-NULL admin levels
+    dplyr::mutate(long_geo = {
       non_null_adms <- c()
       
-      if (!is.null(adm0) && 
-          !is.na(get(adm0))) non_null_adms <- c(non_null_adms, get(adm0))
-      if (!is.null(adm1) && 
-          !is.na(get(adm1))) non_null_adms <- c(non_null_adms, get(adm1))
-      if (!is.null(adm2) && 
-          !is.na(get(adm2))) non_null_adms <- c(non_null_adms, get(adm2))
+      if (!is.null(adm0) &&
+          !is.na(get(adm0))) {
+        non_null_adms <- c(non_null_adms, get(adm0))
+      }
+      if (!is.null(adm1) &&
+          !is.na(get(adm1))) {
+        non_null_adms <- c(non_null_adms, get(adm1))
+      }
+      if (!is.null(adm2) &&
+          !is.na(get(adm2))) {
+        non_null_adms <- c(non_null_adms, get(adm2))
+      }
       
-      paste(non_null_adms, collapse = ":")
-    }) 
+      paste(non_null_adms, collapse = "_")
+    })
   
-  lookup_df <- dplyr::ungroup(lookup_df) 
+  lookup_df <- dplyr::ungroup(lookup_df)
   
   # filter to matched rows
   target_done <- target_df |>
     dplyr::filter(
-      (dot_name %in%
-         unique(lookup_df[["dot_name"]]))
+      (long_geo %in%
+         unique(lookup_df[["long_geo"]]))
     )
   
   # reduce down to only unmatched rows
   target_todo <- target_df |>
     dplyr::filter(
-      !(dot_name %in%
-          unique(lookup_df[["dot_name"]]))
+      !(long_geo %in%
+          unique(lookup_df[["long_geo"]]))
     )
   
   calculate_match_stats(
@@ -713,23 +783,23 @@ prep_geonames <- function(target_df, lookup_df,
   
   # Step 3: String distance those that are unmatched ---------------------------
   
-  # Initialize empty lists to store results
+  # initialize empty lists to store results
   unmatched_dfs <- list()
   cleaned_dfs <- list()
   
-  # Loop through administrative levels
+  # loop through administrative levels
   for (adm_level in adm_levels) {
     # Initialize empty list for top results within each level
     top_res_list <- list()
     
-    # Nested loop for province and district levels (if strict)
+    # nested loop for province and district levels (stratified)
     if (stratify & adm_level %in% c("adm1", "adm2", "province", "district")) {
       # set up grouping level
       grouping_level <- ifelse(
         adm_level %in% c("adm1", "province"), "country", "province"
       )
       
-      # Loop through unique groups within the previous level
+      # loop through unique groups within the previous level
       for (group in unique(target_todo[[grouping_level]])) {
         # Filter unmatched records for this group (country/province)
         lookup_df_group <- lookup_df |>
@@ -742,22 +812,22 @@ prep_geonames <- function(target_df, lookup_df,
                 unique(lookup_df_group[[adm_level]]))
           )
         
-        # Skip if no unmatched records in this group
+        # skip if no unmatched records in this group
         if (nrow(unmatched_df_group) == 0) next
         
-        # if adm_level is adm2 or district, create a dot_name from
+        # if adm_level is adm2 or district, create a long_geo from
         # country and province
         if (adm_level %in% c("adm2", "district")) {
-          group_dot <- paste(
+          long_geo_group <- paste(
             unmatched_df_group[[adm0]][1],
             group,
-            sep = ":"
+            sep = "_"
           )
         } else {
-          group_dot <- group
+          long_geo_group <- group
         }
         
-        # Calculate string distance for this group
+        # calculate string distance for this group
         top_res <- parallel::mclapply(
           methods,
           function(method) {
@@ -777,13 +847,13 @@ prep_geonames <- function(target_df, lookup_df,
           dplyr::arrange(AdminToClean, Distance) |>
           dplyr::select(AdminToClean, MatchedNames) |>
           dplyr::ungroup() |>
-          dplyr::mutate(dot_name = group_dot)
+          dplyr::mutate(long_geo = long_geo_group)
         
-        # Store top results for this group
+        # store top results for this group
         top_res_list[[group]] <- top_res
       }
       
-      # Combine top results for all groups within this level
+      # combine top results for all groups within this level
       top_res <- do.call(rbind, top_res_list)
     } else {
       #  filter to nonmatched countries
@@ -793,10 +863,10 @@ prep_geonames <- function(target_df, lookup_df,
               unique(lookup_df[[adm_level]]))
         )
       
-      # Skip if no unmatched records in this group
+      # skip if no unmatched records in this group
       if (nrow(unmatched_df_group) == 0) next
       
-      # Standard processing for all levels or non-strict province/district
+      # standard processing for all levels or non-strict province/district
       top_res <- parallel::mclapply(
         methods,
         function(method) {
@@ -814,19 +884,24 @@ prep_geonames <- function(target_df, lookup_df,
         dplyr::slice_min(Distance, with_ties = FALSE) |>
         dplyr::distinct(AdminToClean, .keep_all = T) |>
         dplyr::arrange(AdminToClean, Distance) |>
-        dplyr::select(AdminToClean, MatchedNames) |> 
-        dplyr::ungroup() 
-      
+        dplyr::select(AdminToClean, MatchedNames) |>
+        dplyr::ungroup()
     }
     
     if (!is.null(top_res)) {
-      # Handle user interaction for replacements (replace with your UI logic)
+      # handle user interaction for replacements
       replacement_df <- handle_user_interaction(
-        top_res, adm_level, 
-        stratify = stratify)
+        top_res, adm_level,
+        stratify = stratify
+      )
       
       # store cleaned data for this level
       cleaned_dfs[[adm_level]] <- replacement_df
+      
+    } else {cleaned_dfs = NULL}
+    
+    
+    if (!is.null(cleaned_dfs)) {
       
       # lets update the dataset
       target_todo <- target_todo |>
@@ -847,31 +922,34 @@ prep_geonames <- function(target_df, lookup_df,
   }
   # Step 4: clean up the alias file and save -----------------------------------
   
-  # clean up the alias df
-  suppressWarnings(
-    cleaned_dfs_joined <- dplyr::bind_rows(cleaned_dfs) |>
-      dplyr::mutate(name_corrected2 = name_corrected) |>
-      tidyr::separate(
-        name_corrected2,
-        into = c("country_dot", "province_dot", "district_dot"),
-        sep = ":"
-      ) |> 
-      dplyr::mutate(
-        dplyr::across(dplyr::everything(), ~dplyr::na_if(.x, "")))
-  )
-  
-  # Combine cleaned data frames
-  final_alias_dfs <-
-    dplyr::bind_rows(saved_alias_df, cleaned_dfs_joined) |>
-    dplyr::select(
-      AdminToClean, replacement, name_alias,
-      name_corrected, level, country_dot,
-      province_dot, district_dot
-    ) |>
-    dplyr::distinct()
-  
-  # file saving
-  handle_file_save(final_alias_dfs, save_alias_df_path)
+  if (!is.null(cleaned_dfs)) {
+    # clean up the alias df
+    suppressWarnings(
+      cleaned_dfs_joined <- dplyr::bind_rows(cleaned_dfs) |>
+        dplyr::mutate(name_corrected2 = name_corrected) |>
+        tidyr::separate(
+          name_corrected2,
+          into = c("country_prepped", "province_prepped", "district_prepped"),
+          sep = "_"
+        ) |>
+        dplyr::mutate(
+          dplyr::across(dplyr::everything(), ~ dplyr::na_if(.x, ""))
+        )
+    )
+    
+    # combine cleaned data frames
+    final_alias_dfs <-
+      dplyr::bind_rows(saved_alias_df, cleaned_dfs_joined) |>
+      dplyr::select(
+        AdminToClean, replacement, name_alias,
+        name_corrected, level, country_prepped,
+        province_prepped, district_prepped
+      ) |>
+      dplyr::distinct()
+    
+    # file saving
+    handle_file_save(final_alias_dfs, save_alias_df_path)
+  }
   
   # Step 5: Combine the cleaned data frames ------------------------------------
   
@@ -882,6 +960,6 @@ prep_geonames <- function(target_df, lookup_df,
     finalised_df, lookup_df, adm0, adm1, adm2
   )
   
-  # Return the cleaned data frame
+  # return the final data frame
   return(finalised_df)
 }

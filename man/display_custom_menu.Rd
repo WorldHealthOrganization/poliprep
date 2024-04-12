@@ -4,7 +4,7 @@
 \alias{display_custom_menu}
 \title{Display a Custom Menu and Capture User Choice}
 \usage{
-display_custom_menu(title, options, special_actions, prompt)
+display_custom_menu(title, main_header, options, special_actions, prompt)
 }
 \arguments{
 \item{title}{The menu title.}

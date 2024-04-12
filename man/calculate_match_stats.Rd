@@ -33,6 +33,6 @@ match and mismatch counts.
 \examples{
 # calculate_match_stats(
 #      my_data, my_lookup, "country", "province", "district")
- 
+
 }
 \keyword{internal}

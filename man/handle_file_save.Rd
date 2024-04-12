@@ -25,5 +25,6 @@ provide a new path. A default file name is used if no valid path is provided.
 \examples{
 # handle_file_save(data_to_save, "path/to/default/location.csv")
 
+
 }
 \keyword{internal}

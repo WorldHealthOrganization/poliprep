@@ -26,7 +26,8 @@ top N closest matches for each name.
 \examples{
 calculate_string_distance(c("New York", "Los Angeles"),
   c("New York", "Los Angeles", "Chicago"),
-  method = "lv")
-  
+  method = "lv"
+)
+
 }
 \keyword{internal}
