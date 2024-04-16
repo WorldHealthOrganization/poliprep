@@ -19,16 +19,17 @@ BugReports: https://github.com/WorldHealthOrganization/poliprep/issues
 Depends:
   R (>= 3.5.0)
 Imports:
-  rio, 
-  cli,
-  dplyr,
-  tidyr,
-  sf,
-  rlang,
-  stringr,
-  httr,
-  jsonlite,
-  tidyselect
+    rio,
+    cli,
+    dplyr,
+    tidyr,
+    sf,
+    rlang,
+    stringr,
+    httr,
+    jsonlite,
+    tidyselect,
+    tibble
 Suggests: 
   testthat,
   withr,
