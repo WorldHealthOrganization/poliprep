@@ -5,7 +5,7 @@
 #' if the request is successful. If the request fails, the function stops and 
 #' returns an error message indicating the failure reason.
 #'
-#' @param api_url A string specifying the URL for the ONA API, 
+#' @param base_url A string specifying the URL for the ONA API, 
 #'                could be https://esurv.afro.who.int/api/v1/data eSurv.
 #'                Default is https://api.whonghub.org/api/v1/data
 #' @param form_id A string or numeric value as the dataset id. 
@@ -15,18 +15,20 @@
 #' @return A list containing the data geted from the ONA API.
 #'
 #' @examples
-#' # api_url <- https://api.ona.io/api/v1/data
+#' # base_url <- https://api.ona.io/api/v1/data
 #' # api_token <- "your_api_token_here"
 #' # form_id <- 123456
-#' # data <- get_ona_data(api_url, form_id, api_token)
+#' # data <- get_ona_data(base_url, form_id, api_token)
 #' @export
 #'
 #' @seealso \url{https://api.ona.io/api/v1/data/} for more info on ONA API
 get_ona_data <- function(
     base_url = "https://api.whonghub.org", form_id, api_token) {
   
-  base_url_pattern <- "^(https?://[^/]+).*"
+  
   # check base url validity
+  base_url_pattern <- "^(https?://[^/]+).*"
+  
   try(
     if(grepl(base_url_pattern, base_url)){
       base_url <- sub(base_url_pattern, "\\1", base_url)
@@ -91,7 +93,7 @@ get_ona_data <- function(
     }
   }
   
-  # Check for unique submission IDs
+  # check for unique submission IDs
   if (dplyr::n_distinct(results$`_id`) != nrow(results)) {
     stop("Number of submission IDs is not the same as the number of records.")
   }

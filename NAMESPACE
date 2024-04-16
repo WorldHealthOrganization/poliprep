@@ -3,6 +3,7 @@
 export(calculate_match_stats)
 export(calculate_string_distance)
 export(display_custom_menu)
+export(get_ona_data)
 export(handle_file_save)
 export(handle_user_interaction)
 export(prep_geonames)

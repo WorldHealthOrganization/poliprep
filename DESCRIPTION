@@ -25,7 +25,10 @@ Imports:
   tidyr,
   sf,
   rlang,
-  stringr
+  stringr,
+  httr,
+  jsonlite,
+  tidyselect
 Suggests: 
   testthat,
   withr,
