@@ -20,10 +20,22 @@ Depends:
   R (>= 3.5.0)
 Imports:
   rio, 
-  sf
+  cli,
+  dplyr,
+  tidyr,
+  sf,
+  rlang,
+  stringr,
+  httr,
+  jsonlite,
+  tidyselect
 Suggests: 
   testthat,
-  withr
+  withr,
+  stringdist,
+  epiCleanr,
+  crayon,
+  glue
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true

@@ -1,7 +1,7 @@
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)
+  [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)  [![CodeFactor](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep/badge)](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep)
 <!-- badges: end -->
-  
+
 # poliprep
 
 ## What is poliprep?
@@ -27,7 +27,7 @@ devtools::install_github("WorldHealthOrganization/poliprep")
 We plan to add a number of functions which do the following: 
 
 - [x] Import and export different datasets (tabular, shapefiles, etc.). 
-- [ ] Pull data from ONA using an API. 
+- [x] Pull data from ONA using an API. 
 - [ ] Clean and fix names of places including locations and sites. 
 - [ ] Process and validate Environmental Surveillance data. 
 - [ ] Process and validate AFP Surveillance data. 
