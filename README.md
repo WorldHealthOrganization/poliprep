@@ -34,7 +34,9 @@ We plan to add a number of functions which do the following:
 - [ ] Process and validate Lab data. 
 - [ ] Process and validate SIA data. 
 - [ ] Process and validate eSURV data. 
-- [ ] Process reports and scorecards. 
+- [ ] Process reports and scorecards.
+- [ ] Match variables naming conventions within two dataframes
+- [ ] Match variables datatypes within two dataframes
 
 ## :incoming_envelope: Contacting us
 
