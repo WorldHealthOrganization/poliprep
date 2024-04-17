@@ -227,7 +227,7 @@ display_custom_menu <- function(title, main_header, options,
     cli::cli_alert_warning("Invalid choice, please try again.")
   }
   
-  return(choice)
+  choice
 }
 
 #' Calculate String Distances Between Admin Names
@@ -272,7 +272,7 @@ calculate_string_distance <- function(
   results <- list()
   
   # iterate over each row (admin name to be cleaned)
-  for (i in 1:nrow(scores)) {
+  for (i in  seq_len(nrow(scores))) {
     # sort distances and get indices ot top ones
     sorted_indices <- order(scores[i, ], decreasing = FALSE)[1:n_matches]
     
@@ -293,7 +293,7 @@ calculate_string_distance <- function(
   # combine all results into a single data frame
   results_df <- do.call(rbind, results)
   
-  return(results_df)
+  results_df
 }
 
 #' Interact with Users for Data Cleaning Choices
@@ -707,7 +707,7 @@ prep_geonames <- function(target_df, lookup_df,
   target_df <- dplyr::rowwise(target_df)
   target_df <- target_df |>
     dplyr::mutate(long_geo = {
-      non_null_adms <- c()
+      non_null_adms <- NULL
       
       if (!is.null(adm0) &&
           !is.na(get(adm0))) {
@@ -731,7 +731,7 @@ prep_geonames <- function(target_df, lookup_df,
   lookup_df <- dplyr::rowwise(lookup_df)
   lookup_df <- lookup_df |>
     dplyr::mutate(long_geo = {
-      non_null_adms <- c()
+      non_null_adms <- NULL
       
       if (!is.null(adm0) &&
           !is.na(get(adm0))) {

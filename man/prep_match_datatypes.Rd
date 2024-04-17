@@ -2,13 +2,37 @@
 % Please edit documentation in R/prep_match_datatypes.R
 \name{prep_match_datatypes}
 \alias{prep_match_datatypes}
-\title{Title}
+\title{Match Data Types Between Dataframes}
 \usage{
 prep_match_datatypes(ref_dataframe, target_dataframe)
 }
 \arguments{
-\item{target_dataframe}{}
+\item{ref_dataframe}{A dataframe serving as the reference for data types.}
+
+\item{target_dataframe}{A dataframe whose columns' data types will be
+modified to match those of \code{ref_dataframe}.}
+}
+\value{
+A modified copy of \code{target_dataframe} with data types aligned
+to those of \code{ref_dataframe}.
 }
 \description{
-Title
+This function aligns the data types of columns in the target dataframe
+to match those in the reference dataframe. It ensures consistency in
+data types across dataframes, facilitating accurate data analysis and
+manipulation.
+}
+\examples{
+ref_df <- tibble::tibble(
+  integer_col = 1:3,
+  character_col = c("a", "b", "c"),
+  numeric_col = c(1.1, 2.2, 3.3)
+)
+target_df <- tibble::tibble(
+  integer_col = c("1", "2", "3"), # should be integer
+  character_col = 1:3, # should be character
+  numeric_col = c("1.1", "2.2", "3.3") # should be numeric
+)
+matched_df <- prep_match_datatypes(ref_df, target_df)
+
 }

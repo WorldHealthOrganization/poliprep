@@ -1,63 +1,64 @@
-#' Match naming conventions
+#' Match Naming Conventions Between df
 #'
-#' Given two dataframes with variables in common but with diffrent naming 
-#' conventions (ex: CamelCase vs camelcase), this function will find the common 
-#' varibles and rename those in the target table with those from the reference 
-#' table.
-#' 
-#' @param ref_dataframe reference dataframe to be matched to
-#' @param target_dataframe target dataframe that needs to be matched to
-#'        ref_dataframe
+#' Standardizes variable names between two df by renaming variables in
+#' the target dataframe to match the naming conventions in the reference
+#' dataframe. This function is particularly useful for ensuring seamless
+#' integration and minimizing errors during data merging processes, especially
+#' when dealing with data from different sources that use different naming
+#' conventions (e.g., CamelCase vs snake_case).
 #'
-#' @return returns the target dataframe with common names matching the reference
-#'        dataframe
-#' @export
+#' @param ref_dataframe A dataframe with reference variable names.
+#' @param target_dataframe A dataframe to modify variable names to match
+#'        `ref_dataframe`.
+#'
+#' @return A modified copy of `target_dataframe` with standardized variable
+#'        names.
 #'
 #' @examples
+#' # Define reference and target df with different naming conventions
+#' ref_dataframe <- tibble::tibble(
+#'   CountryName = c("Cameroon", "Nigeria", "Tchad", "Niger"),
+#'   NameOfCapital = c("Yaounde", "Abuja", "Ndjamena", "Niamey")
+#' )
 #'
-#' # Create reference and target dataframes
-#' ref_dataframe <- tibble::tibble(CountryName = c("Cameroon",
-#'                                                 "Nigeria",
-#'                                                "Tchad",
-#'                                                "Niger"),
-#'                                NameOfCapital = c("Yaounde",
-#'                                                  "Abuja",
-#'                                                  "Ndjamena",
-#'                                                  "Niamey"))
+#' target_dataframe <- tibble::tibble(
+#'   countryname = c("South Sudan", "Kenya", "Ethiopia", "CAR"),
+#'   nameofcapital = c("Juba", "Nairobi", "Addis Ababa", "Bangui")
+#' )
 #'
-#' target_dataframe <- tibble::tibble(countryname = c("South Sudan",
-#'                                                    "Kenya",
-#'                                                    "Ethiopia",
-#'                                                    "CAR"),
-#'                                    nameofcapital = c("Juba",
-#'                                                      "Nairobi",
-#'                                                      "Addis Ababa",
-#'                                                      "Bangui"))
-#' # Check the names matching. Expect False
-#' names(ref_dataframe) == names(target_dataframe)
+#' # Before matching: expect FALSE
+#' all(names(ref_dataframe) == names(target_dataframe))
 #'
-#' # Match the dataframes names
+#' # Apply the name matching function
 #' target_dataframe <- prep_match_names(ref_dataframe, target_dataframe)
 #'
-#' # Check the names matching. Expect True
-#' names(ref_dataframe) == names(target_dataframe)
-
-
+#' # After matching: expect TRUE
+#' all(names(ref_dataframe) == names(target_dataframe))
+#' @export
 prep_match_names <- function(ref_dataframe, target_dataframe) {
-  # get the column names of the reference dataframe
-  refNames <- names(ref_dataframe)
-  # get the column names of the target dataframe
-  targetNames <- names(target_dataframe)
-  # find the common columns between the reference and the target dataframes
-  common_cols <- intersect(toupper(targetNames), toupper(refNames))
-  # loop through the common columns and rename the target dataframe columns
+  # Step 1): get the column names of the ref and target df
+  ref_names <- names(ref_dataframe)
+  target_names <- names(target_dataframe)
+
+  # Step 2): check if reference names contain spaces or punctuation
+  # if so names are clean, clean both ref and target names
+  if (all(grepl("^[[:alnum:]]+$", ref_names))) {
+    ref_names <- gsub("[[:punct:][:space:]]", "", ref_names)
+    target_names <- gsub("[[:punct:][:space:]]", "", target_names)
+  }
+
+  # Step 3): find the common columns between the ref and the target df
+  common_cols <- intersect(toupper(target_names), toupper(ref_names))
+
+  # Step 4): loop through the common columns and rename the target
+  # dataframe columns
   for (col in common_cols) {
     # get the index of the col in the target dataframe column names
-    col_index1 <- which(tolower(targetNames) == tolower(col))
+    col_index1 <- which(tolower(target_names) == tolower(col))
     # get the index of the col in the target reference column names
-    col_index2 <- which(tolower(refNames) == tolower(col))
+    col_index2 <- which(tolower(ref_names) == tolower(col))
     # get the corresponding column name from the reference dataframe
-    new_col_name <- refNames[col_index2]
+    new_col_name <- ref_names[col_index2]
     # rename the target dataframe column using the new name from the reference
     # dataframe
     names(target_dataframe)[col_index1] <- new_col_name

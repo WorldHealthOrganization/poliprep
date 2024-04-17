@@ -1,27 +1,39 @@
-#' Title
+#' Match Data Types Between Dataframes
 #'
-#' @param ref_dataframe
-#' @param target_dataframe
+#' This function aligns the data types of columns in the target dataframe
+#' to match those in the reference dataframe. It ensures consistency in
+#' data types across dataframes, facilitating accurate data analysis and
+#' manipulation.
 #'
-#' @return
+#' @param ref_dataframe A dataframe serving as the reference for data types.
+#' @param target_dataframe A dataframe whose columns' data types will be
+#'        modified to match those of `ref_dataframe`.
+#'
+#' @return A modified copy of `target_dataframe` with data types aligned
+#'         to those of `ref_dataframe`.
 #' @export
 #'
 #' @examples
-#'
+#' ref_df <- tibble::tibble(
+#'   integer_col = 1:3,
+#'   character_col = c("a", "b", "c"),
+#'   numeric_col = c(1.1, 2.2, 3.3)
+#' )
+#' target_df <- tibble::tibble(
+#'   integer_col = c("1", "2", "3"), # should be integer
+#'   character_col = 1:3, # should be character
+#'   numeric_col = c("1.1", "2.2", "3.3") # should be numeric
+#' )
+#' matched_df <- prep_match_datatypes(ref_df, target_df)
 #'
 prep_match_datatypes <- function(ref_dataframe, target_dataframe) {
   data_types <- tibble::tibble(
     Col_names = names(ref_dataframe),
     data_type = sapply(ref_dataframe, class)
   )
-  # Loop through the columns in AFP Central
   for (col in names(target_dataframe)) {
-    # check that the column is in the esa_data_type tibble
     if (col %in% data_types$Col_names) {
-      # get the datatype from the tibble
       col_type <- data_types$data_type[data_types$Col_names == col]
-      # check what the data type is and use that to convert the AFP
-      # central datatype
       if (col_type == "integer") {
         target_dataframe <- target_dataframe |>
           dplyr::mutate(!!col := as.integer(!!rlang::sym(col)))
@@ -37,10 +49,10 @@ prep_match_datatypes <- function(ref_dataframe, target_dataframe) {
       } else if (col_type == 'c("POSIXct", "POSIXt")') {
         target_dataframe <- target_dataframe |>
           dplyr::mutate(!!col == as.POSIXct(!!rlang::sym(col),
-                                            format = "YYYY-MM-DD"))
+            format = "YYYY-MM-DD"
+          ))
       }
     }
   }
-  # Return the target dataframe
   return(target_dataframe)
 }

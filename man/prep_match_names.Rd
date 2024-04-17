@@ -2,52 +2,46 @@
 % Please edit documentation in R/prep_match_names.R
 \name{prep_match_names}
 \alias{prep_match_names}
-\title{Match naming conventions}
+\title{Match Naming Conventions Between df}
 \usage{
 prep_match_names(ref_dataframe, target_dataframe)
 }
 \arguments{
-\item{ref_dataframe}{reference dataframe to be matched to}
+\item{ref_dataframe}{A dataframe with reference variable names.}
 
-\item{target_dataframe}{target dataframe that needs to be matched to
-ref_dataframe}
+\item{target_dataframe}{A dataframe to modify variable names to match
+\code{ref_dataframe}.}
 }
 \value{
-returns the target dataframe with common names matching the reference
-dataframe
+A modified copy of \code{target_dataframe} with standardized variable
+names.
 }
 \description{
-Given two dataframes with variables in common but with diffrent naming
-conventions (ex: CamelCase vs camelcase), this function will find the common
-varibles and rename those in the target table with those from the reference
-table.
+Standardizes variable names between two df by renaming variables in
+the target dataframe to match the naming conventions in the reference
+dataframe. This function is particularly useful for ensuring seamless
+integration and minimizing errors during data merging processes, especially
+when dealing with data from different sources that use different naming
+conventions (e.g., CamelCase vs snake_case).
 }
 \examples{
+# Define reference and target df with different naming conventions
+ref_dataframe <- tibble::tibble(
+  CountryName = c("Cameroon", "Nigeria", "Tchad", "Niger"),
+  NameOfCapital = c("Yaounde", "Abuja", "Ndjamena", "Niamey")
+)
 
-# Create reference and target dataframes
-ref_dataframe <- tibble::tibble(CountryName = c("Cameroon",
-                                                "Nigeria",
-                                               "Tchad",
-                                               "Niger"),
-                               NameOfCapital = c("Yaounde",
-                                                 "Abuja",
-                                                 "Ndjamena",
-                                                 "Niamey"))
+target_dataframe <- tibble::tibble(
+  countryname = c("South Sudan", "Kenya", "Ethiopia", "CAR"),
+  nameofcapital = c("Juba", "Nairobi", "Addis Ababa", "Bangui")
+)
 
-target_dataframe <- tibble::tibble(countryname = c("South Sudan",
-                                                   "Kenya",
-                                                   "Ethiopia",
-                                                   "CAR"),
-                                   nameofcapital = c("Juba",
-                                                     "Nairobi",
-                                                     "Addis Ababa",
-                                                     "Bangui"))
-# Check the names matching. Expect False
-names(ref_dataframe) == names(target_dataframe)
+# Before matching: expect FALSE
+all(names(ref_dataframe) == names(target_dataframe))
 
-# Match the dataframes names
+# Apply the name matching function
 target_dataframe <- prep_match_names(ref_dataframe, target_dataframe)
 
-# Check the names matching. Expect True
-names(ref_dataframe) == names(target_dataframe)
+# After matching: expect TRUE
+all(names(ref_dataframe) == names(target_dataframe))
 }
