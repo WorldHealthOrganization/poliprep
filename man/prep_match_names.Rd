@@ -4,13 +4,16 @@
 \alias{prep_match_names}
 \title{Match Naming Conventions Between df}
 \usage{
-prep_match_names(ref_dataframe, target_dataframe)
+prep_match_names(ref_dataframe, target_dataframe, report = TRUE)
 }
 \arguments{
 \item{ref_dataframe}{A dataframe with reference variable names.}
 
 \item{target_dataframe}{A dataframe to modify variable names to match
 \code{ref_dataframe}.}
+
+\item{report}{Boolean value indicating if processing report should be printed
+or not. Defaults to TRUE}
 }
 \value{
 A modified copy of \code{target_dataframe} with standardized variable
