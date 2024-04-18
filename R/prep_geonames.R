@@ -188,7 +188,7 @@ calculate_match_stats <- function(data, lookup_data,
 #' #                   list(x = "Skip", y = "Save"), "Your choice:")
 #'
 #' @keywords internal
-display_custom_menu <- function(title, main_header, options,
+display_custom_menu <- function(title, main_header, choices_input,
                                 special_actions, prompt) {
   cli::cli_h1(main_header)
   
@@ -196,7 +196,7 @@ display_custom_menu <- function(title, main_header, options,
   cli::cli_h2(title)
   
   # display the replacement options with cli styling
-  options_nums <- seq_along(options)
+  options_nums <- seq_along(choices_input)
   for (i in options_nums) {
     cli::cli_text(glue::glue("{i}: {options[i]}"))
   }
@@ -221,7 +221,7 @@ display_custom_menu <- function(title, main_header, options,
     cli::cli_alert_warning("Invalid choice, please try again.")
   }
   
-  return(choice)
+  choice
 }
 
 #' Calculate String Distances Between Admin Names
@@ -265,7 +265,7 @@ calculate_string_distance <- function(
   results <- list()
   
   # iterate over each row (admin name to be cleaned)
-  for (i in 1:nrow(scores)) {
+  for (i in seq_len(nrow(scores))) {
     # sort distances and get indices ot top ones
     sorted_indices <- order(scores[i, ], decreasing = FALSE)[1:n_matches]
     
@@ -565,10 +565,10 @@ handle_user_interaction <- function(input_data, adm_level,
 #' #)
 #' # result <- construct_geo_names(data, "country", "state", "city")
 construct_geo_names <- function(data, adm0, adm1, adm2) {
-  data <- data |>
+  data |>
     dplyr::rowwise() |>
     dplyr::mutate(long_geo = {
-      non_null_adms <- c()
+      non_null_adms <- NULL
       if (!is.null(adm0) && !is.na(get(adm0))) {
         non_null_adms <- c(non_null_adms, get(adm0))
       }
@@ -581,7 +581,6 @@ construct_geo_names <- function(data, adm0, adm1, adm2) {
       paste(non_null_adms, collapse = "_")
     }) |>
     dplyr::ungroup()
-  return(data)
 }
 
 #' Interactive Admin Name Cleaning and Matching

@@ -1,8 +1,5 @@
-library(testthat)
-library(stringdist)
-
 # Example test for calculate_string_distance function
-test_that("calculate_string_distance works correctly", {
+testthat::test_that("calculate_string_distance works correctly", {
   
   # get function output
   result <- calculate_string_distance(
@@ -20,7 +17,7 @@ test_that("calculate_string_distance works correctly", {
   )
   
   # Test if the output matches expected data frame
-  expect_equal(result, expected)
+  testthat::expect_equal(result, expected)
 })
 
 
