@@ -84,7 +84,24 @@ user choices and algorithmic matching.
 }
 }
 \examples{
-# results <- prep_geonames(
-#          target_df, lookup_df, "country", "province", "district")
+# dummy target data
+# target_df <- data.frame(
+#   country = c("Country1", "Country2"),
+#   province = c("State1", "State2"),
+#   district = c("City1", "City2")
+# )
+# dummy lookup data
+# lookup_df <- data.frame(
+#   country = c("Country1", "Country3"),
+#   province = c("State1", "State3"),
+#   district = c("City1", "City3")
+# )
+# 
+# interactively clean geonames
+# prep_geonames(
+#   target_df, lookup_df,
+#   adm0 ="country", adm1 = 'province',
+#   adm2 = "district"
+# )
 
 }

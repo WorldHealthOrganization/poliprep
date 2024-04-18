@@ -198,7 +198,7 @@ display_custom_menu <- function(title, main_header, choices_input,
   # display the replacement options with cli styling
   options_nums <- seq_along(choices_input)
   for (i in options_nums) {
-    cli::cli_text(glue::glue("{i}: {options[i]}"))
+    cli::cli_text(glue::glue("{i}: {choices_input[i]}"))
   }
   
   # display the special actions with a skipped line and non-numeric identifiers
@@ -643,8 +643,25 @@ construct_geo_names <- function(data, adm0, adm1, adm2) {
 #'        of users decisions.
 #'
 #' @examples
-#' # results <- prep_geonames(
-#' #          target_df, lookup_df, "country", "province", "district")
+#' # dummy target data
+#' # target_df <- data.frame(
+#' #   country = c("Country1", "Country2"),
+#' #   province = c("State1", "State2"),
+#' #   district = c("City1", "City2")
+#' # )
+#' # dummy lookup data
+#' # lookup_df <- data.frame(
+#' #   country = c("Country1", "Country3"),
+#' #   province = c("State1", "State3"),
+#' #   district = c("City1", "City3")
+#' # )
+#' # 
+#' # interactively clean geonames
+#' # prep_geonames(
+#' #   target_df, lookup_df,
+#' #   adm0 ="country", adm1 = 'province',
+#' #   adm2 = "district"
+#' # )
 #'
 #' @importFrom rlang :=
 #' @export
