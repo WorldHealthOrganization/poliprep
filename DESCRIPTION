@@ -28,7 +28,8 @@ Imports:
   stringr,
   httr,
   jsonlite,
-  tidyselect
+  tidyselect,
+  httpcode
 Suggests: 
   testthat,
   withr,

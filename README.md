@@ -1,5 +1,5 @@
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)  [![CodeFactor](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep/badge)](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep)
+  [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)  [![CodeFactor](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep/badge)](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep) [![codecov](https://codecov.io/gh/WorldHealthOrganization/poliprep/graph/badge.svg?token=PCYAMB2S6Y)](https://codecov.io/gh/WorldHealthOrganization/poliprep)
 <!-- badges: end -->
 
 # poliprep
@@ -29,14 +29,15 @@ We plan to add a number of functions which do the following:
 - [x] Import and export different datasets (tabular, shapefiles, etc.). 
 - [x] Pull data from ONA using an API. 
 - [ ] Clean and fix names of places including locations and sites. 
+- [ ] Match variables naming conventions within two dataframes
+- [ ] Match variables datatypes within two dataframes
 - [ ] Process and validate Environmental Surveillance data. 
 - [ ] Process and validate AFP Surveillance data. 
 - [ ] Process and validate Lab data. 
 - [ ] Process and validate SIA data. 
 - [ ] Process and validate eSURV data. 
 - [ ] Process reports and scorecards.
-- [ ] Match variables naming conventions within two dataframes
-- [ ] Match variables datatypes within two dataframes
+
 
 ## :incoming_envelope: Contacting us
 

@@ -33,5 +33,4 @@ returns an error message indicating the failure reason.
 }
 \seealso{
 \url{https://api.ona.io/api/v1/data/} for more info on ONA API
-function to get a Page of Data from an API
 }
