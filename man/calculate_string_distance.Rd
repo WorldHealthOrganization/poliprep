@@ -24,10 +24,10 @@ a set of lookup administrative names using the specified method. Returns the
 top N closest matches for each name.
 }
 \examples{
-calculate_string_distance(c("New York", "Los Angeles"),
-  c("New York", "Los Angeles", "Chicago"),
-  method = "lv"
-)
+# calculate_string_distance(c("New York", "Los Angeles"),
+# c("New York", "Los Angeles", "Chicago"),
+#   method = "lv"
+# )
 
 }
 \keyword{internal}

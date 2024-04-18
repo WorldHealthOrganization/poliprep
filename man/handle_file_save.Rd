@@ -2,7 +2,7 @@
 % Please edit documentation in R/prep_geonames.R
 \name{handle_file_save}
 \alias{handle_file_save}
-\title{Save Dataframe to CSV File}
+\title{Save Dataframe to RDS File}
 \usage{
 handle_file_save(data_to_save, default_save_path = NULL)
 }
@@ -18,13 +18,12 @@ Invisible \code{NULL}. The function's primary purpose is to saving a
 file, not to return a value.
 }
 \description{
-Prompts the user for confirmation before saving a dataframe to a CSV file.
+Prompts the user for confirmation before saving a dataframe to a RDS file.
 If the specified file path does not exist or is NULL, the user is prompted to
 provide a new path. A default file name is used if no valid path is provided.
 }
 \examples{
-# handle_file_save(data_to_save, "path/to/default/location.csv")
-
+# handle_file_save(data_to_save, "path/to/default/location.rds")
 
 }
 \keyword{internal}
