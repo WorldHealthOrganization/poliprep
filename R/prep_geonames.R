@@ -286,7 +286,7 @@ calculate_string_distance <- function(
   # combine all results into a single data frame
   results_df <- do.call(rbind, results)
   
-  return(results_df)
+  results_df
 }
 
 #' Interact with Users for Data Cleaning Choices

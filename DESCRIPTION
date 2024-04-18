@@ -29,7 +29,8 @@ Imports:
   httr,
   jsonlite,
   tidyselect,
-  httpcode
+  httpcode,
+  tibble
 Suggests: 
   testthat,
   withr,

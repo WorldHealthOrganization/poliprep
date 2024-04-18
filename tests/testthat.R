@@ -1,4 +1,1 @@
-library(testthat)
-library(poliprep)
-
-test_check("poliprep")
+testthat::test_check("poliprep")
