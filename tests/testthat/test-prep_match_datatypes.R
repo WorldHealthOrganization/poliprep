@@ -24,7 +24,7 @@ testthat::test_that("Data types match correctly", {
     testthat::expect_type(matched_df$integer_col, "integer")
     testthat::expect_type(matched_df$character_col, "character")
     testthat::expect_type(matched_df$numeric_col, "double")
-    #testthat::expect_type(matched_df$date_col, "Date")
+    testthat::expect_equal(class(matched_df$date_col), "Date")
 })
 
 
