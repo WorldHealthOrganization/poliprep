@@ -10,6 +10,8 @@
 #' @param ref_dataframe A dataframe with reference variable names.
 #' @param target_dataframe A dataframe to modify variable names to match
 #'        `ref_dataframe`.
+#' @param report Boolean value indicating if processing report should be printed
+#'               or not. Defaults to TRUE 
 #'
 #' @return A modified copy of `target_dataframe` with standardized variable
 #'        names.
@@ -35,7 +37,7 @@
 #' # After matching: expect TRUE
 #' all(names(ref_dataframe) == names(target_dataframe))
 #' @export
-prep_match_names <- function(ref_dataframe, target_dataframe) {
+prep_match_names <- function(ref_dataframe, target_dataframe, report = TRUE) {
   # Step 1): get the column names of the ref and target df
   ref_names <- names(ref_dataframe)
   target_names <- names(target_dataframe)
@@ -63,6 +65,37 @@ prep_match_names <- function(ref_dataframe, target_dataframe) {
     # dataframe
     names(target_dataframe)[col_index1] <- new_col_name
   }
+  
+  # Step 5): Return processing report to user
+  # target columns with no match in ref columns
+  if (report == TRUE) {
+    no_match_cols <-
+      setdiff(names(target_dataframe), names(ref_dataframe))
+    if (length(no_match_cols) > 0) {
+      print(
+        paste(
+          "No match found for ",
+          no_match_cols,
+          ". initial name maintained. A total of ",
+          length(names(no_match_cols)),
+          "/",
+          length(names(no_match_cols)),
+          " columns from the target dataframe were matched to the reference dataframe"
+        )
+      )
+    } else{
+      print(
+        paste(
+          "All columns were successfully matched and renamed. A total of ",
+          length(names(common_cols)),
+          "/",
+          length(names(common_cols)),
+          " columns from the target dataframe were matched to the reference dataframe"
+        )
+      )
+    }
+  }
+  
   # Return the target dataframe
   return(target_dataframe)
 }

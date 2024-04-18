@@ -47,6 +47,7 @@ prep_match_datatypes <- function(ref_dataframe, target_dataframe) {
         target_dataframe <- target_dataframe |>
           dplyr::mutate(!!col := as.logical(!!rlang::sym(col)))
       } else if (col_type == 'c("POSIXct", "POSIXt")') {
+        
         target_dataframe <- target_dataframe |>
           dplyr::mutate(!!col == as.POSIXct(!!rlang::sym(col),
             format = "YYYY-MM-DD"
