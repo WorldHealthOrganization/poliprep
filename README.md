@@ -29,8 +29,8 @@ We plan to add a number of functions which do the following:
 - [x] Import and export different datasets (tabular, shapefiles, etc.). 
 - [x] Pull data from ONA using an API. 
 - [ ] Clean and fix names of places including locations and sites. 
-- [ ] Match variables naming conventions within two dataframes
-- [ ] Match variables datatypes within two dataframes
+- [x] Match variables naming conventions within two dataframes
+- [x] Match variables datatypes within two dataframes
 - [ ] Process and validate Environmental Surveillance data. 
 - [ ] Process and validate AFP Surveillance data. 
 - [ ] Process and validate Lab data. 
