@@ -41,17 +41,17 @@ prep_match_names <- function(ref_dataframe, target_dataframe, report = TRUE) {
   # Step 1): get the column names of the ref and target df
   ref_names <- names(ref_dataframe)
   target_names <- names(target_dataframe)
-
+  
   # Step 2): check if reference names contain spaces or punctuation
   # if so names are clean, clean both ref and target names
   if (all(grepl("^[[:alnum:]]+$", ref_names))) {
     ref_names <- gsub("[[:punct:][:space:]]", "", ref_names)
     target_names <- gsub("[[:punct:][:space:]]", "", target_names)
   }
-
+  
   # Step 3): find the common columns between the ref and the target df
   common_cols <- intersect(toupper(target_names), toupper(ref_names))
-
+  
   # Step 4): loop through the common columns and rename the target
   # dataframe columns
   for (col in common_cols) {
@@ -72,27 +72,13 @@ prep_match_names <- function(ref_dataframe, target_dataframe, report = TRUE) {
     no_match_cols <-
       setdiff(names(target_dataframe), names(ref_dataframe))
     if (length(no_match_cols) > 0) {
-      print(
-          length(names(no_match_cols)),
-          "/",
-          length(names(no_match_cols)),
-          " columns from the target dataframe were matched to the reference dataframe"
-        )
-      print(
-          "No match found for ",
-          no_match_cols,
-          ". initial name maintained. A total of "
-        )
-    } else{
-      print(
-        paste(
-          "All columns were successfully matched and renamed. A total of ",
-          length(common_cols),
-          "/",
-          length(common_cols),
-          " columns from the target dataframe were matched to the reference dataframe"
-        )
-      )
+        cat(glue::glue(
+          "No match found for the following {length(no_match_cols)} column(s)",
+          " in the tarrget df: {crayon::red(no_match_cols)}\n"))
+    } else {
+      cat(glue::glue(
+        "All columns were successfully matched and renamed!\n"))
+      
     }
   }
   
