@@ -32,6 +32,59 @@ check_status_api <- function(response) {
   }
 }
 
+#' Fetch ONA API Data
+#'
+#' Retrieves data from the ONA API endpoints to display available forms and 
+#' datasets. It initially, uses given API token for authorization and checks the 
+#' initial API response status. Then it validates the base URL and constructs 
+#' the full API endpoint URL to retrieve a dataframe of all the available for 
+#' forms/data.
+#'
+#' @param base_url The base URL for the ONA API; defaults to 
+#'            'https://api.whonghub.org'.
+#' @param api_token API token for authentication.
+#'
+#' @return Data frame of the API endpoint data.
+#' 
+#' @export  
+#' @examples
+#' # prep_ona_data_endpoints(api_token = "your_api_token_here")
+prep_ona_data_endpoints <- function(
+    base_url = "https://api.whonghub.org", api_token) {
+  
+  # check base url validity
+  base_url_pattern <- "^(https?://[^/]+).*"
+  if ( grepl(base_url_pattern, base_url)){
+    base_url <- sub(base_url_pattern, "\\1", base_url)
+  } else {
+    stop(paste("Error: ", base_url, " is not a valid base url"))
+  }
+  
+  # set up URL
+  api_url <- paste0(base_url,"/api/v1/data")
+  
+  # Validate base url link first -----------------------------------------------
+  
+  # get head before download
+  response <- httr::HEAD(
+    base_url, 
+    config = httr::add_headers(Authorization = paste("Token", api_token)))
+  
+  # check status of call
+  check_status_api(response)
+  
+  # Validate url link before downloading ---------------------------------------
+  
+  # get one data endpoint df 
+  response <- httr::GET(
+    api_url, 
+    config = httr::add_headers(Authorization = paste("Token", api_token))) |> 
+    httr::content("text", encoding = "UTF-8") |> 
+    jsonlite::fromJSON(simplifyDataFrame = TRUE)
+  
+  return(response)
+}
+
 #' Get a Page of Data from an API
 #'
 #' This function retrieves a single page of data from a specified API endpoint.
@@ -118,15 +171,20 @@ get_ona_data <- function(
   get_next_page <- TRUE
   start <- 0
   
-  # Validate url link before downloading ---------------------------------------
-
-  # get head before download
-  response <- httr::HEAD(
-    api_url, 
-    config = httr::add_headers(Authorization = paste("Token", api_token)))
+  # Check if the form id is available for download -----------------------------
   
-  # check status of call
-  check_status_api(response)
+  resp_data <- prep_ona_data_endpoints(
+    base_url = base_url,
+    api_token = api_token)
+  
+  if (!(form_id %in% unique(resp_data$id))) {
+    cli::cli_abort(
+      paste0("Form IDs ", 
+             toString(form_id), 
+             " not found. Use `prep_ona_data_endpoints()` ",
+             "to check available forms for download.")
+    )
+  }
   
   # Download data (use pagination if necessary) --------------------------------
   
@@ -172,3 +230,58 @@ get_ona_data <- function(
   
   return(results)
 }
+
+#' Get Data from ONA for Multiple Forms
+#'
+#' This function retrieves data for a specified form from the ONA API using a 
+#' provided API token and constructs a unique key for each dataset. It returns 
+#' the data in a structured format if the request is successful.
+#'
+#' @param base_url The base URL for the ONA API; defaults to 
+#'            'https://api.whonghub.org'.
+#' @param form_ids A vector containing form id number to identify each form.
+#' @param api_token A string specifying the API token for ONA.
+#'
+#' @return A data frame containing the combined data from all specified form 
+#'        IDs, and includes from_id column.
+#' @examples
+#' # api_token <- "your_api_token_here"
+#' # data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
+#' @export
+get_multi_ona_data <- function(
+    base_url = "https://api.whonghub.org", form_ids, api_token) {
+  
+  # Check if the form IDs are available for download ---------------------------
+  resp_data <- prep_ona_data_endpoints(
+    base_url = base_url,
+    api_token = api_token
+  )
+  
+  if (!all(form_ids %in% unique(resp_data$id))) {
+    missing_ids <- form_ids[!form_ids %in% unique(resp_data$id)]
+    cli::cli_abort(
+      paste0("Form IDs ", 
+             toString(missing_ids), 
+             " not found. Use `prep_ona_data_endpoints()` ",
+             "to check available forms for download.")
+    )
+  }
+  
+  # Fetch data in parallel for each form ID ------------------------------------
+  results_list <- pbmcapply::pbmclapply(
+    form_ids,
+    function(form_id) {
+      get_ona_data(form_id = form_id, api_token = api_token)
+    },
+    mc.cores = parallel::detectCores() - 1
+  )
+  
+  # Set names for each element in the results list to match form_ids
+  names(results_list) <- as.character(form_ids)
+  
+  # Combine all into one df
+  combined_data <- dplyr::bind_rows(results_list, .id = "form_id")
+  
+  return(combined_data)
+}
+

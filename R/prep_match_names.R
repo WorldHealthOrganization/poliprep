@@ -73,23 +73,23 @@ prep_match_names <- function(ref_dataframe, target_dataframe, report = TRUE) {
       setdiff(names(target_dataframe), names(ref_dataframe))
     if (length(no_match_cols) > 0) {
       print(
-        paste(
-          "No match found for ",
-          no_match_cols,
-          ". initial name maintained. A total of ",
           length(names(no_match_cols)),
           "/",
           length(names(no_match_cols)),
           " columns from the target dataframe were matched to the reference dataframe"
         )
-      )
+      print(
+          "No match found for ",
+          no_match_cols,
+          ". initial name maintained. A total of "
+        )
     } else{
       print(
         paste(
           "All columns were successfully matched and renamed. A total of ",
-          length(names(common_cols)),
+          length(common_cols),
           "/",
-          length(names(common_cols)),
+          length(common_cols),
           " columns from the target dataframe were matched to the reference dataframe"
         )
       )
