@@ -231,3 +231,57 @@ get_ona_data <- function(
   return(results)
 }
 
+#' Get Data from ONA for Multiple Forms
+#'
+#' This function retrieves data for a specified form from the ONA API using a 
+#' provided API token and constructs a unique key for each dataset. It returns 
+#' the data in a structured format if the request is successful.
+#'
+#' @param base_url The base URL for the ONA API; defaults to 
+#'            'https://api.whonghub.org'.
+#' @param form_ids A vector containing form id number to identify each form.
+#' @param api_token A string specifying the API token for ONA.
+#'
+#' @return A data frame containing the combined data from all specified form 
+#'        IDs, and includes from_id column.
+#' @examples
+#' # api_token <- "your_api_token_here"
+#' # data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
+#' @export
+get_multi_ona_data <- function(
+    base_url = "https://api.whonghub.org", form_ids, api_token) {
+  
+  # Check if the form IDs are available for download ---------------------------
+  resp_data <- prep_ona_data_endpoints(
+    base_url = base_url,
+    api_token = api_token
+  )
+  
+  if (!all(form_ids %in% unique(resp_data$id))) {
+    missing_ids <- form_ids[!form_ids %in% unique(resp_data$id)]
+    cli::cli_abort(
+      paste0("Form IDs ", 
+             toString(missing_ids), 
+             " not found. Use `prep_ona_data_endpoints()` ",
+             "to check available forms for download.")
+    )
+  }
+  
+  # Fetch data in parallel for each form ID ------------------------------------
+  results_list <- pbmcapply::pbmclapply(
+    form_ids,
+    function(form_id) {
+      get_ona_data(form_id = form_id, api_token = api_token)
+    },
+    mc.cores = parallel::detectCores() - 1
+  )
+  
+  # Set names for each element in the results list to match form_ids
+  names(results_list) <- as.character(form_ids)
+  
+  # Combine all into one df
+  combined_data <- dplyr::bind_rows(results_list, .id = "form_id")
+  
+  return(combined_data)
+}
+

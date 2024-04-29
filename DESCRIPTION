@@ -30,7 +30,8 @@ Imports:
   jsonlite,
   tidyselect,
   httpcode,
-  tibble
+  tibble,
+  pbmcapply
 Suggests: 
   testthat,
   withr,
