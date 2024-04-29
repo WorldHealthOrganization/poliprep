@@ -67,9 +67,9 @@ testthat::test_that("Unmatched and matched columns are correctly reported", {
   )
   
   # Expected output messages
-  expected_messages <- c(
+  expected_messages <-
     "No match found for the following 1 column(s) in the tarrget df: GDP"
-  )
+  
   
   # Run the function and capture the output
   output <- testthat::capture_output_lines(
@@ -81,9 +81,8 @@ testthat::test_that("Unmatched and matched columns are correctly reported", {
   expect_equal(output, expected_messages)
   
   
-  expected_messages_2 <- c(
+  expected_messages_2 <- 
     "All columns were successfully matched and renamed!"
-  )
   
   output_2 <- testthat::capture_output_lines(
     prep_match_names(ref_df, target_df[, - 3])

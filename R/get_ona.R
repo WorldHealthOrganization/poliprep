@@ -198,7 +198,9 @@ get_ona_data <- function(
           tidyselect::everything(), as.character))
     
     # join the paginated results
-    results <- dplyr::bind_rows(results, current_page)
+    results <- dplyr::bind_rows(results, current_page) |> 
+      dplyr::mutate(date_last_updated = Sys.Date())
+    
     if (nrow(current_page) < api_limit) {
       get_next_page <- FALSE
     } else {
@@ -280,8 +282,9 @@ get_multi_ona_data <- function(
   names(results_list) <- as.character(form_ids)
   
   # Combine all into one df
-  combined_data <- dplyr::bind_rows(results_list, .id = "form_id")
+  combined_data <- dplyr::bind_rows(results_list, .id = "form_id_num")
   
   return(combined_data)
 }
+
 

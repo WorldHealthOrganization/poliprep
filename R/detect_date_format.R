@@ -39,12 +39,11 @@ detect_date_format <- function(date_vector, common_formats = NULL, ...) {
   }
   
   # Calculate the number of successful parses for each format ------------------
-  format_counts <- sapply(common_formats, function(fmt) {
+  format_counts <- vapply(common_formats, function(fmt) {
     sum(!is.na(
       lubridate::parse_date_time(
-        date_vector, orders = fmt, quiet = TRUE, exact = TRUE,
-        locale = Sys.setlocale("LC_TIME", "C"), ...)))
-  }, USE.NAMES = TRUE)
+        date_vector, orders = fmt, quiet = TRUE, exact = TRUE, ...)))
+  }, numeric(1)) 
   
   # Select the format with the maximum count of successful parses --------------
   if (max(format_counts) > 0) {
