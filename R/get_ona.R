@@ -437,35 +437,28 @@ call_urls <- function(urls, api_token) {
   return(combined_data)
 }
 
-#' Update Data from ONA API
+#' Update ONA Data
 #'
-#' Retrieves and optionally updates data from the ONA API for a specified form. 
-#' It checks the availability of the form ID, downloads new data if requested, 
-#' and can log results. It also handles pagination of data automatically.
+#' This function manages and updates a dataset by downloading new data from 
+#' specified form IDs using an API endpoint, and integrating this with existing
+#' data. The function checks for the availability of form IDs, downloads new 
+#' data, combines it with existing data if present, logs the results if 
+#' specified, and saves the updated dataset.
 #'
-#' @param base_url Base URL for the ONA API endpoint, defaulting to a predefined 
-#'              URL.
-#' @param form_ids The ID(s) of the form to download data for.
-#' @param api_token Authorization token for accessing the API.
-#'      with new data from ONA.
-#' @param log_results Logical indicating whether to log the results of the data 
-#'      update.
-#' @param file_path Optional path to save the downloaded data; defaults to the 
-#'      working directory.
-#' @param data_file_name Name of the file to save the data into, defaults to 
-#'      my_ona_data".
+#' @param base_url The base URL for the API calls, defaults to 
+#'        "https://api.whonghub.org".
+#' @param form_ids A vector of form IDs to download data for.
+#' @param api_token The API token used for authentication with the API.
+#' @param log_results Boolean flag to indicate whether to log results of the 
+#'        data updates, defaults to TRUE.
+#' @param file_path The file path where data files will be stored, can be NULL.
+#' @param data_file_name The base name for the data file, defaults to 
+#'      "my_ona_data".
 #'
-#' @return Returns a data frame containing the retrieved and possibly updated   
-#'      data.
+#' @return Returns a data frame containing the combined new and existing data.
 #'
 #' @examples
-#' # update_data <- update_ona_data(
-#' # base_url = "https://api.whonghub.org",
-#' #   form_id = "12345",
-#' #   api_token = "your_api_token_here",
-#' #   update_ona = TRUE,
-#' #   log_results = TRUE
-#' #)
+#' # update_ona_data(form_ids = c(123, 456), api_token = "your_api_token_here")
 #'
 #' @export
 update_ona_data <- function(
