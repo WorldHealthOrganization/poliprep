@@ -382,7 +382,7 @@ generate_urls <- function(full_data, file_path,
     }
   })
   
-  return(urls)
+  urls
 }
 
 #' Call multiple URLs
@@ -434,7 +434,8 @@ call_urls <- function(urls, api_token) {
   # Combine all the results into one tibble
   combined_data <- dplyr::bind_rows(results)
   gc()  # Clean up memory
-  return(combined_data)
+
+  combined_data
 }
 
 #' Update ONA Data
