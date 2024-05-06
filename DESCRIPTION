@@ -32,7 +32,11 @@ Imports:
   httpcode,
   tibble,
   lubridate,
-  pbmcapply
+  pbmcapply,
+  doFuture, 
+  foreach, 
+  future,
+  progressr
 Suggests: 
   testthat,
   withr,

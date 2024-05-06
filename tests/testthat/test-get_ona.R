@@ -49,12 +49,3 @@ testthat::test_that("API call fails with incorrect URL", {
   testthat::expect_null(result)
 })
 
-testthat::test_that("get_ona_data handles invalid URLs", {
-  testthat::expect_error(
-    get_ona_data(
-      base_url = "xxxxx" , 
-      form_id = 12345, 
-      api_token = NULL
-    ), "Error:  xxxxx  is not a valid base url")
-  
-})

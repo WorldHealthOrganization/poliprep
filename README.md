@@ -27,8 +27,9 @@ devtools::install_github("WorldHealthOrganization/poliprep")
 We plan to add a number of functions which do the following: 
 
 - [x] Import and export different datasets (tabular, shapefiles, etc.). 
-- [x] Pull data from ONA using an API. 
-- [ ] Clean and fix names of places including locations and sites. 
+- [x] Pull data from ONA using an API call. 
+- [x] Update data from ONA API without re-downloading.
+- [x] Clean and fix names of places including geolocations. 
 - [x] Match variables naming conventions within two dataframes
 - [x] Match variables datatypes within two dataframes
 - [ ] Process and validate Environmental Surveillance data. 
