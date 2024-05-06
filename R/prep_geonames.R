@@ -92,80 +92,54 @@ handle_file_save <- function(data_to_save, default_save_path = NULL) {
 #' #      my_data, my_lookup, "country", "province", "district")
 #'
 #' @keywords internal
-calculate_match_stats <- function(data, lookup_data,
-                                  adm0 = NULL, adm1 = NULL, adm2 = NULL) {
-  # Calculate unique matches for each admn level -------------------------------
+calculate_match_stats <- function(data, lookup_data, adm0 = NULL, 
+                                  adm1 = NULL, adm2 = NULL) {
+  
+  # Calculate unique matches for each admin level
+  results <- list()
+  
   if (!is.null(adm0)) {
     matches_adm0 <- sum(unique(data[[adm0]]) %in% unique(lookup_data[[adm0]]))
+    results$adm0 <- c(
+      "matches" = matches_adm0, "total" = length(unique(data[[adm0]])))
   }
   
   if (!is.null(adm1)) {
     matches_adm1 <- sum(unique(data[[adm1]]) %in% unique(lookup_data[[adm1]]))
+    results$adm1 <- c(
+      "matches" = matches_adm1, "total" = length(unique(data[[adm1]])))
   }
   
   if (!is.null(adm2)) {
     matches_adm2 <- sum(unique(data[[adm2]]) %in% unique(lookup_data[[adm2]]))
+    results$adm2 <- c(
+      "matches" = matches_adm2, "total" = length(unique(data[[adm2]])))
   }
   
-  if (!is.null(adm0) & !is.null(adm1)) {
-    adm1_unique <- data |>
-      dplyr::mutate(
-        joined_adm = paste(get(adm0), get(adm1), sep = "-")
-      ) |>
-      dplyr::distinct(joined_adm) |>
-      dplyr::pull()
-    
-    adm1_unique_lookup <- lookup_data |>
-      dplyr::mutate(
-        joined_adm = paste(get(adm0), get(adm1), sep = "-")
-      ) |>
-      dplyr::distinct(joined_adm) |>
-      dplyr::pull()
-    
-    matches_adm1 <- sum(
-      unique(adm1_unique) %in% unique(adm1_unique_lookup)
-    )
-  }
-  
-  if (!is.null(adm1) & !is.null(adm2)) {
-    adm2_unique <- data |>
-      dplyr::mutate(
-        joined_adm = paste(get(adm0), get(adm1), get(adm2), sep = "-")
-      ) |>
-      dplyr::distinct(joined_adm) |>
-      dplyr::pull()
-    
-    adm2_unique_lookup <- lookup_data |>
-      dplyr::mutate(
-        joined_adm = paste(get(adm0), get(adm1), get(adm2), sep = "-")
-      ) |>
-      dplyr::distinct(joined_adm) |>
-      dplyr::pull()
-    
-    matches_adm2 <- sum(
-      unique(adm2_unique) %in% unique(adm2_unique_lookup)
-    )
-  }
-  
-  # Presenting the results using cli -------------------------------------------
+  # Presenting the results using cli
   cli::cli_alert_info("Match Summary:")
   cli::cli_ul()
   
   if (!is.null(adm0)) {
-    unique_adm0 <- length(unique(data[[adm0]]))
-    cli::cli_li("{adm0} (adm0): {matches_adm0} out of {unique_adm0} matched")
+    cli::cli_li(
+      glue::glue(
+        "{adm0} (country): {results$adm0['matches']} ",
+        "out of {results$adm0['total']} matched"))
   }
   
   if (!is.null(adm1)) {
-    unique_adm1 <- length(unique(data[[adm1]]))
-    cli::cli_li("{adm1}  (adm1): {matches_adm1} out of {unique_adm1} matched")
+    cli::cli_li(glue::glue(
+      "{adm1} (province): {results$adm1['matches']} ",
+      "out of {results$adm1['total']} matched"))
   }
   
   if (!is.null(adm2)) {
-    unique_adm2 <- length(unique(data[[adm2]]))
-    cli::cli_li("{adm2}  (adm2): {matches_adm2} out of {unique_adm2} matched")
+    cli::cli_li(glue::glue("{adm2} (district): {results$adm2['matches']} ",
+                           "out of {results$adm2['total']} matched"))
   }
+  
   cli::cli_end()
+  invisible(NULL)
 }
 
 #' Display a Custom Menu and Capture User Choice
@@ -332,7 +306,7 @@ handle_user_interaction <- function(input_data, adm_level,
   input_data <- input_data |>
     dplyr::filter(
       !is.na(MatchedNames) &  !is.na(AdminToClean))
-        
+  
   # set aliases for looping
   unique_aliases <- unique(input_data$AdminToClean)
   num_aliases <- length(unique_aliases)
@@ -484,9 +458,9 @@ handle_user_interaction <- function(input_data, adm_level,
         user_choices[[length(user_choices) + 1]] <- data.frame(
           AdminToClean = alias_to_clean,
           replacement = toupper(as.character(manual_alias)),
-          name_alias = paste(input_data$long_geo[i], alias_to_clean, sep = "_"),
+          name_alias = paste(long_geo, alias_to_clean, sep = "_"),
           name_corrected = paste(
-            input_data$long_geo[i], manual_alias, sep = "_"),
+            long_geo, manual_alias, sep = "_"),
           level = adm_level
         )
         cli::cli_alert_success("Manual alias entered successfully.")
@@ -500,9 +474,9 @@ handle_user_interaction <- function(input_data, adm_level,
         user_choices[[length(user_choices) + 1]] <- data.frame(
           AdminToClean = alias_to_clean,
           replacement = replace_int,
-          name_alias = paste(input_data$long_geo[i], alias_to_clean, sep = "_"),
+          name_alias = paste(long_geo, alias_to_clean, sep = "_"),
           name_corrected = paste(
-            input_data$long_geo[i], replace_int, sep = "_"),
+            long_geo, replace_int, sep = "_"),
           level = adm_level
         )
       })
@@ -716,7 +690,6 @@ prep_geonames <- function(target_df, lookup_df,
           saved_alias_df |>
             dplyr::filter(level == adm0) |>
             dplyr::distinct(AdminToClean, country_prepped),
-          relationship = "many-to-many",
           by = stats::setNames("AdminToClean", adm0)
         ) |>
         dplyr::mutate(
@@ -729,9 +702,9 @@ prep_geonames <- function(target_df, lookup_df,
         dplyr::left_join(
           saved_alias_df |>
             dplyr::filter(level == adm1) |>
-            dplyr::distinct(AdminToClean, province_prepped),
-          relationship = "many-to-many",
-          by = stats::setNames("AdminToClean", adm1)
+            dplyr::distinct(AdminToClean, country_prepped, province_prepped),
+          by = stats::setNames(
+            c("country_prepped", "AdminToClean"), c(adm0, adm1))
         ) |>
         dplyr::mutate(
           province = dplyr::coalesce(province_prepped, province)
@@ -743,9 +716,11 @@ prep_geonames <- function(target_df, lookup_df,
         dplyr::left_join(
           saved_alias_df |>
             dplyr::filter(level == adm2) |>
-            dplyr::distinct(AdminToClean, district_prepped),
-          relationship = "many-to-many",
-          by = stats::setNames("AdminToClean", adm2)
+            dplyr::distinct(AdminToClean, country_prepped,
+                            province_prepped, district_prepped),
+          by = stats::setNames(
+            c("country_prepped", "province_prepped", "AdminToClean"), 
+            c(adm0, adm1, adm2))
         ) |>
         dplyr::mutate(
           district = dplyr::coalesce(district_prepped, district)
@@ -786,7 +761,7 @@ prep_geonames <- function(target_df, lookup_df,
     cli::cli_alert_success(
       "All records matched; process completed. Exiting..."
     )
-    return(target_done) # Early return with finalised_df
+    return(target_done) 
   } else {
     cli::cli_alert_info(
       "Partial match completed. Now carrying out string distance matching..."

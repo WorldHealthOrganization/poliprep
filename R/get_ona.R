@@ -434,7 +434,7 @@ call_urls <- function(urls, api_token) {
   # Combine all the results into one tibble
   combined_data <- dplyr::bind_rows(results)
   gc()  # Clean up memory
-
+  
   combined_data
 }
 
@@ -459,15 +459,31 @@ call_urls <- function(urls, api_token) {
 #' @return Returns a data frame containing the combined new and existing data.
 #'
 #' @examples
-#' # update_ona_data(form_ids = c(123, 456), api_token = "your_api_token_here")
+#' # get_updated_ona_data(
+#' #       form_ids = c(123, 456), api_token = "your_api_token_here")
 #'
 #' @export
-update_ona_data <- function(
+get_updated_ona_data <- function(
     base_url = "https://api.whonghub.org", form_ids, api_token, 
     log_results = TRUE,  file_path = NULL, data_file_name = "my_ona_data") {
   
   # check base url validity
   base_url <- validate_base_url(base_url)
+  
+  if (is.null(file_path)) {
+    # Prompt the user to enter the file path
+    file_path <- readline(
+      "Enter the file path (or press Enter to use the current directory): ")
+    
+    # If the entered file path is empty or incorrect, default to 
+    # the current working directory
+    if (nchar(file_path) == 0 || !file.exists(file_path)) {
+      file_path <- getwd()
+      message("Using the current working directory as the file path.")
+    } else {
+      message("Using the provided file path.")
+    }
+  }
   
   # Check if the form id is available for download -----------------------------
   
