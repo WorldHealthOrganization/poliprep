@@ -878,7 +878,7 @@ prep_geonames <- function(target_df, lookup_df,
       if (nrow(unmatched_df_group) == 0) next
       
       # standard processing for all levels or non-strict province/district
-      top_res <- parallel::mclapply(
+      top_res <- parallel::parLapply(
         methods,
         function(method) {
           calculate_string_distance(
