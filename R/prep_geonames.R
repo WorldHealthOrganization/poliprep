@@ -151,7 +151,7 @@ calculate_match_stats <- function(data, lookup_data, adm0 = NULL,
 #'
 #'
 #' @param title The menu title.
-#' @param options Vector of option strings to display.
+#' @param choices_input Vector of option strings to display.
 #' @param special_actions Named list of special actions with string identifiers.
 #' @param prompt String to display for user input prompt.
 #'
@@ -833,7 +833,7 @@ prep_geonames <- function(target_df, lookup_df,
         }
         
         # calculate string distance for this group
-        top_res <- parallel::mclapply(
+        top_res <- parallel::parLapply(
           methods,
           function(method) {
             calculate_string_distance(

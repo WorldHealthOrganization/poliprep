@@ -36,7 +36,8 @@ Imports:
   doFuture, 
   foreach, 
   future,
-  progressr
+  progressr,
+  doParallel
 Suggests: 
   testthat,
   withr,
