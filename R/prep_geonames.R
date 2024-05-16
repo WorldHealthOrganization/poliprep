@@ -833,7 +833,7 @@ prep_geonames <- function(target_df, lookup_df,
         }
         
         # calculate string distance for this group
-        top_res <- parallel::parLapply(
+        top_res <- lapply(
           methods,
           function(method) {
             calculate_string_distance(
@@ -841,8 +841,7 @@ prep_geonames <- function(target_df, lookup_df,
               lookup_df_group[[adm_level]],
               method
             )
-          },
-          mc.cores = parallel::detectCores() - 1
+          }
         ) |>
           dplyr::bind_rows() |>
           dplyr::select(-MatchRank, -Algorithm) |>
@@ -878,7 +877,7 @@ prep_geonames <- function(target_df, lookup_df,
       if (nrow(unmatched_df_group) == 0) next
       
       # standard processing for all levels or non-strict province/district
-      top_res <- parallel::parLapply(
+      top_res <- lapply(
         methods,
         function(method) {
           calculate_string_distance(
@@ -886,8 +885,7 @@ prep_geonames <- function(target_df, lookup_df,
             lookup_df[[adm_level]],
             method
           )
-        },
-        mc.cores = parallel::detectCores() - 1
+        }
       ) |>
         dplyr::bind_rows() |>
         dplyr::select(-MatchRank, -Algorithm) |>
