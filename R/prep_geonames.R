@@ -684,9 +684,9 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   if (is.null(lookup_df)) {
     lookup_df <-  poliprep::shp_global |> 
       dplyr::select(
-        country = ADM0_NAME,
-        province = ADM1_NAME,
-        district = ADM2_NAME
+        !!level0 := ADM0_NAME,
+        !!level1 := ADM1_NAME,
+        !!level2 := ADM2_NAME
       )
   }
   

@@ -101,17 +101,10 @@ user choices and algorithm_nameic matching.
 #   province = c("CABONDA", "TESO", "LUSAKA"),
 #   district = c("BALIZE", "BOKEDEA", "RAFUNSA")
 # )
-#
-# dummy lookup data
-# lookup_df <- data.frame(
-#   country = c("ANGOLA", "UGANDA", "ZAMBIA"),
-#   province = c("CABINDA", "TESO", "LUSAKA"),
-#   district = c("BELIZE", "BUKEDEA", "RUFUNSA")
-# )
 # 
 # interactively clean geonames
 # prep_geonames(
-#   target_df, lookup_df,
+#   target_df,
 #   level0 ="country", level1 = 'province',
 #   level2 = "district"
 # )
