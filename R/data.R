@@ -29,7 +29,6 @@
 #'   \item{\code{LVL}}{Integer, admin level}
 #'   \item{\code{WHO_STATUS}}{Character, membership status in WHO}
 #'   \item{\code{UN_CODE}}{Integer, United Nations code}
-#'   \item{\code{UNICEF_REG}}{Character, UNICEF regional classification}
 #'   \item{\code{CENTER_LON}}{Numeric, longitude of the center point}
 #'   \item{\code{CENTER_LAT}}{Numeric, latitude of the center point}
 #'   \item{\code{GlobalID}}{Character, another form of unique identifier}
@@ -39,15 +38,7 @@
 #'   \item{\code{ADM0_GUID}}{Character, GUID for admin level 0 (country)}
 #'   \item{\code{NOTES}}{Character, additional notes}
 #'   \item{\code{ADM0_VIZ_NAME}}{Character, visual name for the country}
-#'   \item{\code{ADM2_SHAPE_ID}}{Character, shape identifier for level 2 div}
-#'   \item{\code{ADM1_SHAPE_ID}}{Character, shape identifier for level 1 div}
-#'   \item{\code{ADM0_SHAPE_ID}}{Character, shape identifier for the country}
-#'   \item{\code{ADM2_PCODE}}{Character, p-code for admin level 2}
-#'   \item{\code{ADM1_PCODE}}{Character, p-code for admin level 1}
-#'   \item{\code{ADM0_PCODE}}{Character, p-code for the country}
 #'   \item{\code{WHO_SUBREGION}}{Character, WHO subregion classification}
-#'   \item{\code{Shape__Area}}{Numeric, area of the shape}
-#'   \item{\code{Shape__Length}}{Numeric, perimeter length of the shape}
 #' }
 #' @source https://hub.arcgis.com/datasets/WHO::polio-administrative-boundaries
 #' @keywords datasets

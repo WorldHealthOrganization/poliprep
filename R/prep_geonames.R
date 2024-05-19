@@ -683,6 +683,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   # is not provided
   if (is.null(lookup_df)) {
     lookup_df <-  poliprep::shp_global |> 
+    dplyr::filter(ENDDATE == "9999-12-31 01:00:00") |> 
       dplyr::select(
         !!level0 := ADM0_NAME,
         !!level1 := ADM1_NAME,
