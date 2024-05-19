@@ -8,12 +8,12 @@ testthat::test_that("calculate_string_distance works correctly", {
   
   # expected outputs based on function results
   expected <- data.frame(
-    Algorithm = rep("lv", 6),
-    AdminToClean = rep(c("New York", "Los Angeles"), each = 3),
-    MatchedNames = c("New York", "Chicago", 
+    algorithm_name = rep("lv", 6),
+    name_to_match = rep(c("New York", "Los Angeles"), each = 3),
+    matched_names = c("New York", "Chicago", 
                      "Los Angeles", "Los Angeles", "New York", "Chicago"),
-    Distance = c(0, 8, 10, 0, 10, 10), 
-    MatchRank = rep(1:3, 2)
+    distance = c(0, 8, 10, 0, 10, 10), 
+    match_rank = rep(1:3, 2)
   )
   
   # Test if the output matches expected data frame
@@ -39,8 +39,8 @@ testthat::test_that("Test administrative matching stats output", {
   suppressMessages({
     testthat::expect_invisible(
       calculate_match_stats(
-        data = data, lookup_data = lookup_data, adm0 = "country",
-        adm1 = "province", adm2 = "district")
+        data = data, lookup_data = lookup_data, level0 = "country",
+        level1 = "province", level2 = "district")
     )
   })
 })

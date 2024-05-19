@@ -6,38 +6,42 @@
 \usage{
 prep_geonames(
   target_df,
-  lookup_df,
-  adm0 = NULL,
-  adm1 = NULL,
-  adm2 = NULL,
-  save_alias_df_path = NULL,
+  lookup_df = NULL,
+  level0 = NULL,
+  level1 = NULL,
+  level2 = NULL,
+  cache_path = NULL,
   method = NULL,
-  stratify = TRUE
+  stratify = TRUE,
+  user_name = NULL,
+  non_interactive = FALSE
 )
 }
 \arguments{
 \item{target_df}{Data frame containing the admin names to clean.}
 
-\item{lookup_df}{Lookup data frame for verifying admin names.}
+\item{lookup_df}{Lookup data frame for verifying admin names. If this is not
+provided than an internal version of WHO geoname data
+attached to poliprep is used.}
 
-\item{adm0}{adm0 col name (country) in both 'data' and 'lookup_data'.}
+\item{level0}{level0 col name (country) in both 'data' and 'lookup_data'.}
 
-\item{adm1}{adm1 col name (province) in both 'data' and 'lookup_data'.}
+\item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
 
-\item{adm2}{adm2 col name (district) in both 'data' and 'lookup_data'.}
+\item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 
-\item{save_alias_df_path}{Optional; the path where the alias data frame is
+\item{cache_path}{Optional; the path where the cache data frame is
 saved after user modifications. This path is also used to match and
 integrate previously established  corrections into the current
 session. If NULL or the file does not exist at the provided path,
-users will be prompted to specify a new path or create a new alias
+users will be prompted to specify a new path or create a new cache
 data frame.}
 
 \item{method}{The string distance calculation method(s) to be used. Users
-can specify one or more algorithms from the
+can specify one or more algorithm_names from the
 \code{\link[stringdist]{stringdist}} package to compute
 string distances between admin names. If left NULL, the function
-defaults to using a comprehensive set of algorithms, applying them in
+defaults to using a comprehensive set of algorithm_names, applying them in
 parallel to identify and rank the best matches based on closeness.
 The default methods include: \code{"lv"} (Levenshtein), \code{"dl"}
 (Damerau-Levenshtein), \code{"lcs"} (Longest Common Subsequence),
@@ -46,6 +50,12 @@ The default methods include: \code{"lv"} (Levenshtein), \code{"dl"}
 
 \item{stratify}{Logical; if TRUE, performs cleaning stratified by
 admin levels to maintain hierarchical consistency.}
+
+\item{user_name}{name of user to save onto the cache file.
+Very important for future auditing if cache file is being used
+by many. Make sure it's recognisable.}
+
+\item{non_interactive}{Whether to use the interactivity or not.}
 }
 \value{
 A data frame with cleaned administrative names and saved data frame
@@ -53,55 +63,57 @@ of users decisions.
 }
 \description{
 This function streamlines the admin name cleaning process, leveraging both
-algorithmic approaches and interactive user decisions. It is inspired by the
-string distance matching of the
-\code{\link[epiCleanr]{clean_admin_names}} function (by Mo
-Yusuf at WHO AFRO) and the interactivity of \code{alias_to_plias} in the \code{stanley}
-package by Steve Kroiss from BMGF. It combines string distance algorithms for
-initial matching and offers user interactivity for final decision-making,
-which are then saved for future reference and sharing. Although the function
-does not require limiting name matching exclusively to upper-level admins,
-optimal performance is achieved by confining to stricter
+algorithm_nameic approaches and interactive user decisions. It is inspired
+by the string distance matching of the
+\code{\link[epiCleanr]{clean_admin_names}} function (Mo
+Yusuf at WHO AFRO) and the interactivity of \code{cache_to_plias} in the \code{stanley}
+package by Steve Kroiss from BMGF. It combines string distance
+algorithm_names for initial matching and offers user interactivity for final
+decision-making, which are then saved for future reference and sharing.
+Although the function does not require limiting name matching exclusively to
+upper-level admins, optimal performance is achieved by confining to stricter
 within-admin stratifications (through the use of stratify function option),
-ensuring more accurate results.
+ensuring more accurate results. The function can also work with site names
+or even any string matching that has lookup data.
 }
 \details{
 The function performs the following steps:
 \enumerate{
 \item Prepares the data by ensuring administrative names are in uppercase for
 consistent matching.
-\item Attempts to load a previously saved alias file if available, or
+\item Attempts to load a previously saved cache file if available, or
 initializes the cleaning process.
 \item Matches administrative names between \code{target_df} and \code{lookup_df} using
-string distance algorithms, running in parallel. Results are ranked by
-closeness.
+string distance algorithm_names, running in parallel. Results are ranked
+by closeness.
 \item Engages the user through an interactive CLI menu to make decisions on
-ambiguous matches, leveraging the \code{cli} package for enhanced usability.
-\item Saves the user's decisions in an alias data frame, either to a specified
+ambiguous matches.
+\item Saves the user's decisions in an cache data frame, either to a specified
 path or by prompting the user for a location.
 \item Returns a cleaned data frame with updated administrative names based on
-user choices and algorithmic matching.
+user choices and algorithm_nameic matching.
 }
 }
 \examples{
 # dummy target data
 # target_df <- data.frame(
-#   country = c("Country1", "Country2"),
-#   province = c("State1", "State2"),
-#   district = c("City1", "City2")
+#   country = c("ANGOLA", "UGA", "ZAMBIA"),
+#   province = c("CABONDA", "TESO", "LUSAKA"),
+#   district = c("BALIZE", "BOKEDEA", "RAFUNSA")
 # )
+#
 # dummy lookup data
 # lookup_df <- data.frame(
-#   country = c("Country1", "Country3"),
-#   province = c("State1", "State3"),
-#   district = c("City1", "City3")
+#   country = c("ANGOLA", "UGANDA", "ZAMBIA"),
+#   province = c("CABINDA", "TESO", "LUSAKA"),
+#   district = c("BELIZE", "BUKEDEA", "RUFUNSA")
 # )
 # 
 # interactively clean geonames
 # prep_geonames(
 #   target_df, lookup_df,
-#   adm0 ="country", adm1 = 'province',
-#   adm2 = "district"
+#   level0 ="country", level1 = 'province',
+#   level2 = "district"
 # )
 
 }

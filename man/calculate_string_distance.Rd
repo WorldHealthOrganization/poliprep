@@ -2,7 +2,7 @@
 % Please edit documentation in R/prep_geonames.R
 \name{calculate_string_distance}
 \alias{calculate_string_distance}
-\title{Calculate String Distances Between Admin Names}
+\title{Calculate String distances Between Admin Names}
 \usage{
 calculate_string_distance(admins_to_clean, lookup_admins, method)
 }
@@ -16,7 +16,7 @@ calculate_string_distance(admins_to_clean, lookup_admins, method)
 }
 \value{
 A dataframe detailing top N matches for each name, including
-algorithm, name, matches, distances, and ranks.
+algorithm_name, name, matches, distances, and ranks.
 }
 \description{
 Computes the string distances between administrative names to be cleaned and

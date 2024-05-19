@@ -4,18 +4,24 @@
 \alias{calculate_match_stats}
 \title{Calculate and Report Geo-naming Match Statistics}
 \usage{
-calculate_match_stats(data, lookup_data, adm0 = NULL, adm1 = NULL, adm2 = NULL)
+calculate_match_stats(
+  data,
+  lookup_data,
+  level0 = NULL,
+  level1 = NULL,
+  level2 = NULL
+)
 }
 \arguments{
 \item{data}{A dataframe containing the target data to be matched.}
 
 \item{lookup_data}{A dataframe serving as the reference for matching.}
 
-\item{adm0}{adm0 col name (country) in both 'data' and 'lookup_data'.}
+\item{level0}{level0 col name (country) in both 'data' and 'lookup_data'.}
 
-\item{adm1}{adm1 col name (province) in both 'data' and 'lookup_data'.}
+\item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
 
-\item{adm2}{adm2 col name (district) in both 'data' and 'lookup_data'.}
+\item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 }
 \value{
 Invisible NULL. The primary purpose of this function is to reporting

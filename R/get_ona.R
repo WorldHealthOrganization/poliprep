@@ -287,6 +287,7 @@ get_ona_data <- function(
 #' @examples
 #' # api_token <- "your_api_token_here"
 #' # data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
+#' @importFrom foreach %dopar%
 #' @export
 get_multi_ona_data <- function(
     base_url = "https://api.whonghub.org", form_ids, api_token) {
@@ -308,19 +309,21 @@ get_multi_ona_data <- function(
   }
   
   # Fetch data in parallel for each form ID ------------------------------------
-  results_list <- pbmcapply::pbmclapply(
-    form_ids,
-    function(form_id) {
-      get_ona_data(form_id = form_id, api_token = api_token)
-    },
-    mc.cores = parallel::detectCores() - 1
-  )
   
-  # Set names for each element in the results list to match form_ids
-  names(results_list) <- as.character(form_ids)
+  # register cluster 
+  doParallel::registerDoParallel(cores = (parallel::detectCores() - 2)) 
+  future::plan(future::multisession) 
   
-  # Combine all into one df
-  combined_data <- dplyr::bind_rows(results_list, .id = "form_id_num")
+  combined_data <- 
+    foreach::foreach(
+      form_id = form_ids, .combine = 'bind_rows') %dopar% {
+       data <- get_ona_data(form_id = form_id, api_token = api_token)
+       # add form_id as a new column in each df
+       dplyr::mutate(data, form_id_num = form_id)
+      } 
+  
+  # stop the parallel backend when done
+  doParallel::stopImplicitCluster()		
   
   return(combined_data)
 }
