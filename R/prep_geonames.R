@@ -604,7 +604,7 @@ construct_geo_names <- function(data, level0, level1, level2) {
 #'        session. If NULL or the file does not exist at the provided path,
 #'        users will be prompted to specify a new path or create a new cache
 #'        data frame.
-#' @param method The string distance calculation method(s) to be used. Users
+#' @param methods The string distance calculation method(s) to be used. Users
 #'        can specify one or more algorithm_names from the
 #'        \code{\link[stringdist]{stringdist}} package to compute
 #'        string distances between admin names. If left NULL, the function
@@ -662,13 +662,13 @@ prep_geonames <- function(target_df, lookup_df = NULL,
                           level1 = NULL, 
                           level2 = NULL,
                           cache_path = NULL,
-                          method = NULL,
+                          methods = "lv",
                           stratify = TRUE,
                           user_name = NULL,
                           non_interactive = FALSE) {
   
   # set string distance methods if null
-  if (is.null(method)) {
+  if (is.null(methods)) {
     methods <- c("lv", "dl", "lcs", "qgram", "jw", "soundex")
   }
   
