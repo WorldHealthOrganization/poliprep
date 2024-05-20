@@ -4,7 +4,7 @@
 \alias{find_nearest_coord}
 \title{Find Nearest Coordinate from shapefile Dataset}
 \usage{
-find_nearest_coord(lon, lat, shapefile = NULL)
+find_nearest_coord(lon, lat, shapefile = NULL, level_to_return = "adm2")
 }
 \arguments{
 \item{lon}{Numeric. Longitude of the target point.}
@@ -13,10 +13,12 @@ find_nearest_coord(lon, lat, shapefile = NULL)
 
 \item{shapefile}{An optional \code{sf} object containing the shapefile data.
 Defaults to \code{poliprep::shp_global}.}
+
+\item{level_to_return}{The admin level to return.}
 }
 \value{
-A data frame (of class \code{sf}) containing the nearest coordinate from
-the provided shapefile with all associated attributes.
+A vector of admin level names containing the nearest coordinate from
+the provided shapefile.
 }
 \description{
 This function takes a pair of coordinates (longitude and latitude) and finds
@@ -31,6 +33,6 @@ the nearest coordinate.
 \examples{
 # Example usage
 # Assuming `poliprep::shp_global` is already loaded in the environment
-nearest_coord <- find_nearest_coord(-4.271301, 15.28172)
+nearest_coord <- find_nearest_coord(15.28172, -4.271301)
 print(nearest_coord)
 }

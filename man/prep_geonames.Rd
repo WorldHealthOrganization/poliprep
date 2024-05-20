@@ -51,9 +51,9 @@ The default methods include: \code{"lv"} (Levenshtein), \code{"dl"}
 \item{stratify}{Logical; if TRUE, performs cleaning stratified by
 admin levels to maintain hierarchical consistency.}
 
-\item{user_name}{name of user to save onto the cache file.
-Very important for future auditing if cache file is being used
-by many. Make sure it's recognisable.}
+\item{user_name}{Full name of user to save onto the cache file.
+Very important for future auditing specially if cache file is being used
+by many.}
 
 \item{non_interactive}{Whether to use the interactivity or not.}
 }
