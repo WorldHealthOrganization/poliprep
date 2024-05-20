@@ -23,36 +23,28 @@
 #' @export
 # Define the function
 find_nearest_coord <- function(lon, lat, 
-                               shapefile = NULL,
+                               shapefile = NULL, 
                                level_to_return = "adm2") {
-  
-  # Use default shapefile if none provided
   if (is.null(shapefile)) {
     shapefile <- poliprep::shp_global
   }
   
-  # Prepare the `shp_global` dataset
-  res <- shapefile |>
-    dplyr::filter(ENDDATE > as.Date("9900-12-31")) |> 
-    dplyr::rename(adm0 = ADM0_NAME,
-                  adm1 = ADM1_NAME,
-                  adm2 = ADM2_NAME) |> 
-    dplyr::mutate(
-      CENTER_LON = as.numeric(CENTER_LON),
-      CENTER_LAT = as.numeric(CENTER_LAT)
-    ) |>
-    sf::st_as_sf(coords = c("CENTER_LON", "CENTER_LAT"), crs = 4326)
+  shapefile_prepared <- shapefile |>
+    dplyr::filter(ENDDATE > as.Date("9900-12-31")) |>
+    dplyr::rename(adm0 = ADM0_NAME, 
+                  adm1 = ADM1_NAME, 
+                  lon = CENTER_LON,
+                  lat = CENTER_LAT,
+                  adm2 = ADM2_NAME) |>
+    dplyr::mutate(lon = as.numeric(lon), 
+                  lat = as.numeric(lat)) |> 
+    sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) 
   
-  # Define the target point
-  target_point <- sf::st_sfc(
-    sf::st_point(c(lon, lat)), crs = 4326
-  ) |>
-    sf::st_sf()
+  target_points <- sf::st_as_sf(data.frame(lon = lon, lat = lat), 
+                                coords = c("lon", "lat"), crs = 4326)
   
-  # Find the nearest coordinate
-  distances <- sf::st_distance(target_point, res)
-  nearest_index <- which.min(distances)
-  nearest_coord <- res[nearest_index, ][[level_to_return]]
+  nearest_indices <- sf::st_nearest_feature(target_points, shapefile_prepared)
+  nearest_coords <- shapefile_prepared[nearest_indices, ][[level_to_return]]
   
-  return(as.vector(nearest_coord))
+  return(nearest_coords)
 }

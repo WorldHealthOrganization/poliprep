@@ -17,6 +17,6 @@ testthat::test_that("find_nearest_coord returns correct area", {
 
   result2 <- find_nearest_coord(
     lon = -24.0324, lat = 15.93214, level_to_return = "adm2")
-  testthat::expect_equal(result2, "RIBERIA BRAVA")
+  testthat::expect_equal(as.vector(result2), "RIBERIA BRAVA")
   
 })
