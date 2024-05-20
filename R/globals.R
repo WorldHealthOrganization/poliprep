@@ -8,7 +8,8 @@ globalVariables(
     "distance", "longname_corrected", "longname_corrected2",
     "match_rank", "matched_names",  "form_id_num", "last_date_in_chunk", "x",
     "date_last_updated", "form_id", "name_of_creator", "created_time", 
-    "user_name",  "ADM0_NAME", "ADM1_NAME", "ADM2_NAME", "ENDDATE"
+    "user_name",  "ADM0_NAME", "ADM1_NAME", "ADM2_NAME", "ENDDATE",
+    "CENTER_LAT", "CENTER_LON"
     )
   )
 
