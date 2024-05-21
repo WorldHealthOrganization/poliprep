@@ -607,10 +607,9 @@ construct_geo_names <- function(data, level0, level1, level2) {
 #' @param method The string distance calculation method(s) to be used. Users
 #'        can specify one or more algorithm_names from the
 #'        \code{\link[stringdist]{stringdist}} package to compute
-#'        string distances between admin names. If left NULL, the function
-#'        defaults to using a comprehensive set of algorithm_names, applying them in
-#'        parallel to identify and rank the best matches based on closeness.
-#'        The default method include: \code{"lv"} (Levenshtein), \code{"dl"}
+#'        string distances between admin names. The function by
+#'        defaults uses \code{"jw"} (Jaro-Winkler). Other options include: 
+#'        \code{"lv"} (Levenshtein), \code{"dl"}
 #'        (Damerau-Levenshtein), \code{"lcs"} (Longest Common Subsequence),
 #'        \code{"qgram"} (Q-Gram), \code{"jw"} (Jaro-Winkler), and
 #'        \code{"soundex"}.
@@ -1008,15 +1007,17 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       dplyr::bind_rows(saved_cache_df, cleaned_cache_joined) |>
       dplyr::select(
         level, name_to_match, replacement, 
-        longname_to_match, 
+        # longname_to_match, 
         # longname_corrected
         country_prepped, province_prepped, district_prepped, 
         created_time
       ) |>
       dplyr::mutate(name_of_creator = stringr::str_to_title(user_name)) |> 
       dplyr::arrange(created_time) |> 
-      dplyr::distinct() |> 
-      dplyr::distinct(longname_to_match, .keep_all = TRUE) |> 
+      dplyr::distinct(level, 
+                      name_to_match, 
+                      country_prepped,
+                      .keep_all = TRUE) |> 
       dplyr::select(-longname_to_match)
     
     # file saving

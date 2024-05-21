@@ -11,7 +11,7 @@ prep_geonames(
   level1 = NULL,
   level2 = NULL,
   cache_path = NULL,
-  methods = "lv",
+  method = "jw",
   stratify = TRUE,
   user_name = NULL,
   non_interactive = FALSE
@@ -37,13 +37,12 @@ session. If NULL or the file does not exist at the provided path,
 users will be prompted to specify a new path or create a new cache
 data frame.}
 
-\item{methods}{The string distance calculation method(s) to be used. Users
+\item{method}{The string distance calculation method(s) to be used. Users
 can specify one or more algorithm_names from the
 \code{\link[stringdist]{stringdist}} package to compute
-string distances between admin names. If left NULL, the function
-defaults to using a comprehensive set of algorithm_names, applying them in
-parallel to identify and rank the best matches based on closeness.
-The default methods include: \code{"lv"} (Levenshtein), \code{"dl"}
+string distances between admin names. The function by
+defaults uses \code{"jw"} (Jaro-Winkler). Other options include:
+\code{"lv"} (Levenshtein), \code{"dl"}
 (Damerau-Levenshtein), \code{"lcs"} (Longest Common Subsequence),
 \code{"qgram"} (Q-Gram), \code{"jw"} (Jaro-Winkler), and
 \code{"soundex"}.}
