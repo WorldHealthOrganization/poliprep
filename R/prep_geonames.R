@@ -816,6 +816,12 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     cli::cli_alert_success(
       "All records matched; process completed. Exiting..."
     )
+    
+    # join data missing geo rows
+    target_done <- dplyr::bind_rows(
+      target_df_na, target_done
+    )
+    
     return(target_done) 
   } else {
     cli::cli_alert_info(
