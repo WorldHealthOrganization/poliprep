@@ -998,8 +998,14 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           sep = "_"
         ) |>
         dplyr::mutate(
+          country_prepped = dplyr::if_else(
+            level ==  "country", replacement, country_prepped),
+          province_prepped = dplyr::if_else(
+            level ==  "province", replacement, province_prepped),
+          district_prepped = dplyr::if_else(
+            level ==  "district", replacement, district_prepped),
           dplyr::across( .cols = -created_time, ~ dplyr::na_if(.x, ""))
-        )
+        ) 
     )
     
     # combine cleaned data frames
