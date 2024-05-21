@@ -604,13 +604,13 @@ construct_geo_names <- function(data, level0, level1, level2) {
 #'        session. If NULL or the file does not exist at the provided path,
 #'        users will be prompted to specify a new path or create a new cache
 #'        data frame.
-#' @param methods The string distance calculation method(s) to be used. Users
+#' @param method The string distance calculation method(s) to be used. Users
 #'        can specify one or more algorithm_names from the
 #'        \code{\link[stringdist]{stringdist}} package to compute
 #'        string distances between admin names. If left NULL, the function
 #'        defaults to using a comprehensive set of algorithm_names, applying them in
 #'        parallel to identify and rank the best matches based on closeness.
-#'        The default methods include: \code{"lv"} (Levenshtein), \code{"dl"}
+#'        The default method include: \code{"lv"} (Levenshtein), \code{"dl"}
 #'        (Damerau-Levenshtein), \code{"lcs"} (Longest Common Subsequence),
 #'        \code{"qgram"} (Q-Gram), \code{"jw"} (Jaro-Winkler), and
 #'        \code{"soundex"}.
@@ -662,15 +662,10 @@ prep_geonames <- function(target_df, lookup_df = NULL,
                           level1 = NULL, 
                           level2 = NULL,
                           cache_path = NULL,
-                          methods = "lv",
+                          method = "jw",
                           stratify = TRUE,
                           user_name = NULL,
                           non_interactive = FALSE) {
-  
-  # set string distance methods if null
-  if (is.null(methods)) {
-    methods <- c("lv", "dl", "lcs", "qgram", "jw", "soundex")
-  }
   
   # get users name
   if (is.null(user_name)) {
@@ -830,10 +825,6 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   
   # Step 3: String distance those that are unmatched ---------------------------
   
-  # register cluster 
-  doParallel::registerDoParallel(cores = (parallel::detectCores() - 2)) 
-  future::plan(future::multisession) 
-  
   # initialize empty lists to store results
   unmatched_df_group <- list()
   cleaned_dfs <- list()
@@ -890,27 +881,14 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           long_geo_group <- group
         }
         
-        # standard processing for all levels or non-strict province/district
-        progressr::with_progress({
-          p <- progressr::progressor(along = methods)
-          
-          results <- foreach::`%dopar%`(
-            foreach::foreach(
-              method = methods,
-              .combine = 'bind_rows'
-              # .packages = c("dplyr", "tibble", "jsonlite", "httr")
-            ), {
-              p()  # Update progress
-              calculate_string_distance(
-                unmatched_df_group[[level]],
-                lookup_df_group[[level]],
-                method
-              )
-            })
-        }) 
-        
-        # transform results 
-        top_res <- results |> 
+        # standard processing for province/distric
+        top_res <- 
+          calculate_string_distance(
+            unmatched_df_group[[level]],
+            lookup_df_group[[level]], 
+            method = method
+          ) |> 
+          # transform results 
           dplyr::select(-match_rank, -algorithm_name) |>
           dplyr::group_by(name_to_match, matched_names) |>
           dplyr::slice_min(distance, with_ties = FALSE) |>
@@ -944,25 +922,12 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       if (nrow(unmatched_df_group) == 0) next
       
       # standard processing for all levels or non-strict province/district
-      progressr::with_progress({
-        p <- progressr::progressor(along = methods)
-        
-        results <- foreach::`%dopar%`(
-          foreach::foreach(
-            method = methods,
-            .combine = 'bind_rows'
-          ), {
-            p()
-            calculate_string_distance(
-              unmatched_df_group[[level]],
-              lookup_df[[level]],
-              method
-            )
-          })
-      }) 
-      
-      # transform results 
-      top_res <- results |> 
+      top_res <-
+        calculate_string_distance(
+          unmatched_df_group[[level]],
+          lookup_df[[level]],
+          method = method
+        ) |> 
         dplyr::select(-match_rank, -algorithm_name) |>
         dplyr::group_by(name_to_match, matched_names) |>
         dplyr::slice_min(distance, with_ties = FALSE) |>
@@ -1015,9 +980,6 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       break
     }
   }
-  
-  # stop the parallel backend when done
-  doParallel::stopImplicitCluster()	
   
   # Step 4: clean up the cache file and save -----------------------------------
   
