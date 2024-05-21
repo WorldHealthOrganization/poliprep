@@ -465,7 +465,7 @@ handle_user_interaction <- function(input_data, level,
           level = level,
           name_to_match = name_to_clean,
           replacement = toupper(as.character(manual_name)),
-          # longname_to_match = paste(long_geo, name_to_clean, sep = "_"),
+          longname_to_match = paste(long_geo, name_to_clean, sep = "_"),
           longname_corrected = paste(
             long_geo, manual_name, sep = "_"),
           created_time = format(Sys.time(), tz = "UTC", usetz = TRUE)
@@ -771,7 +771,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
             dplyr::select(name_to_match, country_prepped,
                           province_prepped, district_prepped) |> 
             dplyr::distinct(name_to_match, country_prepped,
-                            province_prepped, .keep_all = TRUE),
+                            province_prepped, district_prepped),
           by = stats::setNames(
             c("country_prepped", "province_prepped", "name_to_match"), 
             c(level0, level1, level2))
@@ -1005,18 +1005,26 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     # combine cleaned data frames
     final_cache_dfs <-
       dplyr::bind_rows(saved_cache_df, cleaned_cache_joined) |>
+      dplyr::mutate(
+        longname_to_match = NA,
+        longname_to_match = dplyr::case_when(
+          is.na(longname_to_match) & level == "country" ~ name_to_match,
+          is.na(longname_to_match) & level == "province" ~ 
+            paste(country_prepped, name_to_match,  sep = "_"),
+          is.na(longname_to_match) & level == "district" ~ 
+            paste(country_prepped, province_prepped, 
+                  name_to_match,  sep = "_")
+        )) |> 
       dplyr::select(
         level, name_to_match, replacement, 
-        # longname_to_match, 
         # longname_corrected
+        longname_to_match,
         country_prepped, province_prepped, district_prepped, 
         created_time
       ) |>
       dplyr::mutate(name_of_creator = stringr::str_to_title(user_name)) |> 
       dplyr::arrange(created_time) |> 
-      dplyr::distinct(level, 
-                      name_to_match, 
-                      country_prepped,
+      dplyr::distinct(longname_to_match,
                       .keep_all = TRUE) |> 
       dplyr::select(-longname_to_match)
     
