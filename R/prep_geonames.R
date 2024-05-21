@@ -1040,7 +1040,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       dplyr::bind_rows(saved_cache_df, cleaned_cache_joined) |>
       dplyr::select(
         level, name_to_match, replacement, 
-        # longname_to_match, longname_corrected
+        longname_to_match, 
+        # longname_corrected
         country_prepped, province_prepped, district_prepped, 
         created_time
       ) |>
