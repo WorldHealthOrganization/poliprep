@@ -482,7 +482,7 @@ handle_user_interaction <- function(input_data, level,
           level = level,
           name_to_match = name_to_clean,
           replacement = replace_int,
-          # longname_to_match = paste(long_geo, name_to_clean, sep = "_"),
+          longname_to_match = paste(long_geo, name_to_clean, sep = "_"),
           longname_corrected = paste(
             long_geo, replace_int, sep = "_"),
           created_time = format(Sys.time(), tz = "UTC", usetz = TRUE)
@@ -506,9 +506,9 @@ handle_user_interaction <- function(input_data, level,
     user_choices_df <- dplyr::bind_rows(user_choices) |> 
       # fix longname_corrected for country
       dplyr::mutate(
-        # longname_to_match = dplyr::if_else(
-        #   level == "country", replacement, longname_to_match
-        # ),
+        longname_to_match = dplyr::if_else(
+          level == "country", replacement, longname_to_match
+        ),
         longname_corrected = dplyr::if_else(
           level == "country", replacement,  longname_corrected
         )
@@ -527,7 +527,7 @@ handle_user_interaction <- function(input_data, level,
       level = NULL,
       name_to_match = NULL, 
       replacement = NULL, 
-      # longname_to_match = NULL,
+      longname_to_match = NULL,
       longname_corrected = NULL,
       created_time = NULL
     )
@@ -683,7 +683,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   # is not provided
   if (is.null(lookup_df)) {
     lookup_df <-  poliprep::shp_global |> 
-    # dplyr::filter(ENDDATE == "9999-12-31 01:00:00") |> 
+      # dplyr::filter(ENDDATE == "9999-12-31 01:00:00") |> 
       dplyr::select(
         !!level0 := ADM0_NAME,
         !!level1 := ADM1_NAME,
@@ -774,8 +774,10 @@ prep_geonames <- function(target_df, lookup_df = NULL,
         dplyr::left_join(
           saved_cache_df |>
             dplyr::filter(level == level2) |>
+            dplyr::select(name_to_match, country_prepped,
+                          province_prepped, district_prepped) |> 
             dplyr::distinct(name_to_match, country_prepped,
-                            province_prepped, district_prepped),
+                            province_prepped, .keep_all = TRUE),
           by = stats::setNames(
             c("country_prepped", "province_prepped", "name_to_match"), 
             c(level0, level1, level2))
@@ -949,9 +951,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           foreach::foreach(
             method = methods,
             .combine = 'bind_rows'
-            # .packages = c("dplyr", "tibble", "jsonlite", "httr")
           ), {
-            p()  # Update progress
+            p()
             calculate_string_distance(
               unmatched_df_group[[level]],
               lookup_df[[level]],
@@ -983,10 +984,11 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       cleaned_dfs[[level]] <- replacement_df
     } else {
       cleaned_dfs <- NULL
+      replacement_df <- NULL
     }
     
     
-    if (length(replacement_df) > 0) {
+    if (!is.null(replacement_df) || length(replacement_df) > 0) {
       # lets update the dataset
       target_todo <- target_todo |>
         dplyr::left_join(
@@ -1044,7 +1046,9 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       ) |>
       dplyr::mutate(name_of_creator = stringr::str_to_title(user_name)) |> 
       dplyr::arrange(created_time) |> 
-      dplyr::distinct()
+      dplyr::distinct() |> 
+      dplyr::distinct(longname_to_match, .keep_all = TRUE) |> 
+      dplyr::select(-longname_to_match)
     
     # file saving
     handle_file_save(final_cache_dfs, cache_path)
