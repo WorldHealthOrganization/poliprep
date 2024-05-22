@@ -706,8 +706,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   # filter out missing geolocations
   target_df <- target_df |> 
     dplyr::filter(
-      !is.na(!!rlang::sym(level0)) & 
-        !is.na(!!rlang::sym(level1)) & 
+      !is.na(!!rlang::sym(level0)) | 
+        !is.na(!!rlang::sym(level1)) | 
         !is.na(!!rlang::sym(level2)) 
     )
   
@@ -817,10 +817,6 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     )
     
     return(dplyr::bind_rows(target_df, target_df_na)) 
-  } else {
-    cli::cli_alert_info(
-      "Partial match completed. Now carrying out string distance matching..."
-    )
   }
   
   # return if non-interactive.
@@ -832,6 +828,10 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   }
   
   # Step 3: String distance those that are unmatched ---------------------------
+  
+  cli::cli_alert_info(
+    "Partial match completed. Now carrying out string distance matching..."
+  )
   
   # initialize empty lists to store results
   unmatched_df_group <- list()
