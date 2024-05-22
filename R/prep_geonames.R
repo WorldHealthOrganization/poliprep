@@ -811,21 +811,24 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   )
   
   # Early return with finalised_df
-  if (nrow(target_todo) == 0 || non_interactive) {
+  if (nrow(target_todo) == 0) {
     cli::cli_alert_success(
       "All records matched; process completed. Exiting..."
     )
     
-    # join data missing geo rows
-    target_done <- dplyr::bind_rows(
-      target_df_na, target_done
-    )
-    
-    return(target_done) 
+    return(dplyr::bind_rows(target_df, target_df_na)) 
   } else {
     cli::cli_alert_info(
       "Partial match completed. Now carrying out string distance matching..."
     )
+  }
+  
+  # return if non-interactive.
+  if (non_interactive) {
+    cli::cli_alert_success(
+      "In non-interactive mode. Exiting after matching with cache..."
+    )
+    return(dplyr::bind_rows(target_df, target_df_na))
   }
   
   # Step 3: String distance those that are unmatched ---------------------------
