@@ -703,22 +703,6 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       )
     )
   
-  # filter out missing geolocations
-  target_df <- target_df |> 
-    dplyr::filter(
-      !is.na(!!rlang::sym(level0)) | 
-        !is.na(!!rlang::sym(level1)) | 
-        !is.na(!!rlang::sym(level2)) 
-    )
-  
-  # filter in missing geolocations
-  target_df_na <- target_df |> 
-    dplyr::filter(
-      is.na(!!rlang::sym(level0)) & 
-        is.na(!!rlang::sym(level1)) & 
-        is.na(!!rlang::sym(level2)) 
-    )
-  
   # Step 1: Configure cache if saved cache file exists available ---------------
   
   # load saved cache file
@@ -788,6 +772,25 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   
   # Step 2: Filter out for those where there is a match ------------------------
   
+  # get the original data
+  orig_df <- target_df
+  
+  # filter in missing geolocations
+  target_df_na <- target_df |> 
+    dplyr::filter(
+      is.na(!!rlang::sym(level0)) | 
+        is.na(!!rlang::sym(level1)) | 
+        is.na(!!rlang::sym(level2)) 
+    )
+  
+  # filter out missing geolocations
+  target_df <- target_df |> 
+    dplyr::filter(
+      !is.na(!!rlang::sym(level0)) &
+        !is.na(!!rlang::sym(level1)) &
+        !is.na(!!rlang::sym(level2)) 
+    )
+  
   # dynamically construct the long geonames on target data
   target_df <- construct_geo_names(target_df, level0, level1, level2)
   lookup_df <- construct_geo_names(lookup_df, level0, level1, level2)
@@ -816,7 +819,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       "All records matched; process completed. Exiting..."
     )
     
-    return(dplyr::bind_rows(target_df, target_df_na)) 
+    return(orig_df)
   }
   
   # return if non-interactive.
@@ -824,7 +827,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     cli::cli_alert_success(
       "In non-interactive mode. Exiting after matching with cache..."
     )
-    return(dplyr::bind_rows(target_df, target_df_na))
+    
+    return(orig_df)
   }
   
   # Step 3: String distance those that are unmatched ---------------------------
@@ -957,11 +961,10 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       cleaned_dfs[[level]] <- replacement_df
     } else {
       cleaned_dfs <- NULL
-      replacement_df <- NULL
+      replacement_df <- data.frame()
     }
     
-    
-    if (!is.null(replacement_df) || length(replacement_df) > 0) {
+    if (length(replacement_df) > 0) {
       # lets update the dataset
       target_todo <- target_todo |>
         dplyr::left_join(
@@ -991,7 +994,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   
   # Step 4: clean up the cache file and save -----------------------------------
   
-  if (length(cleaned_dfs) > 0) {
+  if (length(as.data.frame(cleaned_dfs)) > 0) {
     # clean up the cache df
     suppressWarnings(
       cleaned_cache_joined <- dplyr::bind_rows(cleaned_dfs) |>
