@@ -994,7 +994,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   
   # Step 4: clean up the cache file and save -----------------------------------
   
-  if (length(as.data.frame(cleaned_dfs)) > 0) {
+  if (length(cleaned_dfs) > 0 && any(sapply(cleaned_dfs, nrow) > 0)) {
     # clean up the cache df
     suppressWarnings(
       cleaned_cache_joined <- dplyr::bind_rows(cleaned_dfs) |>
