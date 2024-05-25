@@ -4,12 +4,12 @@
 \alias{handle_user_interaction}
 \title{Interact with Users for Data Cleaning Choices}
 \usage{
-handle_user_interaction(input_data, adm_level, clear_console = T, stratify)
+handle_user_interaction(input_data, level, clear_console = T, stratify)
 }
 \arguments{
 \item{input_data}{Data frame containing admin names etc.,.}
 
-\item{adm_level}{The admins level being cleaned, i.ie adm1 or even disrict.}
+\item{level}{The admins level being cleaned, i.ie level1 or even disrict.}
 
 \item{clear_console}{Logical, whether to clear the console before showing
 prompts; defaults to TRUE.}
@@ -25,7 +25,7 @@ provinces, and districts. It allows users to replace, skip, save, or exit,
 incorporating user feedback into the data cleaning process.
 }
 \examples{
-# handle_user_interaction(my_data, "adm1", TRUE)
+# handle_user_interaction(my_data, "level1", TRUE)
 
 }
 \keyword{internal}

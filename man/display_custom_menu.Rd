@@ -9,11 +9,11 @@ display_custom_menu(title, main_header, choices_input, special_actions, prompt)
 \arguments{
 \item{title}{The menu title.}
 
+\item{choices_input}{Vector of option strings to display.}
+
 \item{special_actions}{Named list of special actions with string identifiers.}
 
 \item{prompt}{String to display for user input prompt.}
-
-\item{options}{Vector of option strings to display.}
 }
 \value{
 The selected option's identifier (numeric or special action key).

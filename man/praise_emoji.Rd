@@ -13,6 +13,7 @@ an empty string.
 \description{
 Selects a random emoji from a predefined list to use as a celebratory message
 in user interfaces or logs where UTF-8 output is supported.
+Taken from testthat package.
 }
 \examples{
 # emoji <- praise_emoji()

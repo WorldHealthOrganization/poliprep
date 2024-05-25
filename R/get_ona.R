@@ -46,7 +46,6 @@ check_status_api <- function(response) {
 #'
 #' @return Data frame of the API endpoint data.
 #' 
-#' @export  
 #' @examples
 #' # prep_ona_data_endpoints(api_token = "your_api_token_here")
 prep_ona_data_endpoints <- function(
@@ -133,7 +132,6 @@ get_ona_page <- function(api_url, api_token, start = 0, api_limit, times = 12) {
 #'
 #' @return A normalized base URL containing only the protocol and the domain.
 #' If the URL is not valid, the function stops and returns an error message.
-#' 
 validate_base_url <- function(base_url) {
   base_url_pattern <- "^(https?://[^/]+).*"
   if (!grepl(base_url_pattern, base_url)) {
@@ -157,7 +155,6 @@ validate_base_url <- function(base_url) {
 #' # api_url <- "https://api.example.com/data"
 #' # api_token <- "your_api_token_here"
 #' # data <- get_paginated_data(api_url, api_token)
-#' @export
 get_paginated_data <- function(api_url, api_token) {
   api_limit = 100000
   results <- list()
@@ -181,7 +178,8 @@ get_paginated_data <- function(api_url, api_token) {
 #' Generate a Random Emoji for Successful Results
 #'
 #' Selects a random emoji from a predefined list to use as a celebratory message
-#' in user interfaces or logs where UTF-8 output is supported.
+#' in user interfaces or logs where UTF-8 output is supported. 
+#' Taken from testthat package.
 #'
 #' @return A single emoji character if UTF-8 output is supported; otherwise, 
 #' an empty string.
@@ -229,7 +227,6 @@ praise_emoji <- function() {
 #' # form_id <- 123456
 #' # data <- get_ona_data(base_url, form_id, api_token)
 #' @export
-#'
 #' @seealso \url{https://api.ona.io/api/v1/data/} for more info on ONA API
 get_ona_data <- function(
     base_url = "https://api.whonghub.org", form_id, api_token) {
@@ -290,6 +287,7 @@ get_ona_data <- function(
 #' @examples
 #' # api_token <- "your_api_token_here"
 #' # data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
+#' @importFrom foreach %dopar%
 #' @export
 get_multi_ona_data <- function(
     base_url = "https://api.whonghub.org", form_ids, api_token) {
@@ -311,19 +309,21 @@ get_multi_ona_data <- function(
   }
   
   # Fetch data in parallel for each form ID ------------------------------------
-  results_list <- pbmcapply::pbmclapply(
-    form_ids,
-    function(form_id) {
-      get_ona_data(form_id = form_id, api_token = api_token)
-    },
-    mc.cores = parallel::detectCores() - 1
-  )
   
-  # Set names for each element in the results list to match form_ids
-  names(results_list) <- as.character(form_ids)
+  # register cluster 
+  doParallel::registerDoParallel(cores = (parallel::detectCores() - 2)) 
+  future::plan(future::multisession) 
   
-  # Combine all into one df
-  combined_data <- dplyr::bind_rows(results_list, .id = "form_id_num")
+  combined_data <- 
+    foreach::foreach(
+      form_id = form_ids, .combine = 'bind_rows') %dopar% {
+       data <- get_ona_data(form_id = form_id, api_token = api_token)
+       # add form_id as a new column in each df
+       dplyr::mutate(data, form_id_num = form_id)
+      } 
+  
+  # stop the parallel backend when done
+  doParallel::stopImplicitCluster()		
   
   return(combined_data)
 }
@@ -350,7 +350,6 @@ get_multi_ona_data <- function(
 #'               form_ids = c(8417, 8734, 9056))
 #' }
 #' 
-#' @export
 generate_urls <- function(full_data, file_path, 
                           data_file_name, base_url, form_ids) {
   
@@ -399,8 +398,9 @@ generate_urls <- function(full_data, file_path,
 #' @param urls array of url strings
 #' @return tibble with all data
 call_urls <- function(urls, api_token) {
-  doFuture::registerDoFuture() ## use futures for parallel operations
-  future::plan(future::multisession) ## parallelize over a local PSOCK cluster
+  ## use futures for parallel operations
+  doParallel::registerDoParallel(cores = (parallel::detectCores()-2)) 
+  future::plan(future::multisession) 
   options(doFuture.rng.onMisuse = "ignore")
   
   progressr::handlers("cli")
@@ -415,7 +415,7 @@ call_urls <- function(urls, api_token) {
       ), {
         p()  # Update progress
         # Retrieve data from the API
-        data <- get_paginated_data(api_url = url, api_token= api_token)
+        data <- get_paginated_data(api_url = url, api_token = api_token)
         
         # Extract form ID from the URL using regex
         form_id <- gsub(".*data/(\\d+).*", "\\1", url)

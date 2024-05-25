@@ -4,16 +4,16 @@
 \alias{construct_geo_names}
 \title{Construct Long Geographic Names}
 \usage{
-construct_geo_names(data, adm0, adm1, adm2)
+construct_geo_names(data, level0, level1, level2)
 }
 \arguments{
 \item{data}{A dataframe containing the geographic data.}
 
-\item{adm0}{adm0 col name (country) in both 'data' and 'lookup_data'.}
+\item{level0}{level0 col name (country) in both 'data' and 'lookup_data'.}
 
-\item{adm1}{adm1 col name (province) in both 'data' and 'lookup_data'.}
+\item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
 
-\item{adm2}{adm2 col name (district) in both 'data' and 'lookup_data'.}
+\item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 }
 \value{
 Returns the dataframe with an additional column \code{long_geo} that
