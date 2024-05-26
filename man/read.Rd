@@ -41,7 +41,6 @@ data_dta <- read(file_path = file.path(path, "test_data.dta"))
 # Import an RDS file
 data_rds <- read(file_path = file.path(path, "test_data.rds"))
 
-# Import an RData file
 data_rdata <- read(file_path = file.path(path, "test_data.RData"))
 
 # Import an SPSS file

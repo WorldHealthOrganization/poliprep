@@ -684,7 +684,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   
   # Ensure lookup_df contains necessary columns if provided
   if (!is.null(lookup_df)) {
-    required_columns <- c()
+    required_columns <- NULL
     if (!is.null(level0)) required_columns <- c(required_columns, level0)
     if (!is.null(level1)) required_columns <- c(required_columns, level1)
     if (!is.null(level2)) required_columns <- c(required_columns, level2)
@@ -699,7 +699,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   
   
   # Ensure target_df contains necessary columns
-  required_columns <- c()
+  required_columns <- NULL
   if (!is.null(level0)) required_columns <- c(required_columns, level0)
   if (!is.null(level1)) required_columns <- c(required_columns, level1)
   if (!is.null(level2)) required_columns <- c(required_columns, level2)
@@ -931,7 +931,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   user_input <- 
     readline("Would you like to do interactive matching? (yes/no):")
   
-  if (tolower(user_input) %in% c("yes", "y")) {
+  if (!(tolower(user_input) %in% c("yes", "y"))) {
     cli::cli_alert_info(
       "Exiting without interactive matching..."
     )

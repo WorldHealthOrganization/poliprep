@@ -546,7 +546,7 @@ get_updated_ona_data <- function(
         number_of_variables = ncol(df),
         number_of_rows = format(nrow(df), big.mark = ",")
       )
-      return(log_message)
+      log_message
     })
     
     log_messages <- do.call(rbind, log_messages)
