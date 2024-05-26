@@ -3,13 +3,11 @@ if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
   return()
 }
 
-# 1. Test for different file formats
-# Define the test cases for the 'import' function
 testthat::test_that("Function imports supported file formats correctly", {
   # List of supported file formats to test
   supported_formats <- c(
     "csv", "tsv", "txt", "csvy", "sas7bdat", "sav",
-    "dta", "xpt", "xlsx", "RData", "rds", "tsv", "GeoJSON", "shp"
+    "dta", "xpt", "xlsx", "rdata", "rds", "tsv", "GeoJSON", "shp"
   )
   
   # Loop through each supported format and test importing the file
@@ -29,10 +27,13 @@ testthat::test_that("Function imports supported file formats correctly", {
     # Check if the imported data has the expected structure and values
     testthat::expect_true("ID" %in% colnames(imported_data),
                           info = paste("ID column not found in", file_path))
+    
     testthat::expect_true("Name" %in% colnames(imported_data),
                           info = paste("Name column not found in", file_path))
+    
     testthat::expect_true("Age" %in% colnames(imported_data),
                           info = paste("Age column not found in", file_path))
+    
     testthat::expect_true("Score" %in% colnames(imported_data),
                           info = paste("Score column not found in", file_path))
     
@@ -51,7 +52,7 @@ testthat::test_that("Function imports supported file formats correctly", {
   
 })
 
-# 2. Test for Unsupported Formats
+# # 2. Test for Unsupported Formats
 testthat::test_that("Function throws error for unsupported file formats", {
   file_path <- "testdata/test_data.xyz"
   testthat::expect_error(

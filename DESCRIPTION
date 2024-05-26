@@ -35,10 +35,13 @@ Imports:
   doFuture, 
   foreach, 
   future,
-  progressr,
+  purrr,
+  archive,
   doParallel
 Suggests: 
   testthat,
+  progressr,
+  janitor,
   withr,
   stringdist,
   epiCleanr,

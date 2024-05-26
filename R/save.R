@@ -32,7 +32,7 @@
 #' save(mtcars, file_path = file.path(tmpdir, "file.dta"))
 #'
 #' # Save an RDS file
-#' save(mtcars, file_path = file.path(tmpdir, "file.rds"))
+#' #save(mtcars, file_path = file.path(tmpdir, "file.rds"))
 #'
 #' # Save an RData file
 #' save(list(mtcars = mtcars, iris = iris),
@@ -46,7 +46,7 @@
 #'     sf::st_as_sf(crs = sf::st_crs(4326))
 #' 
 #' # save an RDS file
-#' save(my_shp, file_path = file.path(tmpdir, "file.shp"))
+#' # save(my_shp, file_path = file.path(tmpdir, "file.shp"))
 #' 
 #' # Remove the temporary directory and its contents
 #' unlink(tmpdir, recursive = TRUE)
@@ -59,18 +59,25 @@
 save <- function(data, file_path, ...) {
   
   # Extract the file extension from the input file path
-  file_ext <- tools::file_ext(file_path)
+  file_ext <- tools::file_ext(file_path) |> tolower()
   
   # List of supported formats
   supported_formats_rio <- c(
-    "csv", "tsv", "xlsx", "rds", "RData", "dta"
+    "csv", "tsv", "xlsx", "rdata", "dta"
   )
   
   if (file_ext %in% supported_formats_rio) {
     rio::export(data, file_path, ...)
+  } else if (file_ext %in% "rds") {
+    
+    con = archive::file_write(file = file_path, filter = "xz")
+    open(con)
+    saveRDS(data, con)
+    close(con)
+  
   } else if (file_ext %in% "shp") { # shp shapefiles
     sf::write_sf(data, file_path, ...)
-  } else if (tolower(file_ext) %in% c("json", "geojson")) { # json shapefiles
+  } else if (file_ext %in% c("json", "geojson")) { # json shapefiles
     sf::write_sf(data, file_path, driver = "GeoJSON", ...) 
   } else {
     stop(

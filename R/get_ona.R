@@ -392,9 +392,6 @@ generate_urls <- function(full_data, file_path,
 #' @param urls A list of URLS to perform call on
 #' @description Call multiple URLs
 #' @import dplyr foreach future doFuture
-#' @importFrom progressr progressor
-#' @importFrom progressr with_progress
-#' @importFrom progressr handlers
 #' @param urls array of url strings
 #' @return tibble with all data
 call_urls <- function(urls, api_token) {
@@ -538,39 +535,42 @@ get_updated_ona_data <- function(
   
   # log results
   if (log_results) {
-    
-    for (form_id in unique(full_data$form_id_num)) {
+    log_messages <- lapply(unique(full_data$form_id_num), function(form_id) {
       df <- full_data |> 
         dplyr::filter(form_id_num == form_id)
       
       # Construct the log message
       log_message <- data.frame(
-        FormID = form_id,
-        UpdateDate = Sys.Date(),
-        NumberOfVariables = ncol(df),
-        NumberOfRows = format(nrow(df), big.mark = ",")
+        form_id = form_id,
+        update_date = Sys.Date(),
+        number_of_variables = ncol(df),
+        number_of_rows = format(nrow(df), big.mark = ",")
       )
-    }
+      return(log_message)
+    })
+    
+    log_messages <- do.call(rbind, log_messages)
     
     # construct file names for logging
     log_file_name <- paste0(file_path, "/", "ona_data_update_log.rds")
     
     if (file.exists(log_file_name)) {
       log_data <- poliprep::read(log_file_name)
-      log_data <- rbind(log_data, log_message) |> 
+      log_data <- rbind(log_data, log_messages) |> 
         dplyr::distinct()
     } else {
-      log_data <- log_message
+      log_data <- log_messages
     }
     
     # Save log file
-    poliprep::save(log_data, log_file_name)
+    poliprep::save(
+      janitor::clean_names(log_data), log_file_name)
   }
   
   # Return output message and save results -------------------------------------
   
   # save full data
-  poliprep::save(full_data, file_name, compress = "xz")
+  poliprep::save(full_data, file_name)
   
   return(full_data)
 }

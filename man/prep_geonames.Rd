@@ -13,15 +13,14 @@ prep_geonames(
   cache_path = NULL,
   method = "jw",
   stratify = TRUE,
-  user_name = NULL,
-  non_interactive = FALSE
+  interactive = TRUE
 )
 }
 \arguments{
 \item{target_df}{Data frame containing the admin names to clean.}
 
 \item{lookup_df}{Lookup data frame for verifying admin names. If this is not
-provided than an internal version of WHO geoname data
+provided, an internal version of WHO geoname data
 attached to poliprep is used.}
 
 \item{level0}{level0 col name (country) in both 'data' and 'lookup_data'.}
@@ -32,16 +31,16 @@ attached to poliprep is used.}
 
 \item{cache_path}{Optional; the path where the cache data frame is
 saved after user modifications. This path is also used to match and
-integrate previously established  corrections into the current
+integrate previously established corrections into the current
 session. If NULL or the file does not exist at the provided path,
 users will be prompted to specify a new path or create a new cache
 data frame.}
 
 \item{method}{The string distance calculation method(s) to be used. Users
-can specify one or more algorithm_names from the
+can specify one or more algorithms from the
 \code{\link[stringdist]{stringdist}} package to compute
 string distances between admin names. The function by
-defaults uses \code{"jw"} (Jaro-Winkler). Other options include:
+default uses \code{"jw"} (Jaro-Winkler). Other options include:
 \code{"lv"} (Levenshtein), \code{"dl"}
 (Damerau-Levenshtein), \code{"lcs"} (Longest Common Subsequence),
 \code{"qgram"} (Q-Gram), \code{"jw"} (Jaro-Winkler), and
@@ -50,24 +49,21 @@ defaults uses \code{"jw"} (Jaro-Winkler). Other options include:
 \item{stratify}{Logical; if TRUE, performs cleaning stratified by
 admin levels to maintain hierarchical consistency.}
 
-\item{user_name}{Full name of user to save onto the cache file.
-Very important for future auditing specially if cache file is being used
-by many.}
-
-\item{non_interactive}{Whether to use the interactivity or not.}
+\item{interactive}{Logical; if TRUE, prompts the user for interactive
+matching decisions. Defaults to FALSE.}
 }
 \value{
 A data frame with cleaned administrative names and saved data frame
-of users decisions.
+of user decisions.
 }
 \description{
 This function streamlines the admin name cleaning process, leveraging both
-algorithm_nameic approaches and interactive user decisions. It is inspired
+algorithmic approaches and interactive user decisions. It is inspired
 by the string distance matching of the
 \code{\link[epiCleanr]{clean_admin_names}} function (Mo
 Yusuf at WHO AFRO) and the interactivity of \code{cache_to_plias} in the \code{stanley}
 package by Steve Kroiss from BMGF. It combines string distance
-algorithm_names for initial matching and offers user interactivity for final
+algorithms for initial matching and offers user interactivity for final
 decision-making, which are then saved for future reference and sharing.
 Although the function does not require limiting name matching exclusively to
 upper-level admins, optimal performance is achieved by confining to stricter
@@ -83,29 +79,29 @@ consistent matching.
 \item Attempts to load a previously saved cache file if available, or
 initializes the cleaning process.
 \item Matches administrative names between \code{target_df} and \code{lookup_df} using
-string distance algorithm_names, running in parallel. Results are ranked
+string distance algorithms, running in parallel. Results are ranked
 by closeness.
 \item Engages the user through an interactive CLI menu to make decisions on
 ambiguous matches.
-\item Saves the user's decisions in an cache data frame, either to a specified
+\item Saves the user's decisions in a cache data frame, either to a specified
 path or by prompting the user for a location.
 \item Returns a cleaned data frame with updated administrative names based on
-user choices and algorithm_nameic matching.
+user choices and algorithmic matching.
 }
 }
 \examples{
-# dummy target data
+# Dummy target data
 # target_df <- data.frame(
-#   country = c("ANGOLA", "UGA", "ZAMBIA"),
-#   province = c("CABONDA", "TESO", "LUSAKA"),
-#   district = c("BALIZE", "BOKEDEA", "RAFUNSA")
-# )
-# 
-# interactively clean geonames
+# country = c("ANGOLA", "UGA", "ZAMBIA"),
+#province = c("CABONDA", "TESO", "LUSAKA"),
+# district = c("BALIZE", "BOKEDEA", "RAFUNSA")
+#)
+
+# Interactively clean geonames
 # prep_geonames(
-#   target_df,
-#   level0 ="country", level1 = 'province',
-#   level2 = "district"
+# target_df,
+# level0 ="country", level1 = 'province',
+# level2 = "district"
 # )
 
 }

@@ -19,7 +19,8 @@ calculate_match_stats(
 
 \item{level0}{level0 col name (country) in both 'data' and 'lookup_data'.}
 
-\item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
+\item{level1}{level1 col name (province/state/region) in both 'data' and
+'lookup_data'.}
 
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 }
@@ -29,8 +30,8 @@ match stats rather than return a value.
 }
 \description{
 Compares entries in a given dataset against a lookup dataset across specified
-admn levels (e.g., countries, provinces, districts) to calculate and report
-match statistics.
+admn levels (e.g., countries, (province/state/region), districts) to
+calculate and report match statistics.
 }
 \details{
 Calculates unique matches across administrative levels, reports
