@@ -1,4 +1,3 @@
-# Example test for calculate_string_distance function
 testthat::test_that("calculate_string_distance works correctly", {
   
   # get function output
@@ -11,7 +10,7 @@ testthat::test_that("calculate_string_distance works correctly", {
     algorithm_name = rep("lv", 6),
     name_to_match = rep(c("New York", "Los Angeles"), each = 3),
     matched_names = c("New York", "Chicago", 
-                     "Los Angeles", "Los Angeles", "New York", "Chicago"),
+                      "Los Angeles", "Los Angeles", "New York", "Chicago"),
     distance = c(0, 8, 10, 0, 10, 10), 
     match_rank = rep(1:3, 2)
   )

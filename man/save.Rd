@@ -40,7 +40,7 @@ save(mtcars, file_path = file.path(tmpdir, "file.xlsx"))
 save(mtcars, file_path = file.path(tmpdir, "file.dta"))
 
 # Save an RDS file
-save(mtcars, file_path = file.path(tmpdir, "file.rds"))
+#save(mtcars, file_path = file.path(tmpdir, "file.rds"))
 
 # Save an RData file
 save(list(mtcars = mtcars, iris = iris),
@@ -54,7 +54,7 @@ my_shp <-  sf::st_sfc(
     sf::st_as_sf(crs = sf::st_crs(4326))
 
 # save an RDS file
-save(my_shp, file_path = file.path(tmpdir, "file.shp"))
+# save(my_shp, file_path = file.path(tmpdir, "file.shp"))
 
 # Remove the temporary directory and its contents
 unlink(tmpdir, recursive = TRUE)

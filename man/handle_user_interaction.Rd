@@ -4,10 +4,12 @@
 \alias{handle_user_interaction}
 \title{Interact with Users for Data Cleaning Choices}
 \usage{
-handle_user_interaction(input_data, level, clear_console = T, stratify)
+handle_user_interaction(input_data, levels, level, clear_console = T, stratify)
 }
 \arguments{
 \item{input_data}{Data frame containing admin names etc.,.}
+
+\item{levels}{The avaiable admin levels withnin the prep_geoname function}
 
 \item{level}{The admins level being cleaned, i.ie level1 or even disrict.}
 

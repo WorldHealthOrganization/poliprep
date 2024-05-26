@@ -31,7 +31,6 @@
 #' # Import an RDS file
 #' data_rds <- read(file_path = file.path(path, "test_data.rds"))
 #'
-#' # Import an RData file
 #' data_rdata <- read(file_path = file.path(path, "test_data.RData"))
 #'
 #' # Import an SPSS file
@@ -56,19 +55,25 @@ read <- function(file_path, ...) {
   }
   
   # Extract the file extension from the input file path
-  file_ext <- tools::file_ext(file_path)
+  file_ext <- tools::file_ext(file_path) |>  tolower()
   
   # List of supported formats
   supported_formats_rio <- c(
     "csv", "tsv", "txt", "csvy", "sas7bdat", "sav",
-    "dta", "xpt", "xlsx", "RData", "rds", "tsv"
+    "dta", "xpt", "rdata", "xlsx", "tsv"
   )
-
+  
   # If the file extension is unsupported
   if (file_ext %in% supported_formats_rio) {  # for tabular data
     rio::import(file_path, ...)
-  } else if (
-    tolower(file_ext) %in% c("shp", "json", "geojson")) { # for shapefiles
+  } else if (file_ext  == "rds") {
+
+      con <- archive::file_read(file_path)
+      res <- readRDS(con)
+      close(con)
+      res
+      
+    } else if (file_ext %in% c("shp", "json", "geojson")) { # for shapefiles
     sf::read_sf(file_path, ...)
   } else {
     stop(

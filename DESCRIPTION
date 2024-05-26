@@ -1,7 +1,7 @@
 Package: poliprep
 Type: Package
 Title: For Processing and Validating Various Types of GPEI Data
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: c(
   person("Mohamed A.", "Yusuf", 
          role = c("aut", "cre"),
@@ -35,10 +35,13 @@ Imports:
   doFuture, 
   foreach, 
   future,
-  progressr,
+  purrr,
+  archive,
   doParallel
 Suggests: 
   testthat,
+  progressr,
+  janitor,
   withr,
   stringdist,
   epiCleanr,
