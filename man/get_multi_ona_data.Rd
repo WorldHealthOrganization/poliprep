@@ -4,7 +4,12 @@
 \alias{get_multi_ona_data}
 \title{Get Data from ONA for Multiple Forms}
 \usage{
-get_multi_ona_data(base_url = "https://api.whonghub.org", form_ids, api_token)
+get_multi_ona_data(
+  base_url = "https://api.whonghub.org",
+  form_ids,
+  api_token,
+  selected_columns = NULL
+)
 }
 \arguments{
 \item{base_url}{The base URL for the ONA API; defaults to
@@ -13,6 +18,9 @@ get_multi_ona_data(base_url = "https://api.whonghub.org", form_ids, api_token)
 \item{form_ids}{A vector containing form id number to identify each form.}
 
 \item{api_token}{A string specifying the API token for ONA.}
+
+\item{selected_columns}{Selected columns to download. Default is NULL.
+It's in stringed list like c("year", "form_id")}
 }
 \value{
 A data frame containing the combined data from all specified form

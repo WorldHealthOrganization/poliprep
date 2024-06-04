@@ -218,7 +218,8 @@ praise_emoji <- function() {
 #' @param form_id A string or numeric value as the dataset id. 
 #'                Could be found by looking at the URL of the form on ONA.
 #' @param api_token A string specifying the API token for ONA
-#'
+#' @param selected_columns Selected columns to download. Default is NULL.
+#'    It's in stringed list like c("year", "form_id")
 #' @return A list containing the data geted from the ONA API.
 #'
 #' @examples
@@ -228,8 +229,8 @@ praise_emoji <- function() {
 #' # data <- get_ona_data(base_url, form_id, api_token)
 #' @export
 #' @seealso \url{https://api.ona.io/api/v1/data/} for more info on ONA API
-get_ona_data <- function(
-    base_url = "https://api.whonghub.org", form_id, api_token) {
+get_ona_data <- function(base_url = "https://api.whonghub.org", form_id, 
+                         api_token, selected_columns = NULL) {
   
   
   # check base url validity
@@ -256,10 +257,31 @@ get_ona_data <- function(
     )
   }
   
+  # If getting multiple columns, include these in url ---------------------------
+  
+  if (!is.null(selected_columns)) {
+    # Construct query parameters with quotes around column names
+    query_params <- list(
+      fields = paste0(
+        '[', 
+        paste(
+          sapply(
+            selected_columns, 
+            function(col) paste0('"', col, '"')), 
+          collapse = ','), ']'))
+    
+    # Build the full URL with query parameters using modify_url from httr
+    api_url <- httr::modify_url(api_url, query = query_params) 
+  }
+  
   # Download data (use pagination if necessary) --------------------------------
   
   # Retrieve data handling pagination
-  results <- get_paginated_data(api_url, api_token)
+  results <- get_paginated_data(api_url, api_token) |> 
+    # drop any empty columns
+    dplyr::select(
+      dplyr::where(
+        ~ any(!is.na(.))))
   
   # Return output message and save results -------------------------------------
   
@@ -281,7 +303,9 @@ get_ona_data <- function(
 #'            'https://api.whonghub.org'.
 #' @param form_ids A vector containing form id number to identify each form.
 #' @param api_token A string specifying the API token for ONA.
-#'
+#' @param selected_columns Selected columns to download. Default is NULL. 
+#'    It's in stringed list like c("year", "form_id")
+#' 
 #' @return A data frame containing the combined data from all specified form 
 #'        IDs, and includes from_id column.
 #' @examples
@@ -289,8 +313,8 @@ get_ona_data <- function(
 #' # data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
 #' @importFrom foreach %dopar%
 #' @export
-get_multi_ona_data <- function(
-    base_url = "https://api.whonghub.org", form_ids, api_token) {
+get_multi_ona_data <- function(base_url = "https://api.whonghub.org", 
+                               form_ids, api_token, selected_columns = NULL) {
   
   # Check if the form IDs are available for download ---------------------------
   resp_data <- prep_ona_data_endpoints(
@@ -317,10 +341,18 @@ get_multi_ona_data <- function(
   combined_data <- 
     foreach::foreach(
       form_id = form_ids, .combine = 'bind_rows') %dopar% {
-       data <- get_ona_data(form_id = form_id, api_token = api_token)
-       # add form_id as a new column in each df
-       dplyr::mutate(data, form_id_num = form_id)
+        data <- get_ona_data(form_id = form_id, 
+                             api_token = api_token, 
+                             selected_columns = selected_columns)
+        # add form_id as a new column in each df
+        dplyr::mutate(data, form_id_num = form_id)
       } 
+  
+  # drop any empty columns
+  combined_data <- combined_data|> 
+    dplyr::select(
+      dplyr::where(
+        ~ any(!is.na(.))))
   
   # stop the parallel backend when done
   doParallel::stopImplicitCluster()		
@@ -396,7 +428,7 @@ generate_urls <- function(full_data, file_path,
 #' @return tibble with all data
 call_urls <- function(urls, api_token) {
   ## use futures for parallel operations
-  doParallel::registerDoParallel(cores = (parallel::detectCores()-2)) 
+  doParallel::registerDoParallel(cores = (parallel::detectCores() - 2)) 
   future::plan(future::multisession) 
   options(doFuture.rng.onMisuse = "ignore")
   
@@ -407,8 +439,7 @@ call_urls <- function(urls, api_token) {
     
     results <- foreach::`%dopar%`(
       foreach::foreach(
-        url = urls,
-        .packages = c("dplyr", "tibble", "jsonlite", "httr")
+        url = urls
       ), {
         p()  # Update progress
         # Retrieve data from the API
@@ -450,6 +481,8 @@ call_urls <- function(urls, api_token) {
 #' @param log_results Boolean flag to indicate whether to log results of the 
 #'        data updates, defaults to TRUE.
 #' @param file_path The file path where data files will be stored, can be NULL.
+#' @param selected_columns Selected columns to download. Default is NULL.
+#'    It's in stringed list like c("year", "form_id")
 #' @param data_file_name The base name for the data file, defaults to 
 #'      "my_ona_data".
 #'
@@ -460,9 +493,11 @@ call_urls <- function(urls, api_token) {
 #' #       form_ids = c(123, 456), api_token = "your_api_token_here")
 #'
 #' @export
-get_updated_ona_data <- function(
-    base_url = "https://api.whonghub.org", form_ids, api_token, 
-    log_results = TRUE,  file_path = NULL, data_file_name = "my_ona_data") {
+get_updated_ona_data <- function(base_url = "https://api.whonghub.org", 
+                                 form_ids, api_token, 
+                                 log_results = TRUE,  file_path = NULL, 
+                                 selected_columns = NULL,
+                                 data_file_name = "my_ona_data") {
   
   # check base url validity
   base_url <- validate_base_url(base_url)
@@ -514,11 +549,42 @@ get_updated_ona_data <- function(
   urls <- generate_urls(full_data, 
                         file_path, data_file_name, base_url, form_ids)
   
+  
+  # If getting multiple columns, include these in url ---------------------------
+  
+  if (!is.null(selected_columns)) {
+    # Construct query parameters with quotes around column names
+    query_params <- list(
+      fields = paste0(
+        '[', 
+        paste(
+          sapply(
+            selected_columns, 
+            function(col) paste0('"', col, '"')), 
+          collapse = ','), ']'))
+    
+    url_list <-  NULL
+    
+    for (url in urls) {
+      
+      # Build the full URL for each form id
+      results <- httr::modify_url(url, query = query_params) 
+      
+      url_list[[url]] <- results
+    }
+    
+  }
+  
   # Download data  -------------------------------------------------------------
   
-  new_data <- call_urls(urls, api_token = api_token)
+  new_data <- call_urls(url_list, api_token = api_token) |> 
+    # drop any empty columns
+    dplyr::select(
+      dplyr::where(
+        ~ any(!is.na(.))))
   
-  # update the exisiting data --------------------------------------------------
+  # update the existing data --------------------------------------------------
+  
   # Combine new data with existing data
   if (nrow(new_data) > 0) {
     full_data <- dplyr::bind_rows(full_data, new_data) |> 
@@ -539,12 +605,18 @@ get_updated_ona_data <- function(
       df <- full_data |> 
         dplyr::filter(form_id_num == form_id)
       
+      df_new <- new_data |> 
+        dplyr::filter(form_id_num == form_id)
+      
+      
       # Construct the log message
       log_message <- data.frame(
         form_id = form_id,
         update_date = Sys.Date(),
-        number_of_variables = ncol(df),
-        number_of_rows = format(nrow(df), big.mark = ",")
+        total_columns = ncol(df),
+        total_rows = format(nrow(df), big.mark = ","),
+        new_columns = ncol(df) - ncol(df_new),
+        new_rows = format(nrow(df) - nrow(df_new), big.mark = ",")
       )
       log_message
     })

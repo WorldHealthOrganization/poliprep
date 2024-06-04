@@ -1127,6 +1127,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     finalised_df, lookup_df, level0, level1, level2
   )
   
+  gc()  # clean up memory
+  
   # return the final data frame
   return(finalised_df)
   
