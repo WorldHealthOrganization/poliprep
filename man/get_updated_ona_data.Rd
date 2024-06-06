@@ -10,6 +10,7 @@ get_updated_ona_data(
   api_token,
   log_results = TRUE,
   file_path = NULL,
+  selected_columns = NULL,
   data_file_name = "my_ona_data"
 )
 }
@@ -25,6 +26,9 @@ get_updated_ona_data(
 data updates, defaults to TRUE.}
 
 \item{file_path}{The file path where data files will be stored, can be NULL.}
+
+\item{selected_columns}{Selected columns to download. Default is NULL.
+It's in stringed list like c("year", "form_id")}
 
 \item{data_file_name}{The base name for the data file, defaults to
 "my_ona_data".}

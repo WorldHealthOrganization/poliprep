@@ -4,7 +4,12 @@
 \alias{get_ona_data}
 \title{Get Data from ONA API}
 \usage{
-get_ona_data(base_url = "https://api.whonghub.org", form_id, api_token)
+get_ona_data(
+  base_url = "https://api.whonghub.org",
+  form_id,
+  api_token,
+  selected_columns = NULL
+)
 }
 \arguments{
 \item{base_url}{A string specifying the URL for the ONA API,
@@ -15,6 +20,9 @@ Default is https://api.whonghub.org/api/v1/data}
 Could be found by looking at the URL of the form on ONA.}
 
 \item{api_token}{A string specifying the API token for ONA}
+
+\item{selected_columns}{Selected columns to download. Default is NULL.
+It's in stringed list like c("year", "form_id")}
 }
 \value{
 A list containing the data geted from the ONA API.
