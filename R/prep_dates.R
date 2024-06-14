@@ -48,7 +48,7 @@ check_leap_issue <- function(date_col) {
 #' @export
 validate_date <- function(data, date_col) {
   # 1: Check for missing dates -------------------------------------------------
-  cli::cli_h1("1: Check for missing dates")
+  cli::cli_h1("Check for missing dates")
   data[[paste0(date_col, "_missing")]] <- is.na(data[[date_col]])
   
   if (any(data[[paste0(date_col, "_missing")]])) {
@@ -196,7 +196,7 @@ validate_date <- function(data, date_col) {
 #' @export
 validate_dates <- function(data, date_col1, date_col2) {
   # 1: Check for missing dates -------------------------------------------------
-  cli::cli_h1("1: Check for missing dates")
+  cli::cli_h1("Check for missing dates")
   data[[paste0(date_col1, "_missing")]] <- is.na(data[[date_col1]])
   data[[paste0(date_col2, "_missing")]] <- is.na(data[[date_col2]])
   
@@ -399,7 +399,7 @@ validate_dates <- function(data, date_col1, date_col2) {
   
   # 6: Check similarity in date formatting -------------------------------------
   
-  cli::cli_h1("6: Check similarity in date formatting")
+  cli::cli_h1("Check similarity in date formatting")
   date1_fmt <- poliprep::detect_date_format(
     as.Date(data[[date_col1]], format = "%Y-%m-%d")
   )
