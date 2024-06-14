@@ -424,7 +424,7 @@ validate_dates <- function(data, date_col1, date_col2) {
   invalid_order <- as.Date(
     data[[date_col1]],
     format = "%Y-%m-%d"
-  ) >= as.Date(data[[date_col2]], format = "%Y-%m-%d")
+  ) > as.Date(data[[date_col2]], format = "%Y-%m-%d")
   
   data[[paste0(date_col1, "_invalid_order")]] <- invalid_order
   
