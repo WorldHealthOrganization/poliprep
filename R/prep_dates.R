@@ -11,6 +11,7 @@
 #' @export
 check_leap_issue <- function(date_col) {
   date_col <- gsub("/", "-", date_col)
+  date_col <- gsub("T.*$", "", date_col) # remove time from date
   date_parts <- strsplit(date_col, "-")
   leap_issue <- sapply(date_parts, function(parts) {
     if (length(parts) == 3) {
@@ -53,7 +54,10 @@ validate_date <- function(data, date_col) {
   if (any(data[[paste0(date_col, "_missing")]])) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col), " has ",
-      crayon::red(sum(data[[paste0(date_col, "_missing")]])),
+      crayon::red(
+        format(
+          sum(data[[paste0(date_col, "_missing")]], 
+              na.rm = T), big.mark = ",")),
       " missing date(s)! Check column ",
       crayon::green(paste0(date_col, "_missing")), "."
     ))
@@ -71,7 +75,8 @@ validate_date <- function(data, date_col) {
   if (any(non_date)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col), " has ",
-      crayon::red(sum(non_date)),
+      crayon::red(
+        format(sum(non_date, na.rm = T), big.mark = ",")),
       " non-date value(s)! Check column ",
       crayon::green(paste0(date_col, "_non_date")), "."
     ))
@@ -95,7 +100,8 @@ validate_date <- function(data, date_col) {
   if (any(invalid_date)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col), " has ",
-      crayon::red(sum(invalid_date, na.rm = TRUE)),
+      crayon::red(
+        format(sum(invalid_date, na.rm = T), big.mark = ",")),
       " non-sensible date(s) (not starting with '20')! Check column ",
       crayon::green(paste0(date_col, "_invalid")), "."
     ))
@@ -103,7 +109,8 @@ validate_date <- function(data, date_col) {
   if (any(future_date)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col), " has ",
-      crayon::red(sum(future_date, na.rm = TRUE)),
+      crayon::red(
+        format(sum(future_date, na.rm = T), big.mark = ",")),
       " date(s) with a year greater than the current year! Check column ",
       crayon::green(paste0(date_col, "_future")), "."
     ))
@@ -123,7 +130,8 @@ validate_date <- function(data, date_col) {
   if (any(leap_issue)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col), " has ",
-      crayon::red(sum(leap_issue)),
+      crayon::red(
+        format(sum(leap_issue, na.rm = T), big.mark = ",")),
       " invalid leap year date(s)! Check column ",
       crayon::green(paste0(date_col, "_leap_issue")), "."
     ))
@@ -149,7 +157,8 @@ validate_date <- function(data, date_col) {
   if (any(full_format_issue)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col), " has ",
-      crayon::red(sum(full_format_issue)),
+      crayon::red(
+        format(sum(full_format_issue, na.rm = T), big.mark = ",")),
       " improperly formatted date(s)! Check column ",
       crayon::green(paste0(date_col, "_format_issue")), "."
     ))
@@ -194,7 +203,9 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(data[[paste0(date_col1, "_missing")]])) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col1), " has ",
-      crayon::red(sum(data[[paste0(date_col1, "_missing")]])),
+      crayon::red(
+        format(sum(data[[paste0(date_col1, "_missing")]]), big.mark = ",")
+      ),
       " missing date(s)! Check column ",
       crayon::green(paste0(date_col1, "_missing")), "."
     ))
@@ -202,7 +213,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(data[[paste0(date_col2, "_missing")]])) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col2), " has ",
-      crayon::red(sum(data[[paste0(date_col2, "_missing")]])),
+      crayon::red(
+        format(sum(data[[paste0(date_col2, "_missing")]]), big.mark = ",")),
       " missing date(s)! Check column ",
       crayon::green(paste0(date_col2, "_missing")), "."
     ))
@@ -225,7 +237,9 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(non_date1)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col1), " has ",
-      crayon::red(sum(non_date1)),
+      crayon::red(
+        format(sum(non_date1, na.rm = T), big.mark = ",")
+      ),
       " non-date value(s)! Check column ",
       crayon::green(paste0(date_col1, "_non_date")), "."
     ))
@@ -233,7 +247,9 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(non_date2)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col2), " has ",
-      crayon::red(sum(non_date2)),
+      crayon::red(
+        format(sum(non_date2, na.rm = T), big.mark = ",")
+      ),
       " non-date value(s)! Check column ",
       crayon::green(paste0(date_col2, "_non_date")), "."
     ))
@@ -265,7 +281,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(invalid_date1)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col1), " has ",
-      crayon::red(sum(invalid_date1, na.rm = TRUE)),
+      crayon::red(
+        format(sum(invalid_date1, na.rm = T), big.mark = ",")),
       " non-sensible date(s) (not starting with '20')! Check column ",
       crayon::green(paste0(date_col1, "_invalid")), "."
     ))
@@ -273,7 +290,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(invalid_date2)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col2), " has ",
-      crayon::red(sum(invalid_date2, na.rm = TRUE)),
+      crayon::red(
+        format(sum(invalid_date2, na.rm = T), big.mark = ",")),
       " non-sensible date(s) (not starting with '20')! Check column ",
       crayon::green(paste0(date_col2, "_invalid")), "."
     ))
@@ -281,7 +299,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(future_date1)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col1), " has ",
-      crayon::red(sum(future_date1, na.rm = TRUE)),
+      crayon::red(
+        format(sum(future_date1, na.rm = T), big.mark = ",")),
       " date(s) with a year greater than the current year! Check column ",
       crayon::green(paste0(date_col1, "_future")), "."
     ))
@@ -289,7 +308,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(future_date2)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col2), " has ",
-      crayon::red(sum(future_date2, na.rm = TRUE)),
+      crayon::red(
+        format(sum(future_date2, na.rm = T), big.mark = ",")),
       " date(s) with a year greater than the current year! Check column ",
       crayon::green(paste0(date_col2, "_future")), "."
     ))
@@ -313,7 +333,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(leap_issue1)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col1), " has ",
-      crayon::red(sum(leap_issue1)),
+      crayon::red(
+        format(sum(leap_issue1, na.rm = T), big.mark = ",")),
       " invalid leap year date(s)! Check column ",
       crayon::green(paste0(date_col1, "_leap_issue")), "."
     ))
@@ -321,7 +342,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(leap_issue2)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col2), " has ",
-      crayon::red(sum(leap_issue2)),
+      crayon::red(
+        format(sum(leap_issue2, na.rm = T), big.mark = ",")),
       " invalid leap year date(s)! Check column ",
       crayon::green(paste0(date_col2, "_leap_issue")), "."
     ))
@@ -356,7 +378,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(full_format_issue1)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col1), " has ",
-      crayon::red(sum(full_format_issue1)),
+      crayon::red(
+        format(sum(full_format_issue1, na.rm = T), big.mark = ",")),
       " improperly formatted date(s)! Check column ",
       crayon::green(paste0(date_col1, "_format_issue")), "."
     ))
@@ -364,7 +387,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   if (any(full_format_issue2)) {
     cli::cli_alert_danger(paste0(
       "Date column ", crayon::blue(date_col2), " has ",
-      crayon::red(sum(full_format_issue2)),
+      crayon::red(
+        format(sum(full_format_issue2, na.rm = T), big.mark = ",")),
       " improperly formatted date(s)! Check column ",
       crayon::green(paste0(date_col2, "_format_issue")), "."
     ))
@@ -373,7 +397,7 @@ validate_dates <- function(data, date_col1, date_col2) {
     cli::cli_alert_success("Both date columns have no formatting issues!")
   }
   
-  # 6: Check similarity in date formatting ———————————––
+  # 6: Check similarity in date formatting -------------------------------------
   
   cli::cli_h1("6: Check similarity in date formatting")
   date1_fmt <- poliprep::detect_date_format(
@@ -394,7 +418,7 @@ validate_dates <- function(data, date_col1, date_col2) {
     cli::cli_alert_success("Both date columns have the same format!")
   }
   
-  # 7: Check if the first date is before the second date ———————–
+  # 7: Check if the first date is before the second date -----------------------
   
   cli::cli_h1("Check if the first date is before the second date")
   invalid_order <- as.Date(
@@ -406,7 +430,8 @@ validate_dates <- function(data, date_col1, date_col2) {
   
   if (any(invalid_order, na.rm = TRUE)) {
     cli::cli_alert_danger(paste0(
-      "There are ", crayon::red(sum(invalid_order, na.rm = TRUE)),
+      "There are ", crayon::red(
+        format(sum(invalid_order, na.rm = T), big.mark = ",")),
       " instances where the first date is not before the second date! ",
       "Check column ", crayon::green(paste0(date_col1, "_invalid_order")), "."
     ))
