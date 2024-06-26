@@ -521,7 +521,11 @@ handle_user_interaction <- function(input_data, levels, level,
         longname_corrected = dplyr::if_else(
           level == "level0", replacement,  longname_corrected
         )
-      ) 
+      ) |> 
+      # drop duplicates as a result of going back on choices
+      dplyr::group_by(longname_to_match) |> 
+      dplyr::slice_max(created_time, with_ties = FALSE) |> 
+      dplyr::ungroup()
     
     cli::cli_alert_success(
       "Your selections have been successfully saved. Exiting..."
@@ -807,7 +811,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       dplyr::rename(level2_prepped = any_of("district_prepped")) |>
       
       dplyr::mutate(
-        dplyr::case_when(
+        level = dplyr::case_when(
           level == "country" ~ "level0",
           level == "province" ~ "level1",
           level == "district" ~ "level2",

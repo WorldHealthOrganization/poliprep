@@ -10,5 +10,6 @@ globalVariables(
     "algorithm_name", "created_time", "distance", "name_of_creator",
     "level0_prepped", "level1_prepped", "level2_prepped", "log_message",
     "longname_corrected", "longname_to_match", "log_results",
-    "CENTER_LAT", "CENTER_LON", "ENDDATE")
+    "CENTER_LAT", "CENTER_LON", "ENDDATE",
+    "new_columns", "new_rows", "total_columns", "total_rows")
 )
