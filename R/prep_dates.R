@@ -36,15 +36,48 @@ check_leap_issue <- function(date_col) {
 #' @param data A data frame containing the date column.
 #' @param date_col The name of the date column.
 #' @return The modified data frame with additional columns indicating issues
-#'      found during the checks.
+#'         found during the checks.
+#'         Columns added:
+#'         - `{date_col}_missing`: Indicates if the date is missing.
+#'         - `{date_col}_non_date`: Indicates if the value is not a valid date.
+#'         - `{date_col}_invalid`: Indicates if the date is not sensible (e.g., 
+#'           not starting with '20').
+#'         - `{date_col}_future`: Indicates if the date is in the future.
+#'         - `{date_col}_leap_issue`: Indicates if there are leap year issues.
+#'         - `{date_col}_format_issue`: Indicates if there are improper 
+#'            formatting issues.
 #' @examples
 #' data <- data.frame(
+#'   country = c("Rwanda", "Burundi", "Ethiopia", "Zambia", "Zambia",
+#'               "Chad", "Niger", "Angola"),
 #'   date = c(
 #'     "2023-06-15", "2024-07-20", NA, "1999-12-31", "2025-08-22",
 #'     "2020/23/10", "2020-02-29", "2019-02-29"
 #'   )
 #' )
-#' validate_date(data, "date")
+#'
+#' # check whether dates column is valid 
+#' res <-  poliprep::validate_date(data, "date") 
+#'
+#'
+#' # Check for countries where there is a 
+#' # non-date issue in the date column
+#' res |> 
+#'  dplyr::filter(date_non_date == TRUE) |> 
+#'  dplyr::count(country)
+#'
+#' # Check for countries where there is a 
+#' # invalid leap year issue
+#' res |> 
+#' dplyr::filter(date_leap_issue == TRUE) |> 
+#' dplyr::count(country)
+#'
+#' # Check for countries where there is a 
+#' # improper formatting of the date  
+#' res |> 
+#'  dplyr::filter(date_format_issue == TRUE) |> 
+#'  dplyr::count(country)
+#'  
 #' @export
 validate_date <- function(data, date_col) {
   # 1: Check for missing dates -------------------------------------------------
@@ -180,19 +213,57 @@ validate_date <- function(data, date_col) {
 #' @param date_col1 The name of the first date column.
 #' @param date_col2 The name of the second date column.
 #' @return The modified data frame with additional columns indicating issues
-#'      found during the checks.
+#'         found during the checks.
+#'         Columns added:
+#'         - `{date_col}_missing`: Indicates if the date is missing.
+#'         - `{date_col}_non_date`: Indicates if the value is not a valid date.
+#'         - `{date_col}_invalid`: Indicates if the date is not sensible (e.g., 
+#'           not starting with '20').
+#'         - `{date_col}_future`: Indicates if the date is in the future.
+#'         - `{date_col}_leap_issue`: Indicates if there are leap year issues.
+#'         - `{date_col}_format_issue`: Indicates if there are improper 
+#'            formatting issues.
+#'         - `{date_col}_invalid_order`: Indicates if the first date is not 
+#'           before the second date.
 #' @examples
 #' data <- data.frame(
+#'   country = c("Rwanda", "Burundi", "Ethiopia", "Zambia", "Zambia",
+#'               "Chad", "Niger", "Angola"),
 #'   date1 = c(
-#'     "2023-06-15", "2024-07-20", NA, "1999-12-31", "2025-08-22",
-#'     "2020/23/10", "2020-02-29", "2019-02-29"
+#'     "2024-06-15", "2024-07-20", NA, "1999-12-31", "2025-08-22",
+#'     "2020/23/10", "2020-02-29", "2024-02-29"
 #'   ),
 #'   date2 = c(
-#'     "2023-06-15", "2024-07-20", "2022-05-10", "2024-02-29",
-#'     "2026-09-23", "2020/23/10", "2020-02-29", "2019-02-29"
+#'     "2023-06-15", "2024-07-20", "2022-05-10", "2019-02-29",
+#'     "2026-09-23", "2020/23/10", "2020-02-29", "2022-02-29"
 #'   )
 #' )
-#' validate_dates(data, "date1", "date2")
+#'
+#' res <-  poliprep::validate_dates(data, "date1",  "date1") 
+#'
+#' # Check for countries where there is a 
+#' # non-date issue in the date1 column
+#' res |> 
+#'  dplyr::filter(date1_non_date == TRUE) |> 
+#'  dplyr::count(country)
+#'
+#' # Check for countries where there is a 
+#' # invalid leap year issue in date1
+#' res |> 
+#' dplyr::filter(date1_leap_issue == TRUE) |> 
+#' dplyr::count(country)
+#'
+#' # Check for countries where there is a 
+#' # improper formatting of date1 col  
+#' res |> 
+#'  dplyr::filter(date1_format_issue == TRUE) |> 
+#'  dplyr::count(country)
+#'
+#' # Check for countries where date1 is after date2
+#' res |> 
+#'  dplyr::filter(date1_invalid_order == TRUE) |> 
+#'  dplyr::count(country)
+#'  
 #' @export
 validate_dates <- function(data, date_col1, date_col2) {
   # 1: Check for missing dates -------------------------------------------------

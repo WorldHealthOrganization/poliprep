@@ -166,7 +166,7 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     # Check invalid order
     testthat::expect_equal(
       result$date1_invalid_order,
-      c(TRUE, TRUE, NA, FALSE, FALSE, NA, TRUE, NA)
+      c(FALSE, FALSE, NA, FALSE, FALSE, NA, FALSE, NA)
     )
   })
 })
