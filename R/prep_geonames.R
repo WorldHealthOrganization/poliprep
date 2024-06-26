@@ -466,7 +466,7 @@ handle_user_interaction <- function(input_data, levels, level,
     } else if (user_choice == "m") { # Enter name manually
       manual_name <- readline(prompt = "Enter the name manually: ")
       if (manual_name != "") {
-        replace_int <- toupper(manual_name)
+        replace_int <- toupper(gsub("\u00A0", " ", manual_name))
         user_choices[[length(user_choices) + 1]] <- data.frame(
           level = level_label,
           name_to_match = name_to_clean,
