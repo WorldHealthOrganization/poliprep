@@ -18,8 +18,8 @@
 #' @examples
 #' # Example usage
 #' # Assuming `poliprep::shp_global` is already loaded in the environment
-#' nearest_coord <- find_nearest_coord(15.28172, -4.271301)
-#' print(nearest_coord)
+#' # nearest_coord <- find_nearest_coord(15.28172, -4.271301)
+#' # print(nearest_coord)
 #' @export
 # Define the function
 find_nearest_coord <- function(lon, lat, 
