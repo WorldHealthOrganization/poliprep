@@ -805,7 +805,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     saved_cache_df <- readRDS(
       cache_path
     ) |> 
-      # harmonised column names incase using old version of cache file
+      # harmonised column names in case using old version of cache file
       dplyr::rename(level0_prepped = any_of("country_prepped")) |>
       dplyr::rename(level1_prepped = any_of("province_prepped")) |>
       dplyr::rename(level2_prepped = any_of("district_prepped")) |>
@@ -817,7 +817,12 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           level == "district" ~ "level2",
           TRUE ~ level
         )
-      )
+      ) 
+      # # Normalize encoding of cols
+      #   dplyr::mutate(
+      #     dplyr::across(
+      #       dplyr::everything(), 
+      #       ~ stringi::stri_trans_general(., "Any-Latin; Latin-ASCII")))
     
   } else {
     saved_cache_df <- data.frame()
@@ -1116,6 +1121,13 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       dplyr::distinct(longname_to_match,
                       .keep_all = TRUE) |> 
       dplyr::select(-longname_to_match)
+    
+    # # Normalize encoding of cols
+    # final_cache_dfs <- final_cache_dfs |> 
+    # dplyr::mutate(
+    #   dplyr::across(
+    #     dplyr::everything(), 
+    #     ~ stringi::stri_trans_general(., "Any-Latin; Latin-ASCII")))
     
     # file saving
     handle_file_save(final_cache_dfs, cache_path)
