@@ -12,17 +12,17 @@ testthat::test_that("Function imports supported file formats correctly", {
   
   # Loop through each supported format and test importing the file
   for (format in supported_formats) {
+    
     # File path for the test data with the specific format
     file_path <- paste0("inst/extdata/test_data.", format)
     
-    # Check if file exists before trying to import it
-    if (!file.exists(file_path)) {
-      message(paste("File does not exist:", file_path))
-      next
-    }
-    
+    file <- paste0("test_data.", format)
+
     # Import the data using the 'import' function
-    imported_data <- poliprep::read(file_path)
+    imported_data <- poliprep::read(
+      system.file(
+        "extdata", file, package = "poliprep")
+    )
     
     # Check if the imported data has the expected structure and values
     testthat::expect_true("ID" %in% colnames(imported_data),
