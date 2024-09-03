@@ -47,7 +47,8 @@ Suggests:
     stringdist,
     epiCleanr,
     crayon,
-    glue
+    glue,
+    stringi
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
