@@ -127,20 +127,20 @@ correct_flipped_geo_coords <- function(data, shapefile_data = NULL,
     ) |>
     dplyr::mutate(
       dist_correct = ifelse(
-        is.na(
-          !!rlang::sym(
-            correct_lat_col)) | is.na(!!rlang::sym(correct_lon_col)),
+        is.na(!!rlang::sym(correct_lat_col)) | is.na(!!rlang::sym(correct_lon_col)),
         NA,
-        sqrt((!!rlang::sym(lat_col) - !!rlang::sym(correct_lat_col))^2 +
-               (!!rlang::sym(lon_col) - !!rlang::sym(correct_lon_col))^2)
+        geosphere::distHaversine(
+          cbind(!!rlang::sym(lon_col), !!rlang::sym(lat_col)),
+          cbind(!!rlang::sym(correct_lon_col), !!rlang::sym(correct_lat_col))
+        )
       ),
       dist_flipped = ifelse(
-        is.na(
-          !!rlang::sym(
-            correct_lat_col)) | is.na(!!rlang::sym(correct_lon_col)),
+        is.na(!!rlang::sym(correct_lat_col)) | is.na(!!rlang::sym(correct_lon_col)),
         NA,
-        sqrt((!!rlang::sym(lat_col) - !!rlang::sym(correct_lon_col))^2 +
-               (!!rlang::sym(lon_col) - !!rlang::sym(correct_lat_col))^2)
+        geosphere::distHaversine(
+          cbind(!!rlang::sym(lon_col), !!rlang::sym(lat_col)),
+          cbind(!!rlang::sym(correct_lat_col), !!rlang::sym(correct_lon_col))
+        )
       ),
       flipped = ifelse(is.na(dist_correct) | is.na(dist_flipped),
                        FALSE,
