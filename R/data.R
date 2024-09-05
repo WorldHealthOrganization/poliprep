@@ -43,3 +43,19 @@
 #' @source https://hub.arcgis.com/datasets/WHO::polio-administrative-boundaries
 #' @keywords datasets
 "shp_global"
+
+#' World lakes data
+#'
+#' A dataset containing high-resolution world lakes data.
+#'
+#' @format An sf object
+#' @source Natural Earth \url{https://www.naturalearthdata.com/}
+"lakes"
+
+#' World land data
+#'
+#' A dataset containing high-resolution world countries data.
+#'
+#' @format An sf object
+#' @source Natural Earth \url{https://www.naturalearthdata.com/}
+"world"
