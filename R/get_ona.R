@@ -16,6 +16,14 @@
 #' # response <- check_status_api(response)
 check_status_api <- function(response) {
   
+  
+  # Conditional loading for packages
+  if (!requireNamespace("httpcode", quietly = TRUE)) {
+    stop(
+    "Package 'dplyr' is required but is not installed.Please install it.", 
+    call. = FALSE)
+  }
+  
   # get resoinse code 
   response_status_code <- httr::status_code(response)
   # get http code
