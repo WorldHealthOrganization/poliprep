@@ -29,7 +29,6 @@ Imports:
   httr,
   jsonlite,
   tidyselect,
-  httpcode,
   tibble,
   lubridate,
   doFuture, 
@@ -38,7 +37,8 @@ Imports:
   purrr,
   archive,
   doParallel,
-  RODBC
+  RODBC,
+  geosphere
 Suggests: 
     testthat,
     progressr,
@@ -49,10 +49,11 @@ Suggests:
     crayon,
     glue,
     stringi,
-    yaml,
-    geosphere
+    httpcode,
+    yaml
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+LazyDataCompression: xz

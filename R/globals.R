@@ -12,5 +12,9 @@ globalVariables(
     "longname_corrected", "longname_to_match", "log_results",
     "CENTER_LAT", "CENTER_LON", "ENDDATE",
     "dist_correct", "dist_flipped", "flipped", "temp_lat", "temp_lon",
-    "new_columns", "new_rows", "total_columns", "total_rows")
+    "new_columns", "new_rows", "total_columns", "total_rows",
+    "check_on_water", "httpcode", "missing_coords", "on_water",
+    "potentially_flipped", "total_coords",
+    "coord_diff_correct", "coord_diff_input"
+    )
 )
