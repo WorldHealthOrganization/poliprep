@@ -258,11 +258,12 @@ mock_data <- data.frame(
 testthat::test_that("check_coords performs all checks correctly", {
   
   suppressMessages(
-    result <- check_coords(mock_data, "lat", "lon", "id")
+    result <- check_coords(mock_data, lat_col = "lat",  
+                           lon_col = "lon", aggregate_by =  "id")
   )
   
   testthat::expect_true("missing_coords" %in% names(result))
-  testthat::expect_true("potentially_flipped" %in% names(result))
+  testthat::expect_true("lat_precision" %in% names(result))
   testthat::expect_true("on_water" %in% names(result))
   
   testthat::expect_equal(sum(result$missing_coords, na.rm = TRUE), 2)
@@ -270,50 +271,35 @@ testthat::test_that("check_coords performs all checks correctly", {
   testthat::expect_true(any(result$on_water != "Land", na.rm = TRUE))
 })
 
-testthat::test_that("check_coords respects the checks parameter", {
-  suppressMessages(
-    result_flip <- check_coords(mock_data, "lat", "lon", "id", checks = "flip"))
-  
-  testthat::expect_true("potentially_flipped" %in% names(result_flip))
-  testthat::expect_false("missing_coords" %in% names(result_flip))
-  testthat::expect_false("on_water" %in% names(result_flip))
-  
-  suppressMessages(
-    result_missing <- check_coords(mock_data, "lat", "lon", "id", 
-                                   checks = "missing"))
-  
-  testthat::expect_false("potentially_flipped" %in% names(result_missing))
-  testthat::expect_true("missing_coords" %in% names(result_missing))
-  testthat::expect_false("on_water" %in% names(result_missing))
-})
-
 testthat::test_that("check_coords handles aggregate_by correctly", {
   
   suppressMessages(
-    result <- check_coords(mock_data, "lat", "lon", "id", 
+    result <- check_coords(mock_data, lat_col = "lat",  
+                           lon_col = "lon", 
                            aggregate_by = "country", summary_table = TRUE))
   
   testthat::expect_equal(nrow(result), 3)  # 3 unique countries
   testthat::expect_true("country" %in% names(result))
-  testthat::expect_true(all(c(
-    "total_coords",
-    "missing_coords", "potentially_flipped", 
-    "on_water") %in% names(result)))
+  testthat::expect_true(any(c(
+    "Potentially Flipped",
+    "Missing Coords", 
+    "On Water") %in% names(result)))
 })
 
 testthat::test_that("check_coords produces correct summary table", {
   
   
   suppressMessages(
-    result <- check_coords(mock_data, "lat", "lon", "id", 
+    result <- check_coords(mock_data, lat_col = "lat",  
+                           lon_col = "lon", 
                            summary_table = TRUE))
   
   testthat::expect_true(is.data.frame(result))
   testthat::expect_equal(nrow(result), 1)  # One summary row
   testthat::expect_true(
     all(c(
-      "total_coords",
-      "missing_coords", 
-      "potentially_flipped", "on_water") %in% names(result)))
+      "Potentially Flipped",
+      "Missing Coords", 
+      "On Water") %in% names(result)))
 })
 

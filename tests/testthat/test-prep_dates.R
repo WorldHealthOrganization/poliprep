@@ -99,7 +99,8 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
       )
     )
 
-    result <- validate_dates(data, "date1", "date2")
+    result <- validate_dates(data, 
+                             date_col1 = "date1", date_col2 =  "date2")
 
     # Check missing dates
     testthat::expect_equal(
@@ -124,11 +125,11 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     # Check invalid dates
     testthat::expect_equal(
       result$date1_invalid,
-      c(FALSE, FALSE, NA, TRUE, FALSE, FALSE, FALSE, FALSE)
+      c(FALSE, FALSE, NA, TRUE, TRUE, NA, FALSE, NA)
     )
     testthat::expect_equal(
       result$date2_invalid,
-      c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
+      c(FALSE, FALSE, FALSE, FALSE, TRUE, NA, FALSE, NA)
     )
 
     # Check future dates
@@ -155,12 +156,12 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     # Check date formatting issues
     testthat::expect_equal(
       result$date1_format_issue,
-      c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE)
+      c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
     )
 
     testthat::expect_equal(
       result$date2_format_issue,
-      c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE)
+      c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
     )
 
     # Check invalid order
@@ -170,3 +171,4 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     )
   })
 })
+

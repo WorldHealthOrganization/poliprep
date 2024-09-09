@@ -6,31 +6,54 @@
 \usage{
 check_coords(
   data,
+  shapefile_data = NULL,
+  join_key_a,
+  join_key_b = NULL,
   lat_col,
   lon_col,
-  join_key,
-  checks = c("flip", "on_water", "missing"),
+  correct_lat_col = NULL,
+  correct_lon_col = NULL,
+  checks = c("flip", "on_water", "missing", "out_of_bounds", "precision", "null_coords"),
   aggregate_by = NULL,
-  summary_table = FALSE
+  summary_table = FALSE,
+  min_precision = 4
 )
 }
 \arguments{
 \item{data}{A dataframe containing the geographic data to be checked.}
 
+\item{shapefile_data}{Optional. A dataframe containing reference shapefile
+data. If NULL, \code{poliprep::shp_global} will be used.}
+
+\item{join_key_a}{The column name in data to join with the shapefile data.}
+
+\item{join_key_b}{Optional. The column name in shapefile_data to join with
+data. If NULL and shapefile_data is NULL, defaults to "ADM2_GUID".}
+
 \item{lat_col}{The name of the latitude column in the data.}
 
 \item{lon_col}{The name of the longitude column in the data.}
 
-\item{join_key}{The column name in data to join with the shapefile data.}
+\item{correct_lat_col}{Optional. The name of the correct latitude column in
+shapefile_data. If NULL and shapefile_data is NULL, defaults to
+"CENTER_LAT".}
+
+\item{correct_lon_col}{Optional. The name of the correct longitude column in
+shapefile_data. If NULL and shapefile_data is NULL, defaults to
+"CENTER_LON".}
 
 \item{checks}{A character vector specifying which checks to perform.
-Options are "flip", "on_water", and "missing". Default is all checks.}
+Options are "flip", "on_water", "missing", "out_of_bounds",
+"precision", and "null_coords". Default is all checks.}
 
 \item{aggregate_by}{Optional. A column name to aggregate results by (e.g.,
 "country" or "year").}
 
 \item{summary_table}{Logical. If TRUE, returns a summary table instead of CLI
 output.}
+
+\item{min_precision}{Numeric. The minimum number of decimal places required
+for coordinate precision. Default is 4.}
 }
 \value{
 If summary_table is FALSE, returns the input data with additional

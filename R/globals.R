@@ -9,12 +9,19 @@ globalVariables(
     "ADM0_NAME", "ADM1_NAME", "ADM2_NAME", "name_to_match",  "match_rank",
     "algorithm_name", "created_time", "distance", "name_of_creator",
     "level0_prepped", "level1_prepped", "level2_prepped", "log_message",
-    "longname_corrected", "longname_to_match", "log_results",
-    "CENTER_LAT", "CENTER_LON", "ENDDATE",
+    "longname_corrected", "longname_to_match", "log_results", "lat_precision", 
+    "CENTER_LAT", "CENTER_LON", "ENDDATE", "low_precision",  "lon_precision", 
     "dist_correct", "dist_flipped", "flipped", "temp_lat", "temp_lon",
-    "new_columns", "new_rows", "total_columns", "total_rows",
-    "check_on_water", "httpcode", "missing_coords", "on_water",
-    "potentially_flipped", "total_coords",
-    "coord_diff_correct", "coord_diff_input"
+    "new_columns", "new_rows", "total_columns", "total_rows", "key_order", 
+    "check_on_water", "httpcode", "missing_coords", "on_water", "current_year", 
+    "potentially_flipped", "total_coords", "priority", "out_of_bounds",
+    "coord_diff_correct", "coord_diff_input",  "missing_count", 
+    "Column", "Is Completely Null", "Missing Count", "Missing Percent",
+    "Priority column", "column", "Priority", "non_unique_count", 
+    "proportion_unique", "total_count", "unique_count",
+    "Data_Value", "Geo_Column", "Missing_in_Shapefile",
+    "DataType", "VDPV1", "VDPV2", "VdpvClassifications", "WILD1",
+    "geo_id_cols", "geo_name_cols", "header", "Missing in Shapefile", 
+    "Non-unique Count", "Variable", "ID", "Test", "Value", "null_count"
     )
 )

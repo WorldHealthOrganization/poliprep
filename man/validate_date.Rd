@@ -4,25 +4,26 @@
 \alias{validate_date}
 \title{Validate Date Column}
 \usage{
-validate_date(data, date_col)
+validate_date(
+  data,
+  date_col,
+  tests = c("missing", "non_date", "sensible", "leap_year", "format"),
+  min_year = 2000
+)
 }
 \arguments{
 \item{data}{A data frame containing the date column.}
 
 \item{date_col}{The name of the date column.}
+
+\item{tests}{A character vector specifying which tests to run. Default is
+c("missing", "non_date", "sensible", "leap_year", "format").}
+
+\item{min_year}{The minimum year to consider as valid. Default is 2000.}
 }
 \value{
 The modified data frame with additional columns indicating issues
 found during the checks.
-Columns added:
-- \verb{\{date_col\}_missing}: Indicates if the date is missing.
-- \verb{\{date_col\}_non_date}: Indicates if the value is not a valid date.
-- \verb{\{date_col\}_invalid}: Indicates if the date is not sensible (e.g.,
-not starting with '20').
-- \verb{\{date_col\}_future}: Indicates if the date is in the future.
-- \verb{\{date_col\}_leap_issue}: Indicates if there are leap year issues.
-- \verb{\{date_col\}_format_issue}: Indicates if there are improper
-formatting issues.
 }
 \description{
 This function checks and validates a date column in a data frame. It
@@ -40,25 +41,21 @@ data <- data.frame(
 )
 
 # check whether dates column is valid 
-res <-  poliprep::validate_date(data, "date") 
+res <- validate_date(data, "date") 
 
-
-# Check for countries where there is a 
-# non-date issue in the date column
+# Check for countries where there is a non-date issue in the date column
 res |> 
- dplyr::filter(date_non_date == TRUE) |> 
- dplyr::count(country)
+  dplyr::filter(date_non_date == TRUE) |> 
+  dplyr::count(country)
 
-# Check for countries where there is a 
-# invalid leap year issue
+# Check for countries where there is an invalid leap year issue
 res |> 
-dplyr::filter(date_leap_issue == TRUE) |> 
-dplyr::count(country)
+  dplyr::filter(date_leap_issue == TRUE) |> 
+  dplyr::count(country)
 
-# Check for countries where there is a 
-# improper formatting of the date  
+# Check for countries where there is improper formatting of the date  
 res |> 
- dplyr::filter(date_format_issue == TRUE) |> 
- dplyr::count(country)
+  dplyr::filter(date_format_issue == TRUE) |> 
+  dplyr::count(country)
  
 }

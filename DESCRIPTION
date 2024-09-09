@@ -50,7 +50,10 @@ Suggests:
     glue,
     stringi,
     httpcode,
-    yaml
+    yaml,
+    scales,
+    webshot,
+    gt
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
