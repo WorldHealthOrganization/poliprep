@@ -38,6 +38,7 @@
 #' all(names(ref_dataframe) == names(target_dataframe))
 #' @export
 prep_match_names <- function(ref_dataframe, target_dataframe, report = TRUE) {
+  
   # Step 1): get the column names of the ref and target df
   ref_names <- names(ref_dataframe)
   target_names <- names(target_dataframe)

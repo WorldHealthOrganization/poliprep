@@ -20,7 +20,7 @@ check_status_api <- function(response) {
   # Conditional loading for packages
   if (!requireNamespace("httpcode", quietly = TRUE)) {
     stop(
-    "Package 'dplyr' is required but is not installed.Please install it.", 
+    "Package 'httpcode' is required but is not installed. Please install it.", 
     call. = FALSE)
   }
   
