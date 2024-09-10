@@ -36,22 +36,22 @@ focusing on hierarchical integrity and uniqueness of combinations.
 \examples{
 # Sample data
 sample_data <- data.frame(
- Id = c(1, 2, 3, 4, 5, 6, 7),
- Admin0GUID = c("A1", "A1", "A2", "A2", "A1", "A2", "A1"),
- Admin0Name = c(
-   "Country1", "Country1", "Country2", "Country2",
-   "Country1", "Country2", "Country1"
- ),
- Admin1GUID = c("B1", "B2", "B3", "B3", "B1", "B3", "B2"),
- Admin1Name = c(
-   "Province1", "Province2", "Province3", "Province3",
-   "Province1", "Province3", "Province2"
- ),
- Admin2GUID = c("C1", "C2", "C3", "C4", "C1", "C3", "C2"),
- Admin2Name = c(
-   "District1", "District2", "District3", "District4",
-   "District1", "District3", "District2"
- )
+  Id = c(1, 2, 3, 4, 5, 6, 7),
+  Admin0GUID = c("A1", "A1", "A2", "A2", "A1", "A2", "A1"),
+  Admin0Name = c(
+    "Country1", "Country1", "Country2", "Country2",
+    "Country1", "Country2", "Country1"
+  ),
+  Admin1GUID = c("B1", "B2", "B3", "B3", "B1", "B3", "B2"),
+  Admin1Name = c(
+    "Province1", "Province2", "Province3", "Province3",
+    "Province1", "Province3", "Province2"
+  ),
+  Admin2GUID = c("C1", "C2", "C3", "C4", "C1", "C3", "C2"),
+  Admin2Name = c(
+    "District1", "District2", "District3", "District4",
+    "District1", "District3", "District2"
+  )
 )
 
 # Check hierarchical integrity

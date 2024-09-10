@@ -21,15 +21,18 @@ and determines whether each point is located on land or water using
 Natural Earth data included in poliprep. It handles missing values gracefully.
 }
 \examples{
-# Create a data frame with test coordinates, known locations, and missing 
+# Create a data frame with test coordinates, known locations, and missing
 # values
 coords <- data.frame(
-   lat = c(40.7772, 40.2987, -1.1466, 1.7656, 4.6282, 5.5880, NA, 45.5017),
-   long = c(-74.1613, -70.7210, 32.9333, 22.8465, -0.6796,
-         -0.0420, -123.5673, NA),
-   actual_location = c(
-           "Land", "Ocean", "Inland Water", "Land", "Ocean", "Ocean", NA, NA)
- )
+  lat = c(40.7772, 40.2987, -1.1466, 1.7656, 4.6282, 5.5880, NA, 45.5017),
+  long = c(
+    -74.1613, -70.7210, 32.9333, 22.8465, -0.6796,
+    -0.0420, -123.5673, NA
+  ),
+  actual_location = c(
+    "Land", "Ocean", "Inland Water", "Land", "Ocean", "Ocean", NA, NA
+  )
+)
 
 # Apply the check_land_water function to the coordinates
 coords$predicted_location <- check_land_water(coords$long, coords$lat)

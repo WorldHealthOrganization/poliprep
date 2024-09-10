@@ -2,12 +2,18 @@
 % Please edit documentation in R/validate_data.R
 \name{validate_polis}
 \alias{validate_polis}
-\title{Validate POLIS Data and Generate Summary Report}
+\title{Validate POLIS Data}
 \usage{
 validate_polis(
   data,
   type = "AFP",
-  group_var = "ReportingYear",
+  group_var = NULL,
+  id_col = NULL,
+  geo_name_cols = NULL,
+  geo_id_cols = NULL,
+  lat_long_cols = NULL,
+  date_cols = NULL,
+  date_pair_cols = NULL,
   n_groups = 8,
   decreasing = FALSE,
   plots_path = NULL,
@@ -19,56 +25,74 @@ validate_polis(
 )
 }
 \arguments{
-\item{data}{A data frame containing the POLIS data to be validated.}
+\item{data}{A dataframe containing the POLIS data to be validated.}
 
-\item{type}{Character string specifying the type of data. Currently supports
-"AFP and ES". Default is "AFP".}
+\item{type}{Character string specifying the data type. Either "AFP" or "ES".}
 
-\item{group_var}{Character string specifying the column name to group by.
-Default is "ReportingYear".}
+\item{group_var}{Optional. The column name to group the data by. If NULL,
+uses default.}
 
-\item{n_groups}{Integer specifying the number of groups to include in the
-summary. Default is 8.}
+\item{id_col}{Optional. The column name for the unique identifier. If NULL,
+uses default.}
 
-\item{decreasing}{Logical indicating whether to sort groups in decreasing
-order. Default is FALSE.}
+\item{geo_name_cols}{Optional. A vector of column names for geographic names.
+If NULL, uses default.}
 
-\item{plots_path}{Character string specifying the directory path where output
-files should be saved. Required if save_output is TRUE.}
+\item{geo_id_cols}{Optional. A vector of column names for geographic IDs.
+If NULL, uses default.}
 
-\item{polis_version}{Character string specifying the version of POLIS data
-being used.}
+\item{lat_long_cols}{Optional. A vector of column names for latitude and
+longitude. If NULL, uses default.}
 
-\item{custom_title}{Optional character string for a custom title for the
-report. If NULL (default), a standard title is generated.}
+\item{date_cols}{Optional. A vector of column names for date fields. If NULL,
+uses default.}
 
-\item{save_output}{Logical indicating whether to save the output files.
+\item{date_pair_cols}{Optional. A list of date column pairs for comparison.
+If NULL, uses default.}
+
+\item{n_groups}{Integer. The number of groups to display in the summary.
+Default is 8.}
+
+\item{decreasing}{Logical. Whether to sort the groups in decreasing order.
 Default is FALSE.}
 
-\item{vheight}{Numeric value for the height of the output PNG file in pixels.
+\item{plots_path}{Optional. The file path to save output plots. Required if
+save_output is TRUE.}
+
+\item{polis_version}{Character string. The version of POLIS being used.
+Default is "2.37.1".}
+
+\item{custom_title}{Optional. A custom title for the output table.}
+
+\item{save_output}{Logical. Whether to save the output as HTML and PNG.
+Default is FALSE.}
+
+\item{vheight}{Integer. The height of the output image in pixels.
 Default is 1400.}
 
-\item{vwidth}{Numeric value for the width of the output PNG file in pixels.
-Default is 1550.}
+\item{vwidth}{Integer. The width of the output image in pixels. Default
+is 1550.}
 }
 \value{
 A list containing two elements:
-\item{gt_table}{A gt table object with formatted data quality summary}
-\item{id_data}{A data frame with detailed ID data}
+\item{gt_table}{A gt table object with the validation summary}
+\item{id_data}{A dataframe with detailed information for each unique
+identifier}
 }
 \description{
-This function validates POLIS (Polio Information System) data, creates a
-summary report, and optionally saves the output as HTML and PNG files.
+This function performs data quality checks on POLIS (Polio Information
+System) data.
 }
 \details{
-The function performs the following steps:
-\enumerate{
-\item Defines parameters for different data types (currently only AFP).
-\item Validates the input data type.
-\item Creates a summary of the data using create_summary_by_group().
-\item Generates a formatted gt table using create_gt_table().
-\item If save_output is TRUE, saves the output as HTML and PNG files.
-}
+This function performs various data quality checks on POLIS data, including
+checks for missing values, geographic data consistency, date field validity,
+and more. It allows for customization of column names and grouping
+variables, making it flexible for different data structures within the
+POLIS system.
+
+The function will use default parameters based on the specified data type
+(AFP or ES) if custom parameters are not provided. It also checks if all
+specified columns exist in the dataset before proceeding with the analysis.
 }
 \examples{
 # Assuming polis_data is your dataset and you have the necessary dependencies

@@ -44,5 +44,4 @@ and values for better readability.
 # summary_table <- create_summary_table(results)
 # print(summary_table)
 
-
 }

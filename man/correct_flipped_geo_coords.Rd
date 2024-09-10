@@ -50,35 +50,39 @@ by comparing them with a reference shapefile.
 \examples{
 # Using default global shapefile
 data <- data.frame(
-   id = c("38E294F7-508F-46A2-B5CF-B1D2FD6B2103", 
-          "1965B8ED-CD56-4784-BEB4-6924A245F533"),
-   lat = c(40.7128, -74.0060),
-   lon = c(-74.0060, 40.7128)
- )
- 
- corrected_data <- correct_flipped_geo_coords(
-   data,
-   join_key_a = "id",
-   lat_col = "lat",
-   lon_col = "lon"
- )
+  id = c(
+    "38E294F7-508F-46A2-B5CF-B1D2FD6B2103",
+    "1965B8ED-CD56-4784-BEB4-6924A245F533"
+  ),
+  lat = c(40.7128, -74.0060),
+  lon = c(-74.0060, 40.7128)
+)
 
- # Using custom shapefile
- custom_shapefile <- data.frame(
-   region_id = c("38E294F7-508F-46A2-B5CF-B1D2FD6B2103", 
-                 "1965B8ED-CD56-4784-BEB4-6924A245F533"),
-   correct_lat = c(40.7128, 41.8781),
-   correct_lon = c(-74.0060, -87.6298)
- )
- corrected_data <- correct_flipped_geo_coords(
-   data,
-   shapefile_data = custom_shapefile,
-   join_key_a = "id",
-   join_key_b = "region_id",
-   lat_col = "lat",
-   lon_col = "lon",
-   correct_lat_col = "correct_lat",
-   correct_lon_col = "correct_lon"
- )
- 
+corrected_data <- correct_flipped_geo_coords(
+  data,
+  join_key_a = "id",
+  lat_col = "lat",
+  lon_col = "lon"
+)
+
+# Using custom shapefile
+custom_shapefile <- data.frame(
+  region_id = c(
+    "38E294F7-508F-46A2-B5CF-B1D2FD6B2103",
+    "1965B8ED-CD56-4784-BEB4-6924A245F533"
+  ),
+  correct_lat = c(40.7128, 41.8781),
+  correct_lon = c(-74.0060, -87.6298)
+)
+corrected_data <- correct_flipped_geo_coords(
+  data,
+  shapefile_data = custom_shapefile,
+  join_key_a = "id",
+  join_key_b = "region_id",
+  lat_col = "lat",
+  lon_col = "lon",
+  correct_lat_col = "correct_lat",
+  correct_lon_col = "correct_lon"
+)
+
 }

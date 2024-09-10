@@ -37,6 +37,6 @@ and NA is returned in such cases.
 \examples{
 calculate_distance(0, 0, 1, 1)
 calculate_distance(-180, 90, 180, -90)
-calculate_distance(0, 91, 0, 0)  # Returns NA due to invalid latitude
+calculate_distance(0, 91, 0, 0) # Returns NA due to invalid latitude
 
 }
