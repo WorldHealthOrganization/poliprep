@@ -733,6 +733,7 @@ check_data <- function(data,
       ) |>
       dplyr::filter(is.na(Value)) |>
       dplyr::distinct(!!rlang::sym(id_col), Column) |>
+      dplyr::mutate(`Column Type` = "Geo") |> 
       dplyr::mutate(Test = glue::glue("{Column} is missing")) |>
       dplyr::select(-Column) |>
       as.data.frame()
@@ -1544,44 +1545,58 @@ create_gt_table <- function(summary_data,
   return(gt_table)
 }
 
-#' Validate POLIS Data and Generate Summary Report
+#' Validate POLIS Data
 #'
-#' This function validates POLIS (Polio Information System) data, creates a
-#' summary report, and optionally saves the output as HTML and PNG files.
+#' This function performs data quality checks on POLIS (Polio Information 
+#' System) data.
 #'
-#' @param data A data frame containing the POLIS data to be validated.
-#' @param type Character string specifying the type of data. Currently supports
-#'    "AFP and ES". Default is "AFP".
-#' @param group_var Character string specifying the column name to group by.
-#'    Default is "ReportingYear".
-#' @param n_groups Integer specifying the number of groups to include in the
-#'    summary. Default is 8.
-#' @param decreasing Logical indicating whether to sort groups in decreasing
-#'    order. Default is FALSE.
-#' @param plots_path Character string specifying the directory path where output
-#'    files should be saved. Required if save_output is TRUE.
-#' @param polis_version Character string specifying the version of POLIS data
-#'    being used.
-#' @param custom_title Optional character string for a custom title for the
-#'    report. If NULL (default), a standard title is generated.
-#' @param save_output Logical indicating whether to save the output files.
+#' @param data A dataframe containing the POLIS data to be validated.
+#' @param type Character string specifying the data type. Either "AFP" or "ES".
+#' @param group_var Optional. The column name to group the data by. If NULL, 
+#'    uses default.
+#' @param id_col Optional. The column name for the unique identifier. If NULL, 
+#'    uses default.
+#' @param geo_name_cols Optional. A vector of column names for geographic names. 
+#'    If NULL, uses default.
+#' @param geo_id_cols Optional. A vector of column names for geographic IDs. 
+#'    If NULL, uses default.
+#' @param lat_long_cols Optional. A vector of column names for latitude and 
+#'    longitude. If NULL, uses default.
+#' @param date_cols Optional. A vector of column names for date fields. If NULL, 
+#'    uses default.
+#' @param date_pair_cols Optional. A list of date column pairs for comparison. 
+#'    If NULL, uses default.
+#' @param n_groups Integer. The number of groups to display in the summary. 
+#'    Default is 8.
+#' @param decreasing Logical. Whether to sort the groups in decreasing order. 
 #'    Default is FALSE.
-#' @param vheight Numeric value for the height of the output PNG file in pixels.
+#' @param plots_path Optional. The file path to save output plots. Required if 
+#'    save_output is TRUE.
+#' @param polis_version Character string. The version of POLIS being used. 
+#'    Default is "2.37.1".
+#' @param custom_title Optional. A custom title for the output table.
+#' @param save_output Logical. Whether to save the output as HTML and PNG. 
+#'    Default is FALSE.
+#' @param vheight Integer. The height of the output image in pixels. 
 #'    Default is 1400.
-#' @param vwidth Numeric value for the width of the output PNG file in pixels.
-#'    Default is 1550.
+#' @param vwidth Integer. The width of the output image in pixels. Default 
+#'    is 1550.
 #'
 #' @return A list containing two elements:
-#'   \item{gt_table}{A gt table object with formatted data quality summary}
-#'   \item{id_data}{A data frame with detailed ID data}
+#'   \item{gt_table}{A gt table object with the validation summary}
+#'   \item{id_data}{A dataframe with detailed information for each unique 
+#'    identifier}
 #'
 #' @details
-#' The function performs the following steps:
-#' 1. Defines parameters for different data types (currently only AFP).
-#' 2. Validates the input data type.
-#' 3. Creates a summary of the data using create_summary_by_group().
-#' 4. Generates a formatted gt table using create_gt_table().
-#' 5. If save_output is TRUE, saves the output as HTML and PNG files.
+#' This function performs various data quality checks on POLIS data, including 
+#'  checks for missing values, geographic data consistency, date field validity, 
+#'  and more. It allows for customization of column names and grouping 
+#'  variables, making it flexible for different data structures within the 
+#'  POLIS system.
+#'
+#' The function will use default parameters based on the specified data type 
+#' (AFP or ES) if custom parameters are not provided. It also checks if all 
+#' specified columns exist in the dataset before proceeding with the analysis.
 #'
 #' @examples
 #' # Assuming polis_data is your dataset and you have the necessary dependencies
@@ -1600,13 +1615,20 @@ create_gt_table <- function(summary_data,
 #'
 #' @export
 validate_polis <- function(data, type = "AFP",
-                           group_var = "ReportingYear",
+                           group_var = NULL,
+                           id_col = NULL,
+                           geo_name_cols = NULL,
+                           geo_id_cols = NULL,
+                           lat_long_cols = NULL,
+                           date_cols = NULL,
+                           date_pair_cols = NULL,
                            n_groups = 8,
                            decreasing = FALSE,
                            plots_path = NULL,
                            polis_version = "2.37.1",
                            custom_title = NULL, save_output = FALSE,
                            vheight = 1400, vwidth = 1550) {
+  
   # Conditional loading for packages
   required_packages <- c("scales", "gt", "glue", "webshot")
 
@@ -1626,7 +1648,7 @@ validate_polis <- function(data, type = "AFP",
   }
 
   # Define parameters based on data type
-  params <- list(
+  default_params <- list(
     AFP = list(
       group_var = group_var,
       id_col = "EPID",
@@ -1645,34 +1667,101 @@ validate_polis <- function(data, type = "AFP",
       )
     ),
     ES = list(
-      # Placeholder for Environmental Surveillance parameters
-      # To be specified later
+      group_var = group_var,
+      id_col = "SampleId",
+      geo_name_cols = c("Admin0Name", "Admin1Name", "Admin2Name"),
+      geo_id_cols = c("Admin0GUID", "Admin1GUID", "Admin2GUID"),
+      lat_long_cols = c("SiteYCoordinate", "SiteXCoordinate"),
+      date_cols = c(
+        "CollectionDate", "DateShippedToRefLab", "DateReceivedInLab",
+        "DateFinalCultureResult", "DateFinalResultsReported"
+      ),
+      date_pair_cols = list(
+        c("CollectionDate", "DateShippedToRefLab"),
+        c("CollectionDate", "DateReceivedInLab"),
+        c("CollectionDate", "DateFinalResultsReported")
+      )
     )
   )
 
-  if (!type %in% names(params)) {
+  if (!type %in% names(default_params)) {
     stop(
       "Invalid data type. Supported types are: ",
-      paste(names(params), collapse = ", ")
+      paste(names(default_params), collapse = ", ")
     )
   }
 
+  # Use provided parameters if not NULL, otherwise use defaults
+  params <- list(
+    group_var = if (!is.null(group_var)) {
+      group_var
+    } else {
+      default_params[[type]]$group_var
+    },
+    id_col = if (!is.null(id_col)) {
+      id_col
+    } else {
+      default_params[[type]]$id_col
+    },
+    geo_name_cols = if (!is.null(geo_name_cols)) {
+      geo_name_cols
+    } else {
+      default_params[[type]]$geo_name_cols
+    },
+    geo_id_cols = if (!is.null(geo_id_cols)) {
+      geo_id_cols
+    } else {
+      default_params[[type]]$geo_id_cols
+    },
+    lat_long_cols = if (!is.null(lat_long_cols)) {
+      lat_long_cols
+    } else {
+      default_params[[type]]$lat_long_cols
+    },
+    date_cols = if (!is.null(date_cols)) {
+      date_cols
+    } else {
+      default_params[[type]]$date_cols
+    },
+    date_pair_cols = if (!is.null(date_pair_cols)) {
+      date_pair_cols
+    } else {
+      default_params[[type]]$date_pair_cols
+    }
+  )
+
+  # Check if all specified columns exist in the dataset
+  all_cols <- c(
+    params$group_var, params$id_col, params$geo_name_cols,
+    params$geo_id_cols, params$lat_long_cols, params$date_cols,
+    unlist(params$date_pair_cols)
+  )
+  missing_cols <- setdiff(all_cols, names(data))
+
+  if (length(missing_cols) > 0) {
+    stop(paste(
+      "The following columns are not present in the dataset:",
+      paste(missing_cols, collapse = ", ")
+    ))
+  }
+
+
   summary <- create_summary_by_group(
     data = data,
-    group_var = params[[type]]$group_var,
-    id_col = params[[type]]$id_col,
-    geo_name_cols = params[[type]]$geo_name_cols,
-    geo_id_cols = params[[type]]$geo_id_cols,
-    lat_long_cols = params[[type]]$lat_long_cols,
-    date_cols = params[[type]]$date_cols,
-    date_pair_cols = params[[type]]$date_pair_cols,
+    group_var = params$group_var,
+    id_col = params$id_col,
+    geo_name_cols = params$geo_name_cols,
+    geo_id_cols = params$geo_id_cols,
+    lat_long_cols = params$lat_long_cols,
+    date_cols = params$date_cols,
+    date_pair_cols = params$date_pair_cols,
     n_groups = n_groups,
     decreasing = decreasing
   )
 
   title <- if (is.null(custom_title)) {
     glue::glue(
-      "POLIS {type} Data Quality Checks for ",
+      "POLIS {type} Data Quality Checks ",
       "(POLIS Version: {polis_version})"
     )
   } else {
