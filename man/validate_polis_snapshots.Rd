@@ -9,6 +9,7 @@ validate_polis_snapshots(
   data_type = "AFP",
   year_of_interest = 2024,
   pattern = NULL,
+  data_type_string = NULL,
   snapshots = 6,
   plots_path,
   custom_title = NULL,
@@ -26,6 +27,8 @@ validate_polis_snapshots(
 2024.}
 
 \item{pattern}{Character. Pattern to match snapshot files. Default is NULL.}
+
+\item{data_type_string}{String of data list name}
 
 \item{snapshots}{Numeric. Number of snapshots to validate. Default is 6.}
 
