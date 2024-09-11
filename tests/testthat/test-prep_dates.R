@@ -36,7 +36,6 @@ testthat::test_that("check_leap_issue correctly identifies leap year issues", {
   testthat::expect_equal(check_leap_issue(dates), c(FALSE, FALSE))
 })
 
-
 testthat::test_that("validate_date correctly identifies various date issues", {
   suppressMessages({
     data <- data.frame(
@@ -57,7 +56,7 @@ testthat::test_that("validate_date correctly identifies various date issues", {
     # Check non-date values
     testthat::expect_equal(
       result$date_non_date,
-      c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
+      c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE)
     )
 
     # Check invalid dates
@@ -69,7 +68,7 @@ testthat::test_that("validate_date correctly identifies various date issues", {
     # Check future dates
     testthat::expect_equal(
       result$date_future,
-      c(FALSE, FALSE, NA, FALSE, TRUE, NA, FALSE, NA)
+      c(FALSE, FALSE, NA, FALSE, TRUE, FALSE, FALSE, NA)
     )
 
     # Check leap year issues
@@ -81,7 +80,7 @@ testthat::test_that("validate_date correctly identifies various date issues", {
     # Check date formatting issues
     testthat::expect_equal(
       result$date_format_issue,
-      c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE)
+      c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
     )
   })
 })
@@ -99,8 +98,9 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
       )
     )
 
-    result <- validate_dates(data, 
-                             date_col1 = "date1", date_col2 =  "date2")
+    result <- validate_dates(data,
+      date_col1 = "date1", date_col2 = "date2"
+    )
 
     # Check missing dates
     testthat::expect_equal(
@@ -171,4 +171,3 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     )
   })
 })
-

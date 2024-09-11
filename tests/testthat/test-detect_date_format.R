@@ -1,8 +1,10 @@
 testthat::test_that("detects simple date formats correctly", {
   testthat::expect_equal(
-    detect_date_format(c("01-02-2021", "02-03-2021")), "%d-%m-%Y")
+    detect_date_format(c("01-02-2021", "02-03-2021")), "%d-%m-%Y"
+  )
   testthat::expect_equal(
-    detect_date_format(c("2021/02/01", "2021/03/02")), "%Y/%m/%d")
+    detect_date_format(c("2021/02/01", "2021/03/02")), "%Y/%m/%d"
+  )
 })
 
 testthat::test_that("handles mixed format vectors", {
@@ -16,7 +18,9 @@ testthat::test_that("returns NA when no dates are parsed", {
 })
 
 testthat::test_that("handles additional arguments correctly", {
-  dates <- c("01-02-21", "02-03-21")  # Ambiguous year format
+  dates <- c("01-02-21", "02-03-21") # Ambiguous year format
   testthat::expect_equal(detect_date_format(
-    dates, common_formats = "%d-%m-%y"), "%d-%m-%y")
+    dates,
+    common_formats = "%d-%m-%y"
+  ), "%d-%m-%y")
 })
