@@ -24,8 +24,9 @@ create_summary_by_group(
   run_geo_hierarchy_check = TRUE,
   run_geo_mismatch_check = TRUE,
   run_coordinate_checks = TRUE,
+  run_detections = FALSE,
   coordinate_checks = c("flip", "on_water", "missing", "out_of_bounds", "precision",
-    "null_coords"),
+    "null_coords", "parse"),
   n_groups = 4,
   decreasing = FALSE
 )
@@ -79,6 +80,8 @@ check (default is TRUE).}
 
 \item{run_coordinate_checks}{Logical; if TRUE, runs coordinate validation
 checks (default is TRUE).}
+
+\item{run_detections}{Logical, whether to run virus detections checks.}
 
 \item{coordinate_checks}{Character vector specifying which coordinate checks
 to run.}

@@ -53,7 +53,11 @@ Suggests:
     yaml,
     scales,
     webshot,
-    gt
+    gt,
+    parzer,
+    readr,
+    zoo,
+    ggplot2
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true

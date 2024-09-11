@@ -1,27 +1,30 @@
 # Declare global variables for package check
 globalVariables(
-  c(".data", ":=", "AdminToClean", "Algorithm", "Distance", "MatchRank", 
-    "MatchedNames", "X", "country", "district_prepped", "district", 
+  c(
+    ".data", ":=", "AdminToClean", "Algorithm", "Distance", "MatchRank",
+    "MatchedNames", "X", "country", "district_prepped", "district",
     "province_prepped", "country_prepped", "long_geo",
-    "dot_name", "joined_adm", "level",  "matches", "name_alias", "replacement",
-    "name_corrected", "name_corrected2", "province", "_id",  "matched_names", 
+    "dot_name", "joined_adm", "level", "matches", "name_alias", "replacement",
+    "name_corrected", "name_corrected2", "province", "_id", "matched_names",
     "date_last_updated", "form_id", "form_id_num", "last_date_in_chunk", "x",
-    "ADM0_NAME", "ADM1_NAME", "ADM2_NAME", "name_to_match",  "match_rank",
+    "ADM0_NAME", "ADM1_NAME", "ADM2_NAME", "name_to_match", "match_rank",
     "algorithm_name", "created_time", "distance", "name_of_creator",
     "level0_prepped", "level1_prepped", "level2_prepped", "log_message",
-    "longname_corrected", "longname_to_match", "log_results", "lat_precision", 
-    "CENTER_LAT", "CENTER_LON", "ENDDATE", "low_precision",  "lon_precision", 
+    "longname_corrected", "longname_to_match", "log_results", "lat_precision",
+    "CENTER_LAT", "CENTER_LON", "ENDDATE", "low_precision", "lon_precision",
     "dist_correct", "dist_flipped", "flipped", "temp_lat", "temp_lon",
-    "new_columns", "new_rows", "total_columns", "total_rows", "key_order", 
-    "check_on_water", "httpcode", "missing_coords", "on_water", "current_year", 
+    "new_columns", "new_rows", "total_columns", "total_rows", "key_order",
+    "check_on_water", "httpcode", "missing_coords", "on_water", "current_year",
     "potentially_flipped", "total_coords", "priority", "out_of_bounds",
-    "coord_diff_correct", "coord_diff_input",  "missing_count", 
+    "coord_diff_correct", "coord_diff_input", "missing_count",
     "Column", "Is Completely Null", "Missing Count", "Missing Percent",
-    "Priority column", "column", "Priority", "non_unique_count", 
+    "Priority column", "column", "Priority", "non_unique_count",
     "proportion_unique", "total_count", "unique_count",
     "Data_Value", "Geo_Column", "Missing_in_Shapefile",
     "DataType", "VDPV1", "VDPV2", "VdpvClassifications", "WILD1",
-    "geo_id_cols", "geo_name_cols", "header", "Missing in Shapefile", 
-    "Non-unique Count", "Variable", "ID", "Test", "Value", "null_count"
-    )
+    "geo_id_cols", "geo_name_cols", "header", "Missing in Shapefile",
+    "Non-unique Count", "Variable", "ID", "Test", "Value", "null_count",
+    "Lat_parzer", "Long_parzer", "parse_failed", "parsed_date", "parsed_date1",
+    "parsed_date2", "Total"
+  )
 )

@@ -32,30 +32,32 @@ leap year validity, and date formatting.
 }
 \examples{
 data <- data.frame(
-  country = c("Rwanda", "Burundi", "Ethiopia", "Zambia", "Zambia",
-              "Chad", "Niger", "Angola"),
+  country = c(
+    "Rwanda", "Burundi", "Ethiopia", "Zambia", "Zambia",
+    "Chad", "Niger", "Angola"
+  ),
   date = c(
     "2023-06-15", "2024-07-20", NA, "1999-12-31", "2025-08-22",
     "2020/23/10", "2020-02-29", "2019-02-29"
   )
 )
 
-# check whether dates column is valid 
-res <- validate_date(data, "date") 
+# check whether dates column is valid
+res <- validate_date(data, "date")
 
 # Check for countries where there is a non-date issue in the date column
-res |> 
-  dplyr::filter(date_non_date == TRUE) |> 
+res |>
+  dplyr::filter(date_non_date == TRUE) |>
   dplyr::count(country)
 
 # Check for countries where there is an invalid leap year issue
-res |> 
-  dplyr::filter(date_leap_issue == TRUE) |> 
+res |>
+  dplyr::filter(date_leap_issue == TRUE) |>
   dplyr::count(country)
 
-# Check for countries where there is improper formatting of the date  
-res |> 
-  dplyr::filter(date_format_issue == TRUE) |> 
+# Check for countries where there is improper formatting of the date
+res |>
+  dplyr::filter(date_format_issue == TRUE) |>
   dplyr::count(country)
- 
+
 }

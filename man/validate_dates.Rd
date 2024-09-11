@@ -38,8 +38,10 @@ if the first date is before the second date.
 }
 \examples{
 data <- data.frame(
-  country = c("Rwanda", "Burundi", "Ethiopia", "Zambia", "Zambia",
-              "Chad", "Niger", "Angola"),
+  country = c(
+    "Rwanda", "Burundi", "Ethiopia", "Zambia", "Zambia",
+    "Chad", "Niger", "Angola"
+  ),
   date1 = c(
     "2024-06-15", "2024-07-20", NA, "1999-12-31", "2025-08-22",
     "2020/23/10", "2020-02-29", "2024-02-29"
@@ -50,26 +52,26 @@ data <- data.frame(
   )
 )
 
-res <- validate_dates(data, "date1", "date2") 
+res <- validate_dates(data, "date1", "date2")
 
 # Check for countries where there is a non-date issue in the date1 column
-res |> 
-  dplyr::filter(date1_non_date == TRUE) |> 
+res |>
+  dplyr::filter(date1_non_date == TRUE) |>
   dplyr::count(country)
 
 # Check for countries where there is an invalid leap year issue in date1
-res |> 
-  dplyr::filter(date1_leap_issue == TRUE) |> 
+res |>
+  dplyr::filter(date1_leap_issue == TRUE) |>
   dplyr::count(country)
 
-# Check for countries where there is improper formatting of date1 col  
-res |> 
-  dplyr::filter(date1_format_issue == TRUE) |> 
+# Check for countries where there is improper formatting of date1 col
+res |>
+  dplyr::filter(date1_format_issue == TRUE) |>
   dplyr::count(country)
 
 # Check for countries where date1 is after date2
-res |> 
-  dplyr::filter(date1_invalid_order == TRUE) |> 
+res |>
+  dplyr::filter(date1_invalid_order == TRUE) |>
   dplyr::count(country)
- 
+
 }

@@ -618,6 +618,7 @@ join_and_check_mismatches <- function(data, shapefile_data = NULL,
 #' @param run_geo_mismatch_check Logical, whether to run geographic mismatch
 #'    check.
 #' @param run_coordinate_checks Logical, whether to run coordinate checks.
+#' @param run_detections Logical, whether to run virus detections checks.
 #' @param coordinate_checks Character vector specifying which coordinate checks
 #'    to run.
 #'
@@ -681,10 +682,11 @@ check_data <- function(data,
                        run_geo_hierarchy_check = TRUE,
                        run_geo_mismatch_check = TRUE,
                        run_coordinate_checks = TRUE,
+                       run_detections = TRUE,
                        coordinate_checks = c(
                          "flip", "on_water", "missing",
                          "out_of_bounds", "precision",
-                         "null_coords"
+                         "null_coords", "parse"
                        )) {
   # Initialize results list
   full_results <- list()
@@ -733,7 +735,7 @@ check_data <- function(data,
       ) |>
       dplyr::filter(is.na(Value)) |>
       dplyr::distinct(!!rlang::sym(id_col), Column) |>
-      dplyr::mutate(`Column Type` = "Geo") |> 
+      dplyr::mutate(`Column Type` = "Geo") |>
       dplyr::mutate(Test = glue::glue("{Column} is missing")) |>
       dplyr::select(-Column) |>
       as.data.frame()
@@ -898,7 +900,7 @@ check_data <- function(data,
       summary_table = TRUE,
       checks = coordinate_checks
     )
-
+    coord_check_results$var1
     # add coordinate_checks to results
     full_results$coordinate_checks <- coord_check_results
 
@@ -916,68 +918,88 @@ check_data <- function(data,
     )
 
     full_results$coord_issue_id <- dplyr::bind_rows(
-      coord_check_results |>
-        dplyr::filter(on_water != "Land") |>
-        dplyr::distinct(!!rlang::sym(id_col)) |>
-        dplyr::mutate(Test = "on_water"),
-      coord_check_results |>
-        dplyr::filter(potentially_flipped == TRUE) |>
-        dplyr::distinct(!!rlang::sym(id_col)) |>
-        dplyr::mutate(Test = "potentially_flipped"),
-      coord_check_results |>
-        dplyr::filter(null_count == TRUE) |>
-        dplyr::distinct(!!rlang::sym(id_col)) |>
-        dplyr::mutate(Test = "null_count"),
-      coord_check_results |>
-        dplyr::filter(out_of_bounds == TRUE) |>
-        dplyr::distinct(!!rlang::sym(id_col)) |>
-        dplyr::mutate(Test = "out_of_bounds"),
-      coord_check_results |>
-        dplyr::filter(low_precision == TRUE) |>
-        dplyr::distinct(!!rlang::sym(id_col)) |>
-        dplyr::mutate(Test = "low_precision"),
-      coord_check_results |>
-        dplyr::filter(missing_coords == TRUE) |>
-        dplyr::distinct(!!rlang::sym(id_col)) |>
-        dplyr::mutate(Test = "missing_coords")
+      if ("parse" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(parse_failed == TRUE) |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "parse_failed")
+      },
+      if ("on_water" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(on_water != "Land") |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "on_water")
+      },
+      if ("flip" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(potentially_flipped == TRUE) |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "potentially_flipped")
+      },
+      if ("null_coords" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(null_count == TRUE) |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "null_count")
+      },
+      if ("out_of_bounds" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(out_of_bounds == TRUE) |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "out_of_bounds")
+      },
+      if ("precision" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(low_precision == TRUE) |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "low_precision")
+      },
+      if ("missing" %in% coordinate_checks) {
+        coord_check_results |>
+          dplyr::filter(missing_coords == TRUE) |>
+          dplyr::distinct(!!rlang::sym(id_col)) |>
+          dplyr::mutate(Test = "missing_coords")
+      }
     ) |>
       dplyr::mutate(`Column Type` = "Coordinate")
   }
 
-  # set up data identify detections
-  data2 <- data |>
-    dplyr::mutate(
-      cVDPV1 = if ("VDPV1" %in% names(data)) {
-        dplyr::if_else(VDPV1 == TRUE & VdpvClassifications == "Circulating",
-          TRUE, FALSE, missing = FALSE
-        )
-      },
-      cVDPV2 = if ("VDPV2" %in% names(data)) {
-        dplyr::if_else(VDPV2 == TRUE & VdpvClassifications == "Circulating",
-          TRUE, FALSE, missing = FALSE
-        )
-      },
-      WPV1 = if ("WILD1" %in% names(data)) {
-        dplyr::if_else(WILD1 == TRUE, TRUE, FALSE, missing = FALSE)
-      } else {
-        FALSE
-      }
-    )
+  if (run_detections) {
+    # set up data identify detections
+    data2 <- data |>
+      dplyr::mutate(
+        cVDPV1 = if ("VDPV1" %in% names(data)) {
+          dplyr::if_else(VDPV1 == TRUE & VdpvClassifications == "Circulating",
+            TRUE, FALSE, missing = FALSE
+          )
+        },
+        cVDPV2 = if ("VDPV2" %in% names(data)) {
+          dplyr::if_else(VDPV2 == TRUE & VdpvClassifications == "Circulating",
+            TRUE, FALSE, missing = FALSE
+          )
+        },
+        WPV1 = if ("WILD1" %in% names(data)) {
+          dplyr::if_else(WILD1 == TRUE, TRUE, FALSE, missing = FALSE)
+        } else {
+          FALSE
+        }
+      )
 
-  full_results$wpv1_count <- if ("WPV1" %in% names(data2)) {
-    sum(data2$WPV1, na.rm = TRUE)
-  } else {
-    0
-  }
-  full_results$cvdpv1_count <- if ("cVDPV1" %in% names(data2)) {
-    sum(data2$cVDPV1, na.rm = TRUE)
-  } else {
-    0
-  }
-  full_results$cvdpv2_count <- if ("cVDPV2" %in% names(data2)) {
-    sum(data2$cVDPV2, na.rm = TRUE)
-  } else {
-    0
+    full_results$wpv1_count <- if ("WPV1" %in% names(data2)) {
+      sum(data2$WPV1, na.rm = TRUE)
+    } else {
+      0
+    }
+    full_results$cvdpv1_count <- if ("cVDPV1" %in% names(data2)) {
+      sum(data2$cVDPV1, na.rm = TRUE)
+    } else {
+      0
+    }
+    full_results$cvdpv2_count <- if ("cVDPV2" %in% names(data2)) {
+      sum(data2$cVDPV2, na.rm = TRUE)
+    } else {
+      0
+    }
   }
 
   full_results$total_columns <- ncol(data)
@@ -1161,6 +1183,7 @@ create_summary_table <- function(data) {
         Column == "Total Columns" ~ "Total Columns",
         Column == "Total Duplicate" ~ "Total Duplicate Rows",
         Column == "Missing Coords" ~ "Missing Coordinates",
+        Column == "Parse Failed" ~ "Coordinates Failed to Parse",
         Column == "Null Coords" ~
           "Null Coordinates (Latitude and Longitude are 0, 0)",
         Column == "Out of Bounds" ~
@@ -1234,6 +1257,7 @@ create_summary_table <- function(data) {
     ) |>
       dplyr::mutate(
         Test = dplyr::case_when(
+          Test == "parse_failed" ~ "Coordinates Failed to Parse",
           Test == "missing_coords" ~ "Missing Coordinate Values",
           Test == "null_count" ~
             "Null Coordinates (Latitude And Longitude Are 0, 0)",
@@ -1312,6 +1336,7 @@ create_summary_table <- function(data) {
 #'   check (default is TRUE).
 #' @param run_coordinate_checks Logical; if TRUE, runs coordinate validation
 #'   checks (default is TRUE).
+#' @param run_detections Logical, whether to run virus detections checks.
 #' @param coordinate_checks Character vector specifying which coordinate checks
 #'   to run.
 #' @param n_groups The number of groups to include in the summary (def is 4).
@@ -1357,12 +1382,13 @@ create_summary_by_group <- function(data, group_var, id_col, geo_name_cols,
                                     run_geo_hierarchy_check = TRUE,
                                     run_geo_mismatch_check = TRUE,
                                     run_coordinate_checks = TRUE,
+                                    run_detections = FALSE,
                                     coordinate_checks = c(
                                       "flip", "on_water",
                                       "missing",
                                       "out_of_bounds",
                                       "precision",
-                                      "null_coords"
+                                      "null_coords", "parse"
                                     ),
                                     n_groups = 4, decreasing = FALSE) {
   # Get unique groups and sort them
@@ -1394,7 +1420,8 @@ create_summary_by_group <- function(data, group_var, id_col, geo_name_cols,
       run_geo_hierarchy_check = run_geo_hierarchy_check,
       run_geo_mismatch_check = run_geo_mismatch_check,
       run_coordinate_checks = run_coordinate_checks,
-      coordinate_checks = coordinate_checks
+      coordinate_checks = coordinate_checks,
+      run_detections = run_detections
     ) |>
       create_summary_table()
   }
@@ -1547,55 +1574,56 @@ create_gt_table <- function(summary_data,
 
 #' Validate POLIS Data
 #'
-#' This function performs data quality checks on POLIS (Polio Information 
+#' This function performs data quality checks on POLIS (Polio Information
 #' System) data.
 #'
 #' @param data A dataframe containing the POLIS data to be validated.
 #' @param type Character string specifying the data type. Either "AFP" or "ES".
-#' @param group_var Optional. The column name to group the data by. If NULL, 
+#' @param group_var Optional. The column name to group the data by. If NULL,
 #'    uses default.
-#' @param id_col Optional. The column name for the unique identifier. If NULL, 
+#' @param id_col Optional. The column name for the unique identifier. If NULL,
 #'    uses default.
-#' @param geo_name_cols Optional. A vector of column names for geographic names. 
+#' @param geo_name_cols Optional. A vector of column names for geographic names.
 #'    If NULL, uses default.
-#' @param geo_id_cols Optional. A vector of column names for geographic IDs. 
+#' @param geo_id_cols Optional. A vector of column names for geographic IDs.
 #'    If NULL, uses default.
-#' @param lat_long_cols Optional. A vector of column names for latitude and 
+#' @param lat_long_cols Optional. A vector of column names for latitude and
 #'    longitude. If NULL, uses default.
-#' @param date_cols Optional. A vector of column names for date fields. If NULL, 
+#' @param date_cols Optional. A vector of column names for date fields. If NULL,
 #'    uses default.
-#' @param date_pair_cols Optional. A list of date column pairs for comparison. 
+#' @param date_pair_cols Optional. A list of date column pairs for comparison.
 #'    If NULL, uses default.
-#' @param n_groups Integer. The number of groups to display in the summary. 
+#' @param n_groups Integer. The number of groups to display in the summary.
 #'    Default is 8.
-#' @param decreasing Logical. Whether to sort the groups in decreasing order. 
+#' @param decreasing Logical. Whether to sort the groups in decreasing order.
 #'    Default is FALSE.
-#' @param plots_path Optional. The file path to save output plots. Required if 
+#' @param plots_path Optional. The file path to save output plots. Required if
 #'    save_output is TRUE.
-#' @param polis_version Character string. The version of POLIS being used. 
+#' @param polis_version Character string. The version of POLIS being used.
 #'    Default is "2.37.1".
 #' @param custom_title Optional. A custom title for the output table.
-#' @param save_output Logical. Whether to save the output as HTML and PNG. 
+#' @param save_output Logical. Whether to save the output as HTML and PNG.
 #'    Default is FALSE.
-#' @param vheight Integer. The height of the output image in pixels. 
+#' @param vheight Integer. The height of the output image in pixels.
 #'    Default is 1400.
-#' @param vwidth Integer. The width of the output image in pixels. Default 
+#' @param vwidth Integer. The width of the output image in pixels. Default
 #'    is 1550.
+#' @param ... Additional arguments passed to internal functions.
 #'
 #' @return A list containing two elements:
 #'   \item{gt_table}{A gt table object with the validation summary}
-#'   \item{id_data}{A dataframe with detailed information for each unique 
+#'   \item{id_data}{A dataframe with detailed information for each unique
 #'    identifier}
 #'
 #' @details
-#' This function performs various data quality checks on POLIS data, including 
-#'  checks for missing values, geographic data consistency, date field validity, 
-#'  and more. It allows for customization of column names and grouping 
-#'  variables, making it flexible for different data structures within the 
+#' This function performs various data quality checks on POLIS data, including
+#'  checks for missing values, geographic data consistency, date field validity,
+#'  and more. It allows for customization of column names and grouping
+#'  variables, making it flexible for different data structures within the
 #'  POLIS system.
 #'
-#' The function will use default parameters based on the specified data type 
-#' (AFP or ES) if custom parameters are not provided. It also checks if all 
+#' The function will use default parameters based on the specified data type
+#' (AFP or ES) if custom parameters are not provided. It also checks if all
 #' specified columns exist in the dataset before proceeding with the analysis.
 #'
 #' @examples
@@ -1627,8 +1655,7 @@ validate_polis <- function(data, type = "AFP",
                            plots_path = NULL,
                            polis_version = "2.37.1",
                            custom_title = NULL, save_output = FALSE,
-                           vheight = 1400, vwidth = 1550) {
-  
+                           vheight = 1400, vwidth = 1550, ...) {
   # Conditional loading for packages
   required_packages <- c("scales", "gt", "glue", "webshot")
 
@@ -1756,7 +1783,8 @@ validate_polis <- function(data, type = "AFP",
     date_cols = params$date_cols,
     date_pair_cols = params$date_pair_cols,
     n_groups = n_groups,
-    decreasing = decreasing
+    decreasing = decreasing,
+    ...
   )
 
   title <- if (is.null(custom_title)) {
@@ -1794,4 +1822,380 @@ validate_polis <- function(data, type = "AFP",
   }
 
   return(list(gt_table = gt_table, id_data = summary$id_data))
+}
+
+#' Validate AFRO Data
+#'
+#' This function performs data quality checks on AFRO (African Regional Office)
+#' data before it is sent to POLIS (Polio Information System).
+#'
+#' @param data A dataframe containing the AFRO data to be validated.
+#' @param type Character string specifying the data type. Either "AFP" or "ES".
+#' @param group_var Optional. The column name to group the data by. If NULL,
+#'    uses default.
+#' @param id_col Optional. The column name for the unique identifier. If NULL,
+#'    uses default.
+#' @param geo_name_cols Optional. A vector of column names for geographic names.
+#'    If NULL, uses default.
+#' @param geo_id_cols Optional. A vector of column names for geographic IDs.
+#'    If NULL, uses default.
+#' @param lat_long_cols Optional. A vector of column names for latitude and
+#'    longitude. If NULL, uses default.
+#' @param date_cols Optional. A vector of column names for date fields. If NULL,
+#'    uses default.
+#' @param date_pair_cols Optional. A list of date column pairs for comparison.
+#'    If NULL, uses default.
+#' @param n_groups Integer. The number of groups to display in the summary.
+#'    Default is 8.
+#' @param decreasing Logical. Whether to sort the groups in decreasing order.
+#'    Default is FALSE.
+#' @param plots_path Optional. The file path to save output plots. Required if
+#'    save_output is TRUE.
+#' @param custom_title Optional. A custom title for the output table.
+#' @param save_output Logical. Whether to save the output as HTML and PNG.
+#'    Default is FALSE.
+#' @param vheight Integer. The height of the output image in pixels.
+#'    Default is 1400.
+#' @param vwidth Integer. The width of the output image in pixels. Default
+#'    is 1550.
+#' @param ... Additional arguments passed to internal functions.
+#'
+#' @return A list containing two elements:
+#'   \item{gt_table}{A gt table object with the validation summary}
+#'   \item{id_data}{A dataframe with detailed information for each unique
+#'    identifier}
+#'
+#' @details
+#' This function performs various data quality checks on AFRO data before it is
+#' sent to POLIS, including checks for missing values, geographic data
+#' consistency, date field validity, and more. It allows for customization of
+#' column names and grouping variables, making it flexible for different data
+#' structures within the AFRO system.
+#'
+#' The function will use default parameters based on the specified data type
+#' (AFP or ES) if custom parameters are not provided. It also checks if all
+#' specified columns exist in the dataset before proceeding with the analysis.
+#'
+#' @examples
+#' # Assuming afro_data is your dataset and you have the necessary dependencies
+#' # result <- validate_afro(afro_data, type = "AFP",
+#' #                        group_var = "ReportingYear",
+#' #                        n_groups = 8,
+#' #                        decreasing = FALSE,
+#' #                        plots_path = "/path/to/save/plots",
+#' #                        save_output = TRUE,
+#' #                        vheight = 1500, vwidth = 1600)
+#'
+#' # Access the GT table and ID data
+#' # gt_table <- result$gt_table
+#' # id_data <- result$id_data
+#'
+#' @export
+validate_afro <- function(data, type = "AFP",
+                          group_var = NULL,
+                          id_col = NULL,
+                          geo_name_cols = NULL,
+                          geo_id_cols = NULL,
+                          lat_long_cols = NULL,
+                          date_cols = NULL,
+                          date_pair_cols = NULL,
+                          n_groups = 8,
+                          decreasing = FALSE,
+                          plots_path = NULL,
+                          custom_title = NULL, save_output = FALSE,
+                          vheight = 1400, vwidth = 1550, ...) {
+  # Conditional loading for packages
+  required_packages <- c(
+    "scales", "zoo", "gt", "glue", "webshot"
+  )
+
+  missing_packages <- required_packages[!sapply(
+    required_packages, requireNamespace,
+    quietly = TRUE
+  )]
+
+  if (length(missing_packages) > 0) {
+    stop(
+      paste0(
+        "Package(s) ", paste(missing_packages, collapse = ", "),
+        " required but not installed. Please install them."
+      ),
+      call. = FALSE
+    )
+  }
+
+  # Define parameters based on data type
+  default_params <- list(
+    AFP = list(
+      group_var = group_var,
+      id_col = "EpidNumber",
+      geo_name_cols = c("ctry", "Province", "District"),
+      geo_id_cols = NULL,
+      date_cols = c(
+        "DateReceived", "DateOfOnset",
+        "DateNotified", "DateCaseinvestigated",
+        "Date1stStool", "Date2ndStool",
+        "DateStoolSentolab", "DateSpecRecbyNatLab",
+        "DateFinalCellcultureResults"
+      ),
+      date_pair_cols = list(
+        c("DateOfOnset", "DateNotified"),
+        c("DateNotified", "DateCaseinvestigated"),
+        c("DateOfOnset", "DateCaseinvestigated"),
+        c("DateOfOnset", "Date1stStool"),
+        c("DateOfOnset", "Date2ndStool"),
+        c("Date1stStool", "Date2ndStool"),
+        c("DateSpecRecbyNatLab", "DateStoolSentolab"),
+        c("DateSpecRecbyNatLab", "DateOfOnset"),
+        c("DateFinalCellcultureResults", "DateOfOnset"),
+        c("DateSpecRecbyNatLab", "DateCaseinvestigated"),
+        c("DateFinalCellcultureResults", "DateCaseinvestigated")
+      ),
+      lat_long_cols = c("Latitude", "Longitude")
+    )
+  )
+
+  if (!type %in% names(default_params)) {
+    stop(
+      "Invalid data type. Supported types are: ",
+      paste(names(default_params), collapse = ", ")
+    )
+  }
+
+  # Use provided parameters if not NULL, otherwise use defaults
+  params <- list(
+    group_var = if (!is.null(group_var)) {
+      group_var
+    } else {
+      default_params[[type]]$group_var
+    },
+    id_col = if (!is.null(id_col)) {
+      id_col
+    } else {
+      default_params[[type]]$id_col
+    },
+    geo_name_cols = if (!is.null(geo_name_cols)) {
+      geo_name_cols
+    } else {
+      default_params[[type]]$geo_name_cols
+    },
+    geo_id_cols = if (!is.null(geo_id_cols)) {
+      geo_id_cols
+    } else {
+      default_params[[type]]$geo_id_cols
+    },
+    lat_long_cols = if (!is.null(lat_long_cols)) {
+      lat_long_cols
+    } else {
+      default_params[[type]]$lat_long_cols
+    },
+    date_cols = if (!is.null(date_cols)) {
+      date_cols
+    } else {
+      default_params[[type]]$date_cols
+    },
+    date_pair_cols = if (!is.null(date_pair_cols)) {
+      date_pair_cols
+    } else {
+      default_params[[type]]$date_pair_cols
+    }
+  )
+
+  # Check if all specified columns exist in the dataset
+  all_cols <- c(
+    params$group_var, params$id_col, params$geo_name_cols,
+    params$geo_id_cols, params$lat_long_cols, params$date_cols,
+    unlist(params$date_pair_cols)
+  )
+  missing_cols <- setdiff(all_cols, names(data))
+
+  if (length(missing_cols) > 0) {
+    stop(paste(
+      "The following columns are not present in the dataset:",
+      paste(missing_cols, collapse = ", ")
+    ))
+  }
+
+
+  summary <- create_summary_by_group(
+    data = data,
+    group_var = params$group_var,
+    id_col = params$id_col,
+    geo_name_cols = params$geo_name_cols,
+    geo_id_cols = params$geo_id_cols,
+    lat_long_cols = params$lat_long_cols,
+    date_cols = params$date_cols,
+    date_pair_cols = params$date_pair_cols,
+    n_groups = n_groups,
+    decreasing = decreasing,
+    ...
+  )
+
+  # set up time lab
+  time_labs <- paste0(
+    "For ", zoo::as.yearmon(Sys.Date()),
+    " in Epiweek ",
+    lubridate::epiweek(Sys.Date())
+  )
+
+  title <- if (is.null(custom_title)) {
+    glue::glue(
+      "AFRO {type} Data Quality Checks ",
+      "{time_labs}"
+    )
+  } else {
+    custom_title
+  }
+
+  gt_table <- create_gt_table(
+    summary$summary_table |> dplyr::filter(
+      Column != "Total Null Columns"
+    ),
+    title = title
+  )
+
+  if (save_output) {
+    if (is.null(plots_path)) {
+      stop("plots_path must be provided when save_output is TRUE")
+    }
+
+    today <- format(Sys.Date(), "%Y%m%d")
+    file_prefix <- glue::glue(
+      "afro_quality_check_{type}_validation_{today}}"
+    )
+
+    html_path <- file.path(plots_path, glue::glue("{file_prefix}.html"))
+    png_path <- file.path(plots_path, glue::glue("{file_prefix}.png"))
+
+    gt_table |> gt::gtsave(html_path)
+
+    webshot::webshot(html_path, png_path, vheight = vheight, vwidth = vwidth)
+
+    file.remove(html_path)
+  }
+
+  return(list(gt_table = gt_table, id_data = summary$id_data))
+}
+
+#' Summarize Validation Results
+#'
+#' Summarizes validation results and optionally creates a plot.
+#'
+#' @param data Data frame containing validation results.
+#' @param metadata Data frame with test metadata.
+#' @param id_col Character. Column name for unique identifiers.
+#' @param test_type_name Character. Name of test type to summarize.
+#' @param agg_vars Character vector. Column(s) to aggregate results by.
+#' @param create_plot Logical. Whether to create a summary plot (default FALSE).
+#' @param return_cols Character vector. Additional columns to return for culprit
+#'    identification (default NULL).
+#'
+#' @return List with:
+#'   \item{summary}{Data frame of summarized results, grouped by agg_vars.}
+#'   \item{plot}{ggplot object if create_plot is TRUE, else NULL.}
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' result <- summarize_validation_results(
+#'   data, metadata, "ID", "missing coord",
+#'   c("Region", "Year"),
+#'   create_plot = TRUE
+#' )
+#' print(result$summary)
+#' if (!is.null(result$plot)) print(result$plot)
+#' }
+summarize_validation_results <- function(data,
+                                         metadata, id_col,
+                                         test_type_name, agg_vars,
+                                         create_plot = FALSE,
+                                         return_cols = NULL) {
+  # Validate inputs
+  if (!id_col %in% names(data)) {
+    stop("id_col not found in the dataset")
+  }
+
+  if (length(agg_vars) == 0) {
+    stop("At least one aggregation variable must be provided")
+  }
+  for (var in agg_vars) {
+    if (!var %in% names(data)) {
+      stop(paste("Aggregation variable", var, "not found in the dataset"))
+    }
+  }
+  if (!test_type_name %in% metadata$Test) {
+    stop("test_type not found in metadata")
+  }
+
+  # Get relevant IDs for the specified test type
+  ids <- metadata |>
+    dplyr::filter(Test %in% test_type_name) |>
+    dplyr::pull(!!rlang::sym(id_col))
+
+  # Summarize test results
+  summary <- data |>
+    dplyr::filter(!!rlang::sym(id_col) %in% ids) |>
+    dplyr::select(!!!rlang::syms(c(agg_vars, id_col))) |>
+    dplyr::group_by(!!!rlang::syms(agg_vars)) |>
+    dplyr::summarise(Total = dplyr::n_distinct(!!rlang::sym(id_col))) |>
+    dplyr::arrange(dplyr::desc(Total)) |>
+    dplyr::ungroup()
+
+  # Get culprit columns if return_cols is provided
+  culprits <- NULL
+  if (!is.null(return_cols)) {
+    culprits <- data |>
+      dplyr::filter(!!rlang::sym(id_col) %in% ids) |>
+      dplyr::select(!!rlang::sym(id_col), !!!rlang::syms(return_cols))
+  }
+
+  plot <- NULL
+  if (create_plot) {
+    if (length(agg_vars) == 1) {
+      plot <- summary |>
+        dplyr::arrange(dplyr::desc(Total)) |>
+        ggplot2::ggplot(ggplot2::aes(
+          x = stats::reorder(!!rlang::sym(agg_vars), Total),
+          y = Total,
+          fill = !!rlang::sym(agg_vars)
+        )) +
+        ggplot2::geom_bar(stat = "identity", show.legend = FALSE) +
+        ggplot2::coord_flip() +
+        ggplot2::theme_minimal() +
+        ggplot2::labs(
+          title = paste("Summary of", test_type_name),
+          x = NULL,
+          y = "Total"
+        ) +
+        ggplot2::scale_y_continuous(labels = scales::comma)
+    } else if (length(agg_vars) == 2) {
+      plot <- summary |>
+        dplyr::group_by(!!rlang::sym(agg_vars[2])) |>
+        dplyr::arrange(dplyr::desc(Total), .by_group = TRUE) |>
+        dplyr::ungroup() |>
+        ggplot2::ggplot(ggplot2::aes(
+          x = stats::reorder(!!rlang::sym(agg_vars[1]), Total),
+          y = Total,
+          fill = !!rlang::sym(agg_vars[1])
+        )) +
+        ggplot2::geom_bar(stat = "identity", show.legend = FALSE) +
+        ggplot2::facet_wrap(
+          ggplot2::vars(!!rlang::sym(agg_vars[2])),
+          scales = "free_y"
+        ) +
+        ggplot2::coord_flip() +
+        ggplot2::theme_minimal() +
+        ggplot2::labs(
+          title = paste("Summary of", test_type_name),
+          x = NULL,
+          y = "Total"
+        ) +
+        ggplot2::scale_y_continuous(labels = scales::comma)
+    } else {
+      warning("Plot can only be created for one or two aggregation variables.")
+    }
+  }
+
+  list(summary = summary, plot = plot, culprits = culprits)
 }

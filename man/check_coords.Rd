@@ -13,7 +13,8 @@ check_coords(
   lon_col,
   correct_lat_col = NULL,
   correct_lon_col = NULL,
-  checks = c("flip", "on_water", "missing", "out_of_bounds", "precision", "null_coords"),
+  checks = c("flip", "on_water", "missing", "out_of_bounds", "precision", "null_coords",
+    "parse"),
   aggregate_by = NULL,
   summary_table = FALSE,
   min_precision = 4
@@ -22,46 +23,42 @@ check_coords(
 \arguments{
 \item{data}{A dataframe containing the geographic data to be checked.}
 
-\item{shapefile_data}{Optional. A dataframe containing reference shapefile
-data. If NULL, \code{poliprep::shp_global} will be used.}
+\item{shapefile_data}{Optional. A dataframe with reference shapefile data.
+If NULL, \code{poliprep::shp_global} is used.}
 
-\item{join_key_a}{The column name in data to join with the shapefile data.}
+\item{join_key_a}{Column name in data to join with shapefile data.}
 
-\item{join_key_b}{Optional. The column name in shapefile_data to join with
-data. If NULL and shapefile_data is NULL, defaults to "ADM2_GUID".}
+\item{join_key_b}{Optional. Column name in shapefile_data to join with data.
+Defaults to "ADM2_GUID" if shapefile_data is NULL.}
 
-\item{lat_col}{The name of the latitude column in the data.}
+\item{lat_col}{Name of the latitude column in the data.}
 
-\item{lon_col}{The name of the longitude column in the data.}
+\item{lon_col}{Name of the longitude column in the data.}
 
-\item{correct_lat_col}{Optional. The name of the correct latitude column in
-shapefile_data. If NULL and shapefile_data is NULL, defaults to
-"CENTER_LAT".}
+\item{correct_lat_col}{Optional. Name of correct latitude column in
+shapefile_data. Defaults to "CENTER_LAT" if shapefile_data is NULL.}
 
-\item{correct_lon_col}{Optional. The name of the correct longitude column in
-shapefile_data. If NULL and shapefile_data is NULL, defaults to
-"CENTER_LON".}
+\item{correct_lon_col}{Optional. Name of correct longitude column in
+shapefile_data. Defaults to "CENTER_LON" if shapefile_data is NULL.}
 
-\item{checks}{A character vector specifying which checks to perform.
-Options are "flip", "on_water", "missing", "out_of_bounds",
-"precision", and "null_coords". Default is all checks.}
+\item{checks}{Character vector specifying checks to perform. Options:
+"flip", "on_water", "missing", "out_of_bounds", "precision",
+"null_coords", "parse". Default is all checks.}
 
-\item{aggregate_by}{Optional. A column name to aggregate results by (e.g.,
-"country" or "year").}
+\item{aggregate_by}{Optional. Column name(s) to aggregate results by.}
 
-\item{summary_table}{Logical. If TRUE, returns a summary table instead of CLI
-output.}
+\item{summary_table}{Logical. If TRUE, returns a summary table instead of
+detailed results. Default is FALSE.}
 
-\item{min_precision}{Numeric. The minimum number of decimal places required
-for coordinate precision. Default is 4.}
+\item{min_precision}{Numeric. Minimum decimal places for coordinate
+precision check. Default is 4.}
 }
 \value{
-If summary_table is FALSE, returns the input data with additional
-check columns. If summary_table is TRUE, returns a summary table of
-the checks.
+If summary_table is FALSE, returns input data with additional check
+columns. If TRUE, returns a summary table of the checks.
 }
 \description{
-This function performs various checks on geographic data, including
-coordinate flipping, land/water checks, and missing coordinate checks. It
-provides CLI output and an optional table summary.
+Performs various checks on geographic data, including coordinate flipping,
+land/water checks, missing coordinate checks, and more. Provides CLI output
+and an optional table summary.
 }

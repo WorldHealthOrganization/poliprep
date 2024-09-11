@@ -23,8 +23,9 @@ check_data(
   run_geo_hierarchy_check = TRUE,
   run_geo_mismatch_check = TRUE,
   run_coordinate_checks = TRUE,
+  run_detections = TRUE,
   coordinate_checks = c("flip", "on_water", "missing", "out_of_bounds", "precision",
-    "null_coords")
+    "null_coords", "parse")
 )
 }
 \arguments{
@@ -75,6 +76,8 @@ check.}
 check.}
 
 \item{run_coordinate_checks}{Logical, whether to run coordinate checks.}
+
+\item{run_detections}{Logical, whether to run virus detections checks.}
 
 \item{coordinate_checks}{Character vector specifying which coordinate checks
 to run.}
