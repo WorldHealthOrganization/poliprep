@@ -18,6 +18,7 @@ validate_polis(
   decreasing = FALSE,
   plots_path = NULL,
   polis_version = "2.37.1",
+  autoscale_nanoplot = FALSE,
   custom_title = NULL,
   save_output = FALSE,
   vheight = 1400,
@@ -62,6 +63,9 @@ save_output is TRUE.}
 
 \item{polis_version}{Character string. The version of POLIS being used.
 Default is "2.37.1".}
+
+\item{autoscale_nanoplot}{Logical. Whether to autoscale the nanoplot.
+Default is FALSE.}
 
 \item{custom_title}{Optional. A custom title for the output table.}
 

@@ -21,6 +21,7 @@ validate_afro(
   save_output = FALSE,
   vheight = 1400,
   vwidth = 1550,
+  autoscale_nanoplot = FALSE,
   ...
 )
 }
@@ -69,6 +70,9 @@ Default is 1400.}
 
 \item{vwidth}{Integer. The width of the output image in pixels. Default
 is 1550.}
+
+\item{autoscale_nanoplot}{Logical. Whether to autoscale the nanoplot.
+Default is FALSE.}
 
 \item{...}{Additional arguments passed to internal functions.}
 }

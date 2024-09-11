@@ -8,7 +8,8 @@ create_gt_table(
   summary_data,
   title = "Summary of POLIS Data Quality Checks",
   add_nanoplot = TRUE,
-  row_start = 6
+  row_start = 6,
+  autoscale_nanoplot = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ Default is TRUE.}
 
 \item{row_start}{An integer indicating the starting row for data color
 formatting. Default is 6.}
+
+\item{autoscale_nanoplot}{Logical. Whether to autoscale the nanoplot.
+Default is FALSE.}
 }
 \value{
 A GT table object with formatted data quality summary.

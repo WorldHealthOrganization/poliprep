@@ -1468,6 +1468,8 @@ create_summary_by_group <- function(data, group_var, id_col, geo_name_cols,
 #'   Default is TRUE.
 #' @param row_start An integer indicating the starting row for data color
 #'   formatting. Default is 6.
+#' @param autoscale_nanoplot Logical. Whether to autoscale the nanoplot.
+#'    Default is FALSE.
 #'
 #' @return A GT table object with formatted data quality summary.
 #'
@@ -1490,7 +1492,8 @@ create_summary_by_group <- function(data, group_var, id_col, geo_name_cols,
 #' @export
 create_gt_table <- function(summary_data,
                             title = "Summary of POLIS Data Quality Checks",
-                            add_nanoplot = TRUE, row_start = 6) {
+                            add_nanoplot = TRUE, row_start = 6,
+                            autoscale_nanoplot = FALSE) {
   # Conditional loading for packages
   required_packages <- c("scales", "gt", "glue")
 
@@ -1561,7 +1564,7 @@ create_gt_table <- function(summary_data,
       columns = -c(1, 2),
       new_col_name = "nanoplot",
       new_col_label = gt::md("**Quality Trend**"),
-      autohide = FALSE,
+      autohide = FALSE, autoscale = autoscale_nanoplot,
       options = gt::nanoplot_options(
         data_bar_stroke_width = 10,
         vertical_guide_stroke_width = 51
@@ -1608,6 +1611,8 @@ create_gt_table <- function(summary_data,
 #'    Default is 1400.
 #' @param vwidth Integer. The width of the output image in pixels. Default
 #'    is 1550.
+#' @param autoscale_nanoplot Logical. Whether to autoscale the nanoplot.
+#'    Default is FALSE.
 #' @param ... Additional arguments passed to internal functions.
 #'
 #' @return A list containing two elements:
@@ -1654,6 +1659,7 @@ validate_polis <- function(data, type = "AFP",
                            decreasing = FALSE,
                            plots_path = NULL,
                            polis_version = "2.37.1",
+                           autoscale_nanoplot = FALSE,
                            custom_title = NULL, save_output = FALSE,
                            vheight = 1400, vwidth = 1550, ...) {
   # Conditional loading for packages
@@ -1800,7 +1806,8 @@ validate_polis <- function(data, type = "AFP",
     summary$summary_table |> dplyr::filter(
       Column != "Total Null Columns"
     ),
-    title = title
+    title = title,
+    autoscale_nanoplot = autoscale_nanoplot
   )
 
   if (save_output) {
@@ -1858,6 +1865,8 @@ validate_polis <- function(data, type = "AFP",
 #'    Default is 1400.
 #' @param vwidth Integer. The width of the output image in pixels. Default
 #'    is 1550.
+#' @param autoscale_nanoplot Logical. Whether to autoscale the nanoplot.
+#'    Default is FALSE.
 #' @param ... Additional arguments passed to internal functions.
 #'
 #' @return A list containing two elements:
@@ -1903,7 +1912,8 @@ validate_afro <- function(data, type = "AFP",
                           decreasing = FALSE,
                           plots_path = NULL,
                           custom_title = NULL, save_output = FALSE,
-                          vheight = 1400, vwidth = 1550, ...) {
+                          vheight = 1400, vwidth = 1550,
+                          autoscale_nanoplot = FALSE, ...) {
   # Conditional loading for packages
   required_packages <- c(
     "scales", "zoo", "gt", "glue", "webshot"
@@ -2051,6 +2061,7 @@ validate_afro <- function(data, type = "AFP",
     summary$summary_table |> dplyr::filter(
       Column != "Total Null Columns"
     ),
+    autoscale_nanoplot = autoscale_nanoplot,
     title = title
   )
 
