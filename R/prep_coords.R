@@ -156,7 +156,7 @@ check_coord_flip <- function(data, shapefile_data = NULL,
     dplyr::mutate(
       !!rlang::sym(lat_col) := as.numeric(!!rlang::sym(lat_col)),
       !!rlang::sym(lon_col) := as.numeric(!!rlang::sym(lon_col))
-    ) |> 
+    ) |>
     dplyr::mutate(
       dist_correct = calculate_distance(
         !!rlang::sym(lon_col),
@@ -350,37 +350,33 @@ check_land_water <- function(lon, lat) {
 
 #' Comprehensive Geographic Data Check
 #'
-#' This function performs various checks on geographic data, including
-#' coordinate flipping, land/water checks, and missing coordinate checks. It
-#' provides CLI output and an optional table summary.
+#' Performs various checks on geographic data, including coordinate flipping,
+#' land/water checks, missing coordinate checks, and more. Provides CLI output
+#' and an optional table summary.
 #'
 #' @param data A dataframe containing the geographic data to be checked.
-#' @param shapefile_data Optional. A dataframe containing reference shapefile
-#'        data. If NULL, `poliprep::shp_global` will be used.
-#' @param join_key_a The column name in data to join with the shapefile data.
-#' @param join_key_b Optional. The column name in shapefile_data to join with
-#'        data. If NULL and shapefile_data is NULL, defaults to "ADM2_GUID".
-#' @param lat_col The name of the latitude column in the data.
-#' @param lon_col The name of the longitude column in the data.
-#' @param correct_lat_col Optional. The name of the correct latitude column in
-#'        shapefile_data. If NULL and shapefile_data is NULL, defaults to
-#'        "CENTER_LAT".
-#' @param correct_lon_col Optional. The name of the correct longitude column in
-#'        shapefile_data. If NULL and shapefile_data is NULL, defaults to
-#'        "CENTER_LON".
-#' @param checks A character vector specifying which checks to perform.
-#'        Options are "flip", "on_water", "missing", "out_of_bounds",
-#'        "precision", and "null_coords". Default is all checks.
-#' @param aggregate_by Optional. A column name to aggregate results by (e.g.,
-#'                      "country" or "year").
-#' @param summary_table Logical. If TRUE, returns a summary table instead of CLI
-#'                      output.
-#' @param min_precision Numeric. The minimum number of decimal places required
-#'                      for coordinate precision. Default is 4.
+#' @param shapefile_data Optional. A dataframe with reference shapefile data.
+#'        If NULL, `poliprep::shp_global` is used.
+#' @param join_key_a Column name in data to join with shapefile data.
+#' @param join_key_b Optional. Column name in shapefile_data to join with data.
+#'        Defaults to "ADM2_GUID" if shapefile_data is NULL.
+#' @param lat_col Name of the latitude column in the data.
+#' @param lon_col Name of the longitude column in the data.
+#' @param correct_lat_col Optional. Name of correct latitude column in
+#'        shapefile_data. Defaults to "CENTER_LAT" if shapefile_data is NULL.
+#' @param correct_lon_col Optional. Name of correct longitude column in
+#'        shapefile_data. Defaults to "CENTER_LON" if shapefile_data is NULL.
+#' @param checks Character vector specifying checks to perform. Options:
+#'        "flip", "on_water", "missing", "out_of_bounds", "precision",
+#'        "null_coords", "parse". Default is all checks.
+#' @param aggregate_by Optional. Column name(s) to aggregate results by.
+#' @param summary_table Logical. If TRUE, returns a summary table instead of
+#'        detailed results. Default is FALSE.
+#' @param min_precision Numeric. Minimum decimal places for coordinate
+#'        precision check. Default is 4.
 #'
-#' @return If summary_table is FALSE, returns the input data with additional
-#'         check columns. If summary_table is TRUE, returns a summary table of
-#'         the checks.
+#' @return If summary_table is FALSE, returns input data with additional check
+#'         columns. If TRUE, returns a summary table of the checks.
 #'
 #' @export
 check_coords <- function(data,
@@ -392,10 +388,23 @@ check_coords <- function(data,
                          checks = c(
                            "flip", "on_water", "missing",
                            "out_of_bounds", "precision",
-                           "null_coords"
+                           "null_coords", "parse"
                          ),
                          aggregate_by = NULL, summary_table = FALSE,
                          min_precision = 4) {
+  # Conditional loading for packages
+  required_packages <- c("readr", "parzer")
+
+  missing_packages <- required_packages[!sapply(
+    required_packages, requireNamespace,
+    quietly = TRUE
+  )]
+
+  suppressMessages(
+    # convert to appropriate type
+    data <- data |> readr::type_convert()
+  )
+
   # Use poliprep::shp_global if shapefile_data is not provided
   if (is.null(shapefile_data)) {
     shapefile_data <- poliprep::shp_global
@@ -406,15 +415,15 @@ check_coords <- function(data,
 
   # Initialize results
   results <- data
-  total_count <- big_mark(nrow(results))
+  total_count <- nrow(results)
+  total_count_c <- big_mark(nrow(results))
 
   # Check for missing coordinates
   if ("missing" %in% checks) {
     results <- results |>
       dplyr::mutate(
-        missing_coords = is.na(
-          !!rlang::sym(lat_col)
-        ) | is.na(!!rlang::sym(lon_col))
+        missing_coords = is.na(!!rlang::sym(lat_col)) |
+          is.na(!!rlang::sym(lon_col))
       )
 
     missing_count <- sum(results$missing_coords, na.rm = TRUE)
@@ -422,136 +431,201 @@ check_coords <- function(data,
     cli::cli_h1("Missing Coordinates Check")
     if (missing_count > 0) {
       cli::cli_alert_danger(
-        "Found {crayon::red(missing_count)} out of {total_count} coordinates missing."
+        paste0(
+          "Found {crayon::red(big_mark(missing_count))} out of ",
+          "{total_count_c} coordinates missing."
+        )
       )
     } else {
       cli::cli_alert_success("No missing coordinates found.")
     }
   }
-
-  # Check for out-of-bounds coordinates
-  if ("out_of_bounds" %in% checks) {
-    results <- results |>
+  # Parse coordinates
+  suppressWarnings({
+    parsed_coords <- results |>
       dplyr::mutate(
-        out_of_bounds = (
-          !!rlang::sym(lat_col) < -90 | !!rlang::sym(lat_col) > 90 |
-            !!rlang::sym(lon_col) < -180 | !!rlang::sym(lon_col) > 180)
+        parse_failed = if ("parse" %in% checks) TRUE else NULL,
+        null_count = if ("null_coords" %in% checks) FALSE else NULL,
+        potentially_flipped = if ("flip" %in% checks) FALSE else NULL,
+        on_water = if ("on_water" %in% checks) NA_character_ else NULL,
+        parse_failed = if ("parse" %in% checks) TRUE else NULL,
+        low_precision = if ("precision" %in% checks) FALSE else NULL,
+        out_of_bounds = if ("out_of_bounds" %in% checks) FALSE else NULL
+      ) |>
+      dplyr::mutate(
+        Long_parzer = parzer::parse_lon(!!rlang::sym(lon_col)),
+        Lat_parzer = parzer::parse_lat(!!rlang::sym(lat_col))
       )
 
-    out_of_bounds_count <- sum(results$out_of_bounds, na.rm = TRUE)
+    # set up missing coords
+    missing_coords <- parsed_coords |>
+      dplyr::filter(is.na(!!rlang::sym(lon_col)) |
+        is.na(!!rlang::sym(lat_col)))
+
+    non_parseable_coords <- parsed_coords |>
+      dplyr::mutate(
+        parse_failed = if ("parse" %in% checks) NA else NULL
+      ) |>
+      dplyr::filter(!is.na(!!rlang::sym(lon_col)) &
+        !is.na(!!rlang::sym(lat_col))) |>
+      dplyr::filter(is.na(Long_parzer) | is.na(Lat_parzer))
+
+    parsed_coords <- parsed_coords |>
+      dplyr::mutate(
+        parse_failed = if ("parse" %in% checks) FALSE else NULL
+      ) |>
+      dplyr::filter(!is.na(!!rlang::sym(lon_col)) &
+        !is.na(!!rlang::sym(lat_col))) |>
+      dplyr::filter(!is.na(Long_parzer) & !is.na(Lat_parzer))
+  })
+
+
+  parse_count <- nrow(parsed_coords)
+
+  cli::cli_h1("Coordinate Parsing Check")
+  if (parse_count == total_count) {
+    cli::cli_alert_success(
+      paste0(
+        "All {big_mark(total_count_c)} ",
+        "coordinates parsed successfully."
+      )
+    )
+  } else {
+    failed_count <- as.numeric(total_count) - parse_count
+    cli::cli_alert_warning(
+      paste0(
+        "Failed to parse {crayon::red(big_mark(failed_count))}",
+        " out of {total_count_c} coordinates."
+      )
+    )
+  }
+
+  # Use parsed_coords for subsequent checks
+  if ("out_of_bounds" %in% checks) {
+    parsed_coords <- parsed_coords |>
+      dplyr::mutate(
+        out_of_bounds = (Lat_parzer < -90 | Lat_parzer > 90 |
+          Long_parzer < -180 | Long_parzer > 180)
+      )
+
+    out_of_bounds_count <- sum(parsed_coords$out_of_bounds, na.rm = TRUE)
 
     cli::cli_h1("Out-of-Bounds Coordinates Check")
     if (out_of_bounds_count > 0) {
       cli::cli_alert_danger(
-        "Found {crayon::red(out_of_bounds_count)} out of {total_count} coordinates out ",
-        "of bounds. Valid lat range is -90 to 90, and valid log range is -180 to 180."
-      )
-      cli::cli_alert_info(
-        "Out-of-bounds coordinates are those where:",
-        "\n  - Lat is less than -90 or greater than 90",
-        "\n  - Long is less than -180 or greater than 180"
-      )
-      cli::cli_alert_warning(
-        "These coordinates may indicate data entry errors or projection issues."
+        paste0(
+          "Found {crayon::red(big_mark(out_of_bounds_count))} out of ",
+          "{big_mark(parse_count)} parsed coordinates out ",
+          "of bounds.\n Valid lat range is -90 to 90, and ",
+          "valid log range is -180 to 180."
+        )
       )
     } else {
       cli::cli_alert_success(
-        "No out-of-bounds coordinates found. All coordinates are within valid ranges:",
-        "\n  - Latitude: -90 to 90",
-        "\n  - Longitude: -180 to 180"
+        paste0(
+          "No out-of-bounds coordinates found. ",
+          "All parsed coordinates are within valid ranges:",
+          "\n  - Latitude: -90 to 90",
+          "\n  - Longitude: -180 to 180"
+        )
       )
     }
   }
 
-  # Check for coordinate precision
   if ("precision" %in% checks) {
-    results <- results |>
+    parsed_coords <- parsed_coords |>
       dplyr::mutate(
         lat_precision = nchar(
-          sub("^-?\\d+\\.", "", as.character(!!rlang::sym(lat_col)))
+          sub("^-?\\d+\\.", "", as.character(Lat_parzer))
         ),
         lon_precision = nchar(
-          sub("^-?\\d+\\.", "", as.character(!!rlang::sym(lon_col)))
+          sub("^-?\\d+\\.", "", as.character(Long_parzer))
         ),
         low_precision = (
           lat_precision < min_precision | lon_precision < min_precision)
       )
 
-    low_precision_count <- sum(results$low_precision, na.rm = TRUE)
+    low_precision_count <- sum(parsed_coords$low_precision, na.rm = TRUE)
 
     cli::cli_h1("Coordinate Precision Check")
     if (low_precision_count > 0) {
       cli::cli_alert_warning(
         paste0(
-          "Found {crayon::red(low_precision_count)} coordinates with precision",
-          " below {min_precision} decimal places."
+          "Found {crayon::red(big_mark(low_precision_count))} parsed",
+          " coordinates with precision below {min_precision} decimal places."
         )
       )
-    }
-
-
-
-
-    if (low_precision_count == 0) {
+    } else {
       cli::cli_alert_success(
         paste0(
-          "All coordinates have appropriate precision ",
+          "All parsed coordinates have appropriate precision ",
           "(minimum {min_precision} decimal places)."
         )
       )
     }
   }
 
-  # Check for Null Island (0,0 coordinates)
   if ("null_coords" %in% checks) {
-    results <- results |>
+    parsed_coords <- parsed_coords |>
       dplyr::mutate(
-        null_count = (!!rlang::sym(lat_col) == 0 & !!rlang::sym(lon_col) == 0)
+        null_count = (Lat_parzer == 0 & Long_parzer == 0)
       )
 
-    null_count <- sum(results$null_count, na.rm = TRUE)
+    null_count <- sum(parsed_coords$null_count, na.rm = TRUE)
 
     cli::cli_h1("Null Coordinates Check")
     if (null_count > 0) {
       cli::cli_alert_danger(
-        "Found {crayon::red(null_count)} coordinates that are Null (0,0)."
+        paste0(
+          "Found {crayon::red(null_count)} parsed coordinates ",
+          "that are Null (0,0)."
+        )
       )
     } else {
-      cli::cli_alert_success("No coordinates that were Null (0,0).")
+      cli::cli_alert_success("No parsed coordinates that were Null (0,0).")
     }
   }
 
-  # Check for flipped coordinates
+
+  if ("flip" %in% checks) {
+    if (is.null(join_key_a)) {
+      cli::cli_alert_danger(
+        "Cannot perform flipped coord check without `join_key_a``."
+      )
+      checks <- checks[checks != "flip"]
+    } else if (is.null(shapefile_data)) {
+      cli::cli_alert_danger(
+        "Cannot perform flipped coord check without shapefile_data."
+      )
+      checks <- checks[checks != "flip"]
+    }
+  }
+
   if ("flip" %in% checks) {
     tryCatch(
       {
         suppressMessages({
-          results <- check_coord_flip(
-            data = results,
+          parsed_coords <- check_coord_flip(
+            data = parsed_coords,
             shapefile_data = shapefile_data,
             join_key_a = join_key_a,
             join_key_b = join_key_b,
-            lat_col = lat_col,
-            lon_col = lon_col,
+            lat_col = "Lat_parzer",
+            lon_col = "Long_parzer",
             correct_lat_col = correct_lat_col,
             correct_lon_col = correct_lon_col
           )
         })
 
-        if ("dist_correct" %in% names(results) && "dist_flipped" %in% names(results)) {
-          results <- results |>
-            dplyr::select(-dist_correct, -dist_flipped)
-        }
-
         cli::cli_h1("Flipped Coordinates Check")
-        flipped_count <- sum(results$potentially_flipped, na.rm = TRUE)
-        total_count <- nrow(results)
-        flipped_count_formatted <- big_mark(flipped_count)
-        total_count_formatted <- big_mark(total_count)
+        flipped_count <- sum(parsed_coords$potentially_flipped, na.rm = TRUE)
         if (flipped_count > 0) {
           cli::cli_alert_warning(
-            "Found {crayon::red(flipped_count_formatted)} out of {total_count_formatted} ",
-            "coordinates potentially flipped."
+            paste0(
+              "Found {crayon::red(big_mark(flipped_count))} out of ",
+              "{big_mark(nrow(parsed_coords))} parsed coordinates",
+              "  potentially flipped."
+            )
           )
         } else {
           cli::cli_alert_success("No potentially flipped coordinates found.")
@@ -559,145 +633,118 @@ check_coords <- function(data,
       },
       error = function(e) {
         cli::cli_alert_danger("Error in flipped coordinates check: {e$message}")
-        results$potentially_flipped <- NA
+        parsed_coords$potentially_flipped <- NA
       }
     )
   }
 
-  # Check for land/water
   if ("on_water" %in% checks) {
-    results$on_water <- check_land_water(
-      results[[lon_col]],
-      results[[lat_col]]
+    parsed_coords$on_water <- check_land_water(
+      parsed_coords$Long_parzer,
+      parsed_coords$Lat_parzer
     )
 
     cli::cli_h1("Land/Water Check")
-    land_count <- sum(results$on_water == "Land", na.rm = TRUE)
-    water_count <- sum(results$on_water != "Land", na.rm = TRUE)
+    land_count <- sum(parsed_coords$on_water == "Land", na.rm = TRUE)
+    water_count <- sum(parsed_coords$on_water != "Land", na.rm = TRUE)
     land_count <- big_mark(land_count)
     water_count <- big_mark(water_count)
 
     if (water_count == 0) {
-      cli::cli_alert_success("All {land_count} coordinates are on land.")
+      cli::cli_alert_success("All {land_count} parsed coordinates are on land.")
     } else {
       cli::cli_alert_warning(
-        "Found {crayon::red(water_count)} coordinates on water, the rest are on land."
+        paste0(
+          "Found {crayon::red(water_count)} parsed coordinates",
+          " on water, the rest are on land."
+        )
       )
     }
   }
 
+  # bind parsed and non-parsed to make results
+  results <- dplyr::bind_rows(
+    missing_coords,
+    non_parseable_coords,
+    parsed_coords
+  )
 
-  # Generate summary table if requested
   if (summary_table) {
     summary_data <- results
     if (!is.null(aggregate_by)) {
       summary_data <- summary_data |>
-        dplyr::select(
-          dplyr::any_of(
-            c(
-              "missing_coords",
-              "out_of_bounds",
-              "low_precision",
-              "high_precision",
-              "null_count",
-              "potentially_flipped",
-              "on_water", aggregate_by
-            )
-          )
-        ) |>
-        dplyr::group_by(
-          dplyr::across(
-            dplyr::all_of(aggregate_by)
-          )
-        )
+        dplyr::select(dplyr::any_of(c(
+          "missing_coords", "parse_failed", "out_of_bounds", "low_precision",
+          "null_count", "potentially_flipped", "on_water", "parse",
+          aggregate_by
+        ))) |>
+        dplyr::group_by(dplyr::across(dplyr::all_of(aggregate_by)))
     }
 
     summary_data <- summary_data |>
-      dplyr::reframe(
+      dplyr::summarise(
         total_coords = dplyr::n(),
-        missing_coords = if (
-          "missing_coords" %in% names(summary_data)) {
-          sum(
-            missing_coords,
-            na.rm = TRUE
-          )
+        missing_coords = if ("missing" %in% checks) {
+          sum(missing_coords, na.rm = TRUE)
         } else {
-          NA_real_
+          NULL
         },
-        potentially_flipped = if (
-          "potentially_flipped" %in% names(summary_data)) {
-          sum(
-            potentially_flipped,
-            na.rm = TRUE
-          )
+        parse_failed = if ("parse" %in% checks) {
+          sum(parse_failed, na.rm = TRUE)
         } else {
-          NA_real_
+          NULL
         },
-        on_water = if (
-          "on_water" %in% names(summary_data)) {
-          sum(
-            on_water %in% c("Ocean", "Inland water"),
-            na.rm = TRUE
-          )
+        out_of_bounds = if ("out_of_bounds" %in% checks) {
+          sum(out_of_bounds, na.rm = TRUE)
         } else {
-          NA_real_
+          NULL
         },
-        out_of_bounds = if (
-          "out_of_bounds" %in% names(summary_data)) {
-          sum(
-            out_of_bounds,
-            na.rm = TRUE
-          )
+        low_precision = if ("precision" %in% checks) {
+          sum(low_precision, na.rm = TRUE)
         } else {
-          NA_real_
+          NULL
         },
-        low_precision = if (
-          "low_precision" %in% names(summary_data)) {
-          sum(
-            low_precision,
-            na.rm = TRUE
-          )
+        null_count = if ("null_coords" %in% checks) {
+          sum(null_count, na.rm = TRUE)
         } else {
-          NA_real_
+          NULL
         },
-        null_count = if (
-          "null_count" %in% names(summary_data)) {
-          sum(
-            null_count,
-            na.rm = TRUE
-          )
+        potentially_flipped = if ("flip" %in% checks) {
+          sum(potentially_flipped, na.rm = TRUE)
         } else {
-          NA_real_
+          NULL
         },
-        total_coords = big_mark(total_coords),
-        null_count = big_mark(null_count),
-        low_precision = big_mark(low_precision),
-        on_water = big_mark(on_water),
-        potentially_flipped = big_mark(potentially_flipped),
-        missing_coords = big_mark(missing_coords)
+        on_water = if ("on_water" %in% checks) {
+          sum(on_water %in% c("Ocean", "Inland water"), na.rm = TRUE)
+        } else {
+          NULL
+        },
+        .groups = "drop"
       ) |>
-      dplyr::select(
-        dplyr::all_of(c(
-          aggregate_by,
-          "total_coords",
-          if ("missing" %in% checks) "missing_coords" else NULL,
-          if ("null_coords" %in% checks) "null_count" else NULL,
-          if ("out_of_bounds" %in% checks) "out_of_bounds" else NULL,
-          if ("precision" %in% checks) "low_precision" else NULL,
-          if ("flip" %in% checks) "potentially_flipped" else NULL,
-          if ("on_water" %in% checks) "on_water" else NULL
-        ))
-      )
+      dplyr::mutate(dplyr::across(
+        where(is.numeric) &
+          !dplyr::any_of(aggregate_by), big_mark
+      )) |>
+      dplyr::select(dplyr::all_of(c(
+        aggregate_by, "total_coords",
+        if ("missing" %in% checks) "missing_coords" else NULL,
+        if ("parse" %in% checks) "parse_failed" else NULL,
+        if ("out_of_bounds" %in% checks) "out_of_bounds" else NULL,
+        if ("precision" %in% checks) "low_precision" else NULL,
+        if ("null_coords" %in% checks) "null_count" else NULL,
+        if ("flip" %in% checks) "potentially_flipped" else NULL,
+        if ("on_water" %in% checks) "on_water" else NULL
+      )))
 
-    # Conditionally rename columns
     new_names <- c(
       "Total Coords" = "total_coords",
       "Missing Coords" = "missing_coords",
+      "Parse Failed" = "parse_failed",
+      "Out of Bounds" = "out_of_bounds",
+      "Low Precision" = "low_precision",
       "Null Coords" = "null_count",
       "Potentially Flipped" = "potentially_flipped",
-      "On Water" = "on_water",
-      "Out of Bounds" = "out_of_bounds",
-      "Low Precision" = "low_precision"
+      "On Water" = "on_water"
     )
 
     for (new_name in names(new_names)) {
