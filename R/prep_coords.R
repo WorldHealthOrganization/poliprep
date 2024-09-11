@@ -453,6 +453,8 @@ check_coords <- function(data,
         out_of_bounds = if ("out_of_bounds" %in% checks) FALSE else NULL
       ) |>
       dplyr::mutate(
+        !!rlang::sym(lon_col) := as.numeric(!!rlang::sym(lon_col)),
+        !!rlang::sym(lat_col) := as.numeric(!!rlang::sym(lat_col)),
         Long_parzer = parzer::parse_lon(!!rlang::sym(lon_col)),
         Lat_parzer = parzer::parse_lat(!!rlang::sym(lat_col))
       )

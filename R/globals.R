@@ -25,6 +25,6 @@ globalVariables(
     "geo_id_cols", "geo_name_cols", "header", "Missing in Shapefile",
     "Non-unique Count", "Variable", "ID", "Test", "Value", "null_count",
     "Lat_parzer", "Long_parzer", "parse_failed", "parsed_date", "parsed_date1",
-    "parsed_date2", "Total"
+    "parsed_date2", "Total", "snapshot"
   )
 )

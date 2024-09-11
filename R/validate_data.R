@@ -1831,6 +1831,111 @@ validate_polis <- function(data, type = "AFP",
   return(list(gt_table = gt_table, id_data = summary$id_data))
 }
 
+#' Validate POLIS Data Snapshots
+#'
+#' This function validates POLIS data snapshots for a specific year and data
+#' type.
+#'
+#' @param path Character. Directory path containing POLIS snapshot files.
+#' @param data_type Character. Type of data ("AFP" or "ES"). Default is "AFP".
+#' @param plots_path Character. Directory to save output plots.
+#' @param custom_title Character. Custom title for the output. Default is NULL.
+#' @param year_of_interest Numeric. Year of interest for validation. Default is
+#'    2024.
+#' @param pattern Character. Pattern to match snapshot files. Default is NULL.
+#' @param snapshots Numeric. Number of snapshots to validate. Default is 6.
+#' @param vheight Integer. The height of the output image in pixels.
+#'    Default is 1400.  Corresponds to the default 6 snapshots.
+#' @param vwidth Integer. The width of the output image in pixels. Default
+#'    is 1760. Corresponds to the default 6 snapshots.
+#' @param ... Additional arguments passed to validate_polis function.
+#'
+#' @return A list containing validation results and GT table.
+#'
+#' @importFrom purrr map_dfr
+#' @importFrom dplyr filter mutate
+#' @importFrom lubridate year
+#' @importFrom rlang sym
+#'
+#' @export
+validate_polis_snapshots <- function(path, data_type = "AFP",
+                                     year_of_interest = 2024,
+                                     pattern = NULL,
+                                     snapshots = 6,
+                                     plots_path,
+                                     custom_title = NULL,
+                                     vheight = 1400,
+                                     vwidth = 1760,
+                                     ...) {
+  default_title <- sprintf(
+    "POLIS %s Data Quality Checks For Data Snapshots (%d-%d)",
+    data_type, year_of_interest - 1, year_of_interest
+  )
+
+  if (is.null(pattern)) {
+    pattern <- paste0("^polis_raw_data_", year_of_interest, "_")
+  }
+
+  files <- list.files(
+    path,
+    pattern = pattern,
+    full.names = TRUE
+  )
+
+  weeks <- sort(
+    as.numeric(gsub(".*_([0-9]+)\\.rds$", "\\1", files)),
+    decreasing = TRUE
+  )[1:snapshots]
+
+  date_col <- if (data_type == "AFP") "CaseDate" else "CollectionDate"
+  data_type_string <- if (data_type == "AFP") "human" else "env"
+
+  df <- purrr::map_dfr(weeks, function(week) {
+    file_path <- file.path(
+      path,
+      sprintf("polis_raw_data_%d_%d.rds", year_of_interest, week)
+    )
+
+    poliprep::read(file_path)[[data_type_string]] |>
+      dplyr::filter(
+        lubridate::year(!!rlang::sym(date_col)) >= year_of_interest - 1
+      ) |>
+      dplyr::mutate(snapshot = sprintf("%d W%d", year_of_interest, week))
+  }) |>
+    dplyr::mutate(
+      snapshot = factor(
+        snapshot,
+        levels = sprintf("%d W%d", year_of_interest, rev(weeks))
+      )
+    )
+
+  results <- poliprep::validate_polis(
+    data = df,
+    group_var = "snapshot",
+    type = data_type,
+    n_groups = Inf,
+    plots_path = plots_path,
+    custom_title = if (is.null(custom_title)) default_title else custom_title,
+    save_output = TRUE,
+    vheight = vheight,
+    vwidth = vwidth,
+    ...
+  )
+
+  today <- format(Sys.Date(), "%Y%m%d")
+  save_path <- file.path(
+    plots_path,
+    paste0(
+      "polis_",
+      tolower(data_type), "_snapshots_", year_of_interest, "_", today, ".RData"
+    )
+  )
+
+  base::save(results, file = save_path)
+
+  return(results)
+}
+
 #' Validate AFRO Data
 #'
 #' This function performs data quality checks on AFRO (African Regional Office)
