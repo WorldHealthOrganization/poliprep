@@ -9,6 +9,8 @@ display_custom_menu(title, main_header, choices_input, special_actions, prompt)
 \arguments{
 \item{title}{The menu title.}
 
+\item{main_header}{The main header for the menu display.}
+
 \item{choices_input}{Vector of option strings to display.}
 
 \item{special_actions}{Named list of special actions with string identifiers.}
@@ -24,8 +26,9 @@ interactivity and style. Displays a menu with given options and special
 actions, capturing user selection through a custom prompt.
 }
 \examples{
-# display_custom_menu("Choose an option:", c("Option 1", "Option 2"),
-#                   list(x = "Skip", y = "Save"), "Your choice:")
+# display_custom_menu("Choose an option:", "Main Menu",
+#                     c("Option 1", "Option 2"),
+#                     list(x = "Skip", y = "Save"), "Your choice:")
 
 }
 \keyword{internal}

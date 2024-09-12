@@ -430,7 +430,7 @@ check_coords <- function(data,
 
     cli::cli_h1("Missing Coordinates Check")
     if (missing_count > 0) {
-      cli::cli_alert_danger(
+      cli::cli_alert_warning(
         paste0(
           "Found {crayon::red(big_mark(missing_count))} out of ",
           "{total_count_c} coordinates missing."
@@ -514,7 +514,7 @@ check_coords <- function(data,
 
     cli::cli_h1("Out-of-Bounds Coordinates Check")
     if (out_of_bounds_count > 0) {
-      cli::cli_alert_danger(
+      cli::cli_alert_warning(
         paste0(
           "Found {crayon::red(big_mark(out_of_bounds_count))} out of ",
           "{big_mark(parse_count)} parsed coordinates out ",
@@ -577,7 +577,7 @@ check_coords <- function(data,
 
     cli::cli_h1("Null Coordinates Check")
     if (null_count > 0) {
-      cli::cli_alert_danger(
+      cli::cli_alert_warning(
         paste0(
           "Found {crayon::red(null_count)} parsed coordinates ",
           "that are Null (0,0)."
@@ -591,12 +591,12 @@ check_coords <- function(data,
 
   if ("flip" %in% checks) {
     if (is.null(join_key_a)) {
-      cli::cli_alert_danger(
+      cli::cli_alert_warning(
         "Cannot perform flipped coord check without `join_key_a``."
       )
       checks <- checks[checks != "flip"]
     } else if (is.null(shapefile_data)) {
-      cli::cli_alert_danger(
+      cli::cli_alert_warning(
         "Cannot perform flipped coord check without shapefile_data."
       )
       checks <- checks[checks != "flip"]
@@ -634,7 +634,7 @@ check_coords <- function(data,
         }
       },
       error = function(e) {
-        cli::cli_alert_danger("Error in flipped coordinates check: {e$message}")
+        cli::cli_alert_warning("Error in flipped coordinates check: {e$message}")
         parsed_coords$potentially_flipped <- NA
       }
     )

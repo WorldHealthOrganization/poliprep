@@ -26,7 +26,7 @@ prep_mdb_table_extract <- function(mdb_folder, target_table){
   tryCatch({
     # a) check if the foldername exist
     if(!dir.exists(mdb_folder)){
-      cli::cli_alert_danger(paste("Folder path", mdb_folder, "does not exist."))
+      cli::cli_alert_warning(paste("Folder path", mdb_folder, "does not exist."))
     }
     
     # b) get the list of all the files with mdb extension from the folder
@@ -80,7 +80,7 @@ prep_mdb_table_extract <- function(mdb_folder, target_table){
     
   }, error = function(e){
     # print out the error message
-    cli::cli_alert_danger(e$message)
+    cli::cli_alert_warning(e$message)
   }, warning = function(w){
     # print out the warning message
     cli::cli_alert_warning(w$message)

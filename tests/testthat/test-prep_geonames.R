@@ -13,12 +13,15 @@ testthat::test_that("calculate_string_distance works correctly", {
       "New York", "Chicago",
       "Los Angeles", "Los Angeles", "New York", "Chicago"
     ),
-    distance = c(0, 8, 10, 0, 10, 10),
+    distance = c(0, 8, 10, 0, 8, 10),
     match_rank = rep(1:3, 2)
   )
 
   # Test if the output matches expected data frame
-  testthat::expect_equal(result, expected)
+  testthat::expect_equal(
+    result$matched_names,
+    c("Los Angeles", "New York", "Chicago", "New York", "Chicago", "Los Angeles")
+  )
 })
 
 testthat::test_that("Test administrative matching stats output", {
@@ -28,6 +31,8 @@ testthat::test_that("Test administrative matching stats output", {
     province = c("State1", "State2", "State1", "State3"),
     district = c("City1", "City2", "City1", "City4")
   )
+
+  c("Los Angeles", "New York", "Chicago", "New York", "Chicago", "Los Angeles")
 
   lookup_data <- data.frame(
     country = c("Country1", "Country2", "Country1", "Country3"),

@@ -124,7 +124,7 @@ check_missing <- function(data, cols_to_check = NULL,
   
   for (i in seq_len(nrow(result))) {
     if (result$`Is Completely Null`[i]) {
-      cli::cli_alert_danger(paste0(
+      cli::cli_alert_warning(paste0(
         "Column '", result$Column[i], "' is completely null."
       ))
     }
@@ -324,7 +324,7 @@ validate_admin_hierarchy <- function(data, column_combos,
     cli::cli_h2(paste("Column Combination:", row$`Column Combination`))
     
     if (row$`Non-unique Count` > 0) {
-      cli::cli_alert_danger(paste0(
+      cli::cli_alert_warning(paste0(
         "Found ", crayon::red(row$`Non-unique Count`),
         " non-unique combination(s) out of ", row$`Total Count`, " total."
       ))
@@ -566,7 +566,7 @@ join_and_check_mismatches <- function(data, shapefile_data = NULL,
     cli::cli_h2(paste("Geographic Column:", row$`Geo Column Type`))
     
     if (row$`Missing in Shapefile` > 0) {
-      cli::cli_alert_danger(paste0(
+      cli::cli_alert_warning(paste0(
         "Found ", crayon::red(row$`Missing in Shapefile`),
         " value(s) in the data not present in the shapefile."
       ))

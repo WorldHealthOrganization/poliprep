@@ -10,6 +10,7 @@ prep_geonames(
   level0 = NULL,
   level1 = NULL,
   level2 = NULL,
+  region = NULL,
   cache_path = NULL,
   method = "jw",
   stratify = TRUE,
@@ -28,6 +29,11 @@ attached to poliprep is used.}
 \item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
 
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
+
+\item{region}{If using the internal version of WHO geoname data, you can]
+specify the region name of interest to speed up the name matching.
+The default is NULL which includes all regions, however, users can
+pick from the following regions: AFRO, AMRO, EMRO, EURO, SEARO & WPRO.}
 
 \item{cache_path}{Optional; the path where the cache data frame is
 saved after user modifications. This path is also used to match and
@@ -93,9 +99,9 @@ user choices and algorithmic matching.
 # Dummy target data
 # target_df <- data.frame(
 # country = c("ANGOLA", "UGA", "ZAMBIA"),
-#province = c("CABONDA", "TESO", "LUSAKA"),
+# province = c("CABONDA", "TESO", "LUSAKA"),
 # district = c("BALIZE", "BOKEDEA", "RAFUNSA")
-#)
+# )
 
 # Interactively clean geonames
 # prep_geonames(

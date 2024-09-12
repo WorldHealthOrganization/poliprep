@@ -29,6 +29,6 @@ values from specified administrative level columns within a dataframe.
 # country = c("USA", "USA", "Canada"),
 #  state = c("California", NA, "Ontario"),
 #  city = c("Los Angeles", "New York", "Toronto")
-#)
+# )
 # result <- construct_geo_names(data, "country", "state", "city")
 }
