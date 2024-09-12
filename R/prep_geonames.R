@@ -132,24 +132,24 @@ calculate_match_stats <- function(data, lookup_data, level0 = NULL,
   if (!is.null(level0)) {
     cli::cli_li(
       glue::glue(
-        "{level0} (level 0): {results$level0['matches']} ",
-        "out of {results$level0['total']} matched"
+        "{level0} (level 0): {big_mark(results$level0['matches'])} ",
+        "out of {big_mark(results$level0['total'])} matched"
       )
     )
   }
 
   if (!is.null(level1)) {
     cli::cli_li(glue::glue(
-      "{level1} (level 1): {results$level1['matches']} ",
-      "out of {results$level1['total']} matched"
+      "{level1} (level 1): {big_mark(results$level1['matches'])} ",
+      "out of {big_mark(results$level1['total'])} matched"
     ))
   }
 
   if (!is.null(level2)) {
     cli::cli_li(
       glue::glue(
-        "{level2} (level 2): {results$level2['matches']} ",
-        "out of {results$level2['total']} matched"
+        "{level2} (level 2): {big_mark(results$level2['matches'])} ",
+        "out of {big_mark(results$level2['total'])} matched"
       )
     )
   }
@@ -365,7 +365,6 @@ handle_user_interaction <- function(input_data, levels, level,
 
   # set cachees for looping
   unique_names <- unique(input_data$name_to_match)
-  number_names <- length(unique_names)
 
   # initialize empty lists to store user choices
   user_choices <- list()
@@ -405,13 +404,6 @@ handle_user_interaction <- function(input_data, levels, level,
         name_to_match == name_to_clean
       ) |>
       dplyr::distinct()
-
-    # # apply red highlight only to the last choice if going back
-    # if (!is.null(user_choice) && user_choice == "b") {
-    #   replacement_name <- sapply(replacement_name, function(x) {
-    #     if (x == stringr::str_to_title(last_choice)) b(red(x)) else x
-    #   })
-    # }
 
     # narrow down to top 25 if not stratified
     if (!stratify) {
@@ -904,6 +896,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           by = stats::setNames("name_to_match", level0)
         ) |>
         dplyr::mutate(
+          !!level0 := stringr::str_replace_all(!!rlang::sym(level0), "\n", ""),
           !!level0 := dplyr::coalesce(level0_prepped, .data[[level0]])
         )
     }
@@ -919,6 +912,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           )
         ) |>
         dplyr::mutate(
+          !!level1 := stringr::str_replace_all(!!rlang::sym(level1), "\n", ""),
           !!level1 := dplyr::coalesce(level1_prepped, .data[[level1]])
         )
     }
@@ -938,6 +932,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
           )
         ) |>
         dplyr::mutate(
+          !!level2 := stringr::str_replace_all(!!rlang::sym(level2), "\n", ""),
           !!level2 := dplyr::coalesce(level2_prepped, .data[[level2]])
         )
     }
