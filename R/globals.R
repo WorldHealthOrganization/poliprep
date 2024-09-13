@@ -25,6 +25,9 @@ globalVariables(
     "geo_id_cols", "geo_name_cols", "header", "Missing in Shapefile",
     "Non-unique Count", "Variable", "ID", "Test", "Value", "null_count",
     "Lat_parzer", "Long_parzer", "parse_failed", "parsed_date", "parsed_date1",
-    "parsed_date2", "Total", "snapshot", "WHO_REGION"
+    "parsed_date2", "Total", "snapshot", "WHO_REGION",
+    "EPID", "ParalysisOnsetDate", "Validation Type", "WPV1", "afp_cases1",
+    "afp_cases2", "cVDPV1", "cVDPV2", "n_data1", "n_data2", "val_type",
+    "virus_type", "CollectionDate"
   )
 )
