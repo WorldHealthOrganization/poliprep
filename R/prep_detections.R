@@ -106,6 +106,7 @@ prep_new_detections_report <- function(polis_df_old,
 
 
     prev_detection <- polis_df_old |>
+        dplyr::mutate(across(where(is.factor), as.character)) |>
         dplyr::mutate(
             VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1", VirusTypeName)
         ) |>
@@ -115,25 +116,51 @@ prep_new_detections_report <- function(polis_df_old,
         dplyr::group_by(Admin0Name, VirusTypeName) |>
         dplyr::reframe(`Previous Detection` = max(VirusDate))
 
+    # get new epids
+    new_epids <- polis_df_old |>
+        dplyr::filter(
+            lubridate::year(VirusDate) > lubridate::year(Sys.Date()) - 3
+        ) |>
+        dplyr::pull(EPID)
+
+    # establish old emergence groups
+    previous_emergence_group <- polis_df_old |>
+        dplyr::filter(!is.na(VdpvEmergenceGroupName)) |>
+        dplyr::mutate(
+            unique_emerg_grp = sub("-\\d+$", "", VdpvEmergenceGroupName)
+        ) |>
+        dplyr::pull(unique_emerg_grp) |>
+        unique()
+
+
     result <- polis_df_new |>
         dplyr::filter(
-            !EPID %in% unique(polis_df_old$EPID),
+            lubridate::year(as.Date(VirusDate)) > lubridate::year(Sys.Date()) - 3 &
+                !EPID %in% unique(new_epids),
             stringr::str_detect(VirusTypeName, "^WILD|^VDPV|^cVDPV"),
             SurveillanceTypeName %in% c("AFP", "Environmental")
         ) |>
+        dplyr::mutate(dplyr::across(where(is.factor), as.character)) |>
         dplyr::transmute(
             Admin0Name, Admin1Name, Admin2Name,
             VirusDate = as.Date(VirusDate),
-            VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1", VirusTypeName),
+            VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1",
+                VirusTypeName
+            ),
+            BaseVdpvEmergenceGroup = sub("-\\d+$", "", VdpvEmergenceGroupName),
             SurveillanceTypeName,
-            NtChanges,
+            NtChanges = ifelse(
+                stringr::str_detect(VirusTypeName, "^VDPV"), NtChanges, NA
+            ),
             `Emergence/Cluster Group` = ifelse(is.na(VdpvEmergenceGroupName),
-                WildClusterName, VdpvEmergenceGroupName
+                WildClusterName,
+                VdpvEmergenceGroupName
             )
         ) |>
         dplyr::count(
             Admin0Name, Admin1Name, Admin2Name, VirusDate, VirusTypeName,
             SurveillanceTypeName, NtChanges, `Emergence/Cluster Group`,
+            BaseVdpvEmergenceGroup,
             name = "Detections"
         ) |>
         dplyr::left_join(
@@ -143,19 +170,21 @@ prep_new_detections_report <- function(polis_df_old,
         dplyr::mutate(
             `Days Since Last Detections` =
                 VirusDate - `Previous Detection`
+        ) |>
+        dplyr::mutate(
+            `New Emergence` = ifelse(
+                VirusTypeName %in% c("cVDPV1", "cVDPV2") &
+                    !BaseVdpvEmergenceGroup %in% previous_emergence_group,
+                TRUE, FALSE
+            )
         )
 
-
     reslist <- result |>
-        dplyr::filter(
-            # VirusTypeName == "VDPV2"
-        ) |>
-        # dplyr::slice_sample(n = 14) |>
         dplyr::mutate(
             `Emergence/Cluster Group` = ifelse(
                 VirusTypeName == "WPV1",
                 paste(`Emergence/Cluster Group`, "Cluster Group"),
-                paste(`Emergence/Cluster Group`, "Emegernce Group")
+                paste(`Emergence/Cluster Group`, "Emergence Group")
             ),
             `Emergence/Cluster Group` = dplyr::case_when(
                 !is.na(NtChanges) & VirusTypeName %in% c("VDPV1", "VDPV2") ~
@@ -166,6 +195,11 @@ prep_new_detections_report <- function(polis_df_old,
             ),
             `Emergence/Cluster Group` = ifelse(
                 stringr::str_detect(`Emergence/Cluster Group`, " belonging to NA"), "",
+                `Emergence/Cluster Group`
+            ),
+            `Emergence/Cluster Group` = ifelse(
+                `New Emergence` == TRUE,
+                paste0(`Emergence/Cluster Group`, " (this is a new Emergence Group)"),
                 `Emergence/Cluster Group`
             ),
             VirusDate = format_date_ord(VirusDate),
@@ -187,7 +221,7 @@ prep_new_detections_report <- function(polis_df_old,
             ),
             country = stringr::str_to_title(Admin0Name),
             province = stringr::str_to_title(Admin1Name),
-            district = stringr::str_to_title(Admin2Name),
+            district = stringr::str_to_title(Admin2Name)
         ) |>
         as.list()
 
