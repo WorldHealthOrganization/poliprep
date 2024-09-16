@@ -28,6 +28,9 @@ globalVariables(
     "parsed_date2", "Total", "snapshot", "WHO_REGION",
     "EPID", "ParalysisOnsetDate", "Validation Type", "WPV1", "afp_cases1",
     "afp_cases2", "cVDPV1", "cVDPV2", "n_data1", "n_data2", "val_type",
-    "virus_type", "CollectionDate"
+    "virus_type", "CollectionDate", "Admin0Name", "Admin1Name",
+    "Admin2Name", "Detections", "Emergence/Cluster Group", "NtChanges",
+    "Previous Detection", "SurveillanceTypeName", "VdpvEmergenceGroupName",
+    "VirusDate", "VirusTypeName", "WildClusterName"
   )
 )
