@@ -139,22 +139,46 @@ prep_new_detections_report <- function(polis_df_old,
         )
 
     reslist <- result |>
+        dplyr::filter(
+            # VirusTypeName == "VDPV2"
+        ) |>
+        # dplyr::slice_sample(n = 14) |>
         dplyr::mutate(
-            `Emergence/Cluster Group` = paste0(
-                " with ", NtChanges, " Nucleotide changes from Sabin."
+            `Emergence/Cluster Group` = ifelse(
+                VirusTypeName == "WPV1",
+                paste(`Emergence/Cluster Group`, "Cluster Group"),
+                paste(`Emergence/Cluster Group`, "Emegernce Group")
+            ),
+            `Emergence/Cluster Group` = dplyr::case_when(
+                !is.na(NtChanges) & VirusTypeName %in% c("VDPV1", "VDPV2") ~
+                    paste0(" with ", NtChanges, " Nucleotide changes from Sabin"),
+                !is.na(NtChanges) & !VirusTypeName %in% c("VDPV1", "VDPV2") ~
+                    paste0(" belonging to ", `Emergence/Cluster Group`),
+                TRUE ~ ""
+            ),
+            `Emergence/Cluster Group` = ifelse(
+                stringr::str_detect(`Emergence/Cluster Group`, " belonging to NA"), "",
+                `Emergence/Cluster Group`
             ),
             VirusDate = format_date_ord(VirusDate),
+            `Previous Detection` = ifelse(
+                !is.na(`Previous Detection`),
+                format_date_ord(`Previous Detection`),
+                `Previous Detection`
+            ),
             prev_det = ifelse(
                 is.na(`Previous Detection`),
-                " This virus was reported for the first time in that country",
-                paste(
-                    " With last known detection in that country being in",
-                    format_date_ord(`Previous Detection`)
+                "",
+                # paste(
+                # " This virus was reported for the first time in that country"),
+                paste0(
+                    " With last known detection in that country being in ",
+                    `Previous Detection`, "."
                 )
             ),
             country = stringr::str_to_title(Admin0Name),
             province = stringr::str_to_title(Admin1Name),
-            district = stringr::str_to_title(Admin2Name)
+            district = stringr::str_to_title(Admin2Name),
         ) |>
         as.list()
 
@@ -204,9 +228,10 @@ prep_new_detections_report <- function(polis_df_old,
         "{reslist$SurveillanceTypeName}",
         " Sample in {reslist$province}, {reslist$district} from",
         " {reslist$VirusDate} is reported this week",
-        "{reslist$`Emergence/Cluster Group`}",
-        "{reslist$prev_det}.\n"
+        "{reslist$`Emergence/Cluster Group`}.",
+        "{reslist$prev_det}\n"
     )
+
 
     if (output_word) {
         doc <- officer::read_docx()
