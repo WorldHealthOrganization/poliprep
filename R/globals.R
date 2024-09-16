@@ -31,6 +31,7 @@ globalVariables(
     "virus_type", "CollectionDate", "Admin0Name", "Admin1Name",
     "Admin2Name", "Detections", "Emergence/Cluster Group", "NtChanges",
     "Previous Detection", "SurveillanceTypeName", "VdpvEmergenceGroupName",
-    "VirusDate", "VirusTypeName", "WildClusterName"
+    "VirusDate", "VirusTypeName", "WildClusterName",
+    "Days Since Last Detections"
   )
 )

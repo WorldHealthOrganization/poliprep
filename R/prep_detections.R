@@ -106,7 +106,10 @@ prep_new_detections_report <- function(polis_df_old,
 
 
     prev_detection <- polis_df_old |>
-        dplyr::filter(stringr::str_detect(VirusTypeName, "^WILD|^VDPV|^cVDPV")) |>
+        dplyr::mutate(
+            VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1", VirusTypeName)
+        ) |>
+        dplyr::filter(stringr::str_detect(VirusTypeName, "^WPV|^VDPV|^cVDPV")) |>
         dplyr::filter(SurveillanceTypeName %in% c("AFP", "Environmental")) |>
         dplyr::mutate(VirusDate = as.Date(VirusDate)) |>
         dplyr::group_by(Admin0Name, VirusTypeName) |>
@@ -136,7 +139,12 @@ prep_new_detections_report <- function(polis_df_old,
         dplyr::left_join(
             prev_detection,
             by = c("Admin0Name", "VirusTypeName")
+        ) |>
+        dplyr::mutate(
+            `Days Since Last Detections` =
+                VirusDate - `Previous Detection`
         )
+
 
     reslist <- result |>
         dplyr::filter(
@@ -168,9 +176,10 @@ prep_new_detections_report <- function(polis_df_old,
             ),
             prev_det = ifelse(
                 is.na(`Previous Detection`),
-                "",
-                # paste(
-                # " This virus was reported for the first time in that country"),
+                #  "" # ,
+                paste(
+                    " This virus was reported for the first time in that country"
+                ),
                 paste0(
                     " With last known detection in that country being in ",
                     `Previous Detection`, "."
@@ -259,7 +268,7 @@ prep_new_detections_report <- function(polis_df_old,
     }
 
     list(
-        overview = overview,
+        detections_table = overview,
         country_specific = country_specific,
         result = result
     )
