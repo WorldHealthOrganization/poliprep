@@ -58,45 +58,67 @@ format_date_ord <- function(date_column) {
 
     paste0(day, ordinal_suffix(day), " ", month, " ", year)
 }
-
-#' Prepare a new detections report for poliovirus cases
+#' Prepare New Detections Table
 #'
-#' This function processes and summarizes new poliovirus detections,
-#' comparing them with previous data. It generates an overview and
-#' country-specific details, with an option to output to a Word document.#'
-#' @param polis_df_old A data frame containing previous poliovirus data
-#' @param polis_df_new A data frame containing new poliovirus data
-#' @param output_word Logical, whether to output results to a Word document
-#' @param output_path String, path for the output Word document (optional)
+#' This function creates a summary table of poliovirus detections, comparing old
+#' and new data, and optionally includes information about Supplementary
+#' Immunization Activities (SIA).
 #'
-#' @return A list containing:
-#'   \item{overview}{A list with summary statistics}
-#'   \item{country_specific}{A character vector of country-specific details}
-#'   \item{result}{A data frame of processed new detections}
+#' @param polis_df_old A data frame containing the old POLIS data.
+#' @param polis_df_new A data frame containing the new POLIS data.
+#' @param polis_sia A data frame containing SIA data.
+#' @param include_sia Logical, whether to include SIA information in the output
+#'   table. Default is TRUE.
+#' @param save_table Logical, whether to save the table as an image file.
+#'   Default is FALSE.
+#' @param output_path Character string specifying the directory to save the
+#'   output file. If NULL, uses the current working directory.
+#' @param vheight Numeric, the height of the output image in pixels. Default is
+#'   800.
+#' @param vwidth Numeric, the width of the output image in pixels. Default is
+#'   3260.
+#'
+#' @return A gt table object containing the summary of poliovirus detections.
 #'
 #' @details
 #' The function performs the following main steps:
-#' 1. Processes previous detection data
-#' 2. Filters and processes new detection data
-#' 3. Generates summary statistics and country-specific details
-#' 4. Optionally creates a Word document report
+#' 1. Checks for required packages and loads them if necessary.
+#' 2. Processes the old POLIS data to get previous detection dates.
+#' 3. Filters and processes the new POLIS data.
+#' 4. Combines and summarizes the data, including calculations for various
+#'    metrics.
+#' 5. Joins with SIA data if include_sia is TRUE.
+#' 6. Creates a formatted gt table with conditional styling.
+#' 7. Optionally saves the table as an HTML and PNG file.
 #'
-#' It uses various dplyr functions for data manipulation and summarization,
-#' stringr for string operations, and officer for Word document creation.
+#' @note
+#' - The function uses various dplyr, tidyr, and gt functions for data
+#'   manipulation and table creation.
+#' - It applies conditional formatting to highlight new emergences, delayed
+#'   reporting, and other important information.
+#' - If save_table is TRUE, it saves the table as both HTML and PNG files, then
+#'   deletes the HTML file.
 #'
 #' @examples
-#' \dontrun{
-#' report <- prep_new_detections_report(old_data, new_data, output_word = TRUE)
-#' }
+#' # Basic usage:
+#' # result_table <- prep_new_detections_table(
+#' #   polis_df_old, polis_df_new,
+#' #   polis_sia
+#' # )
 #'
 #' @export
-prep_new_detections_report <- function(polis_df_old,
-                                       polis_df_new,
-                                       output_word = FALSE,
-                                       output_path = NULL) {
+
+prep_new_detections_table <- function(polis_df_old,
+                                      polis_df_new,
+                                      polis_sia,
+                                      include_sia = TRUE,
+                                      save_table = FALSE,
+                                      output_path = NULL,
+                                      vheight = 800,
+                                      vwidth = 3260) {
     # Conditional loading for packages
     required_packages <- c(
-        "epoxy", "glue", "stringr", "officer"
+        "gt", "glue", "stringr", "webshot"
     )
 
     missing_packages <- required_packages[!sapply(
@@ -116,194 +138,304 @@ prep_new_detections_report <- function(polis_df_old,
         dplyr::group_by(Admin0Name, VirusTypeName) |>
         dplyr::reframe(`Previous Detection` = max(VirusDate))
 
-    # get new epids
-    new_epids <- polis_df_old |>
-        dplyr::filter(
-            lubridate::year(VirusDate) > lubridate::year(Sys.Date()) - 3
-        ) |>
-        dplyr::pull(EPID)
 
-    # establish old emergence groups
-    previous_emergence_group <- polis_df_old |>
-        dplyr::filter(!is.na(VdpvEmergenceGroupName)) |>
+
+    # get max date for old and new data
+    polis_old_maxdate <- max(as.Date(polis_df_old$UpdatedDate))
+    polis_new_maxdate <- max(as.Date(polis_df_new$UpdatedDate))
+
+    res <- polis_df_new |>
         dplyr::mutate(
-            unique_emerg_grp = sub("-\\d+$", "", VdpvEmergenceGroupName)
+            year = lubridate::year(as.Date(VirusDate))
         ) |>
-        dplyr::pull(unique_emerg_grp) |>
-        unique()
-
-
-    result <- polis_df_new |>
         dplyr::filter(
-            lubridate::year(as.Date(VirusDate)) > lubridate::year(Sys.Date()) - 3 &
+            year > lubridate::year(Sys.Date()) - 3 &
                 !EPID %in% unique(new_epids),
             stringr::str_detect(VirusTypeName, "^WILD|^VDPV|^cVDPV"),
             SurveillanceTypeName %in% c("AFP", "Environmental")
         ) |>
         dplyr::mutate(dplyr::across(where(is.factor), as.character)) |>
-        dplyr::transmute(
-            Admin0Name, Admin1Name, Admin2Name,
+        dplyr::mutate(
+            # BaseVdpvEmergenceGroup = sub("-\\d+$", "", VdpvEmergenceGroupName),
+            BaseVdpvEmergenceGroup = VdpvEmergenceGroupName,
+            VdpvClassificationChangeDate = as.Date(VdpvClassificationChangeDate),
+            VdpvReportedToHQDate = as.Date(VdpvReportedToHQDate),
             VirusDate = as.Date(VirusDate),
-            VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1",
-                VirusTypeName
-            ),
-            BaseVdpvEmergenceGroup = sub("-\\d+$", "", VdpvEmergenceGroupName),
-            SurveillanceTypeName,
-            NtChanges = ifelse(
-                stringr::str_detect(VirusTypeName, "^VDPV"), NtChanges, NA
-            ),
-            `Emergence/Cluster Group` = ifelse(is.na(VdpvEmergenceGroupName),
-                WildClusterName,
-                VdpvEmergenceGroupName
-            )
+            VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1", VirusTypeName),
+            year = lubridate::year(VirusDate)
+        )
+
+
+    data <- res |>
+        dplyr::group_by(Admin0Name, VirusTypeName, year) |>
+        dplyr::summarise(
+            Detections = dplyr::n(),
+            MostRecentVirusDate = max(VirusDate, na.rm = TRUE),
+            .groups = "drop"
         ) |>
-        dplyr::count(
-            Admin0Name, Admin1Name, Admin2Name, VirusDate, VirusTypeName,
-            SurveillanceTypeName, NtChanges, `Emergence/Cluster Group`,
-            BaseVdpvEmergenceGroup,
-            name = "Detections"
+        tidyr::pivot_wider(
+            names_from = year,
+            values_from = Detections,
+            names_glue = "{year} Detections"
+        ) |>
+        dplyr::mutate(
+            MostRecentVirusDate = format(MostRecentVirusDate, "%Y-%m-%d")
         ) |>
         dplyr::left_join(
             prev_detection,
             by = c("Admin0Name", "VirusTypeName")
         ) |>
-        dplyr::mutate(
-            `Days Since Last Detections` =
-                VirusDate - `Previous Detection`
+        dplyr::select(
+            Country = Admin0Name,
+            Virus = VirusTypeName,
+            dplyr::ends_with("Detections"),
+            `Most Recent Detection` = MostRecentVirusDate,
+            `Previous Detection`
+        ) |>
+        dplyr::left_join(
+            res |>
+                dplyr::mutate(
+                    Ntchanges = ifelse(
+                        is.na(VdpvNtChangesClosestMatch),
+                        VdpvNtChangesFromSabin,
+                        VdpvNtChangesClosestMatch
+                    ),
+                    Ntchanges = as.numeric(Ntchanges),
+                    VdpvNtChangesClosestMatch = ifelse(
+                        is.na(VdpvNtChangesClosestMatch),
+                        paste0(VdpvNtChangesFromSabin, "**"),
+                        VdpvNtChangesClosestMatch
+                    ),
+                ) |>
+                dplyr::arrange(dplyr::desc(VirusDate)) |>
+                dplyr::group_by(Admin0Name, VirusTypeName) |>
+                dplyr::slice(1) |>
+                dplyr::ungroup() |>
+                dplyr::select(
+                    Country = Admin0Name,
+                    Virus = VirusTypeName,
+                    `Emergence Group` = BaseVdpvEmergenceGroup,
+                    `VDPV Classification Change Date` = VdpvClassificationChangeDate,
+                    `Virus Reported to HQ Date` = VdpvReportedToHQDate,
+                    `Nt Changes from Closest Match` = VdpvNtChangesClosestMatch,
+                    Ntchanges,
+                    `Vaccine Origin` = VaccineOrigin
+                ),
+            by = c("Country", "Virus")
         ) |>
         dplyr::mutate(
+            `Most Recent Detection` = as.Date(`Most Recent Detection`),
+            `Detections to Confirmation (days)` = `Virus Reported to HQ Date` - `Most Recent Detection`,
+            `Delayed Reporting` = ifelse(`Detections to Confirmation (days)` > 90, TRUE, FALSE),
             `New Emergence` = ifelse(
-                VirusTypeName %in% c("cVDPV1", "cVDPV2") &
-                    !BaseVdpvEmergenceGroup %in% previous_emergence_group,
+                Virus %in% c("cVDPV1", "cVDPV2") &
+                    !`Emergence Group` %in% unique(polis_df_old$VdpvEmergenceGroupName),
                 TRUE, FALSE
             )
+        ) |>
+        dplyr::mutate(
+            `New VDPV Classification` = ifelse(
+                Virus %in% c("cVDPV1", "cVDPV2") &
+                    `VDPV Classification Change Date` > polis_old_maxdate &
+                    `VDPV Classification Change Date` <= polis_new_maxdate,
+                TRUE, FALSE
+            )
+        ) |>
+        dplyr::relocate(`Nt Changes from Closest Match`, `Vaccine Origin`, .after = dplyr::last_col()) |>
+        as.data.frame() |>
+        dplyr::left_join(
+            polis_sia |>
+                dplyr::filter(
+                    Admin0Name %in% res$Admin0Name
+                ) |>
+                dplyr::filter(ActivityStatus %in% c("Done")) |>
+                dplyr::mutate(
+                    ActivityDateFrom = as.Date(ActivityDateFrom)
+                ) |>
+                dplyr::arrange(dplyr::desc(ActivityDateFrom)) |>
+                dplyr::group_by(Admin0Name) |>
+                dplyr::slice(1) |>
+                dplyr::ungroup() |>
+                dplyr::select(
+                    Country = Admin0Name,
+                    `Vaccine Type` = ActivityVaccineType,
+                    `Date of Any Last SIA Campagin` = ActivityDateFrom
+                ),
+            by = "Country"
+        ) |>
+        dplyr::mutate(
+            `Days Since SIA and Detection` = `Most Recent Detection` - `Date of Any Last SIA Campagin`,
+            `Days between Previous and Most Recent Detection` = `Most Recent Detection` - `Previous Detection`,
+            `Days between Previous and Most Recent Detection` = ifelse(
+                !is.na(`Days between Previous and Most Recent Detection`) &
+                    `Days between Previous and Most Recent Detection` < 0,
+                paste0(`Days between Previous and Most Recent Detection`, "*"),
+                `Days between Previous and Most Recent Detection`
+            ),
+            `Days between Previous and Most Recent Detection` = ifelse(
+                is.na(`Days between Previous and Most Recent Detection`),
+                "",
+                `Days between Previous and Most Recent Detection`
+            ),
+            `Most Recent Detection` = poliprep::format_date_ord(`Most Recent Detection`),
+            `Previous Detection` = poliprep::format_date_ord(`Previous Detection`),
+            `Date of Any Last SIA Campagin` = poliprep::format_date_ord(`Date of Any Last SIA Campagin`),
+            `Previous Detection` = ifelse(
+                `Previous Detection` == "NAth NA NA",
+                "", `Previous Detection`
+            ),
+            `Emergence Group` = ifelse(is.na(`Emergence Group`), "No Classification Given Yet", `Emergence Group`),
+            `Vaccine Origin` = ifelse(is.na(`Vaccine Origin`), "", `Vaccine Origin`),
+            Country = stringr::str_to_title(Country)
+        ) |>
+        dplyr::select(
+            Country,
+            `Virus` = Virus,
+            dplyr::ends_with("Detections"),
+            `Emergence Group` = `Emergence Group`,
+            `New Emergence`,
+            `Latest Detection` = `Most Recent Detection`,
+            `Prior Detection` = `Previous Detection`,
+            `Days Between` = `Days between Previous and Most Recent Detection`,
+            `Days to Confirm` = `Detections to Confirmation (days)`,
+            `Delayed Report` = `Delayed Reporting`,
+            `Nt Changes` = `Nt Changes from Closest Match`,
+            `New VDPV Class` = `New VDPV Classification`,
+            `Vaccine Origin`,
+            `Last SIA Date` = `Date of Any Last SIA Campagin`,
+            `Days Since SIA` = `Days Since SIA and Detection`,
+            `Vaccine Type`, Ntchanges
         )
 
-    reslist <- result |>
-        dplyr::mutate(
-            `Emergence/Cluster Group` = ifelse(
-                VirusTypeName == "WPV1",
-                paste(`Emergence/Cluster Group`, "Cluster Group"),
-                paste(`Emergence/Cluster Group`, "Emergence Group")
+    gt_table <- data |>
+        gt::gt() |>
+        gt::tab_style(
+            style = list(
+                gt::cell_fill(color = "#de2d26"),
+                gt::cell_text(color = "white")
             ),
-            `Emergence/Cluster Group` = dplyr::case_when(
-                !is.na(NtChanges) & VirusTypeName %in% c("VDPV1", "VDPV2") ~
-                    paste0(" with ", NtChanges, " Nucleotide changes from Sabin"),
-                !is.na(NtChanges) & !VirusTypeName %in% c("VDPV1", "VDPV2") ~
-                    paste0(" belonging to ", `Emergence/Cluster Group`),
-                TRUE ~ ""
-            ),
-            `Emergence/Cluster Group` = ifelse(
-                stringr::str_detect(`Emergence/Cluster Group`, " belonging to NA"), "",
-                `Emergence/Cluster Group`
-            ),
-            `Emergence/Cluster Group` = ifelse(
-                `New Emergence` == TRUE,
-                paste0(`Emergence/Cluster Group`, " (this is a new Emergence Group)"),
-                `Emergence/Cluster Group`
-            ),
-            VirusDate = format_date_ord(VirusDate),
-            `Previous Detection` = ifelse(
-                !is.na(`Previous Detection`),
-                format_date_ord(`Previous Detection`),
-                `Previous Detection`
-            ),
-            prev_det = ifelse(
-                is.na(`Previous Detection`),
-                #  "" # ,
-                paste(
-                    " This virus was reported for the first time in that country"
-                ),
-                paste0(
-                    " With last known detection in that country being in ",
-                    `Previous Detection`, "."
-                )
-            ),
-            country = stringr::str_to_title(Admin0Name),
-            province = stringr::str_to_title(Admin1Name),
-            district = stringr::str_to_title(Admin2Name)
-        ) |>
-        as.list()
-
-    country_result <- result |>
-        dplyr::group_by(Admin0Name) |>
-        dplyr::summarise(Detections = sum(Detections)) |>
-        dplyr::arrange(dplyr::desc(Detections))
-
-    countyr_n <- length(unique(country_result$Admin0Name))
-    detections_n <- sum(country_result$Detections)
-
-    virus_es_surv <- result |>
-        dplyr::filter(SurveillanceTypeName == "Environmental") |>
-        dplyr::group_by(VirusTypeName) |>
-        dplyr::reframe(Detections = sum(Detections)) |>
-        dplyr::arrange(dplyr::desc(Detections))
-
-    virus_afp_surv <- result |>
-        dplyr::filter(SurveillanceTypeName == "AFP") |>
-        dplyr::group_by(VirusTypeName) |>
-        dplyr::reframe(Detections = sum(Detections)) |>
-        dplyr::arrange(dplyr::desc(Detections))
-
-    virus_types <- c("WPV1", "cVDPV1", "cVDPV2", "VDPV1", "VDPV2")
-
-    es_detections <- paste(
-        get_detections(virus_es_surv, virus_types),
-        collapse = ", "
-    )
-    afp_detections <- paste(
-        get_detections(virus_afp_surv, virus_types),
-        collapse = ", "
-    )
-
-    overview <- list(
-        total = glue::glue(
-            "{detections_n} positive isolates are ",
-            "reported from {countyr_n} countries.\n"
-        ),
-        afp = glue::glue("AFP Cases: {afp_detections}"),
-        es = glue::glue("Environmental Samples: {es_detections}.\n")
-    )
-
-    country_specific <- epoxy::epoxy(
-        "{reslist$Admin0Name}\n \u2022 ",
-        "{reslist$Detections} {reslist$VirusTypeName} ",
-        "{reslist$SurveillanceTypeName}",
-        " Sample in {reslist$province}, {reslist$district} from",
-        " {reslist$VirusDate} is reported this week",
-        "{reslist$`Emergence/Cluster Group`}.",
-        "{reslist$prev_det}\n"
-    )
-
-
-    if (output_word) {
-        doc <- officer::read_docx()
-        doc <- doc |>
-            officer::body_add_par("Overview of Virus \n", style = "heading 1") |>
-            officer::body_add_par(overview$total, style = "Normal") |>
-            officer::body_add_par(overview$afp, style = "Normal") |>
-            officer::body_add_par(overview$es, style = "Normal") |>
-            officer::body_add_par("Country Specific Details", style = "heading 1")
-
-        for (message in country_specific) {
-            doc <- officer::body_add_par(
-                doc, message,
-                style = "Normal"
+            locations = gt::cells_body(
+                columns = `Emergence Group`,
+                rows = `New Emergence` == TRUE
             )
-        }
+        ) |>
+        gt::tab_spanner(
+            label = "Previous Campaigns",
+            columns = c(`Last SIA Date`, `Vaccine Type`)
+        ) |>
+        gt::tab_spanner(
+            label = "Virus Information",
+            columns = c(
+                "Virus",
+                dplyr::ends_with("Detections"),
+                "Emergence Group"
+            )
+        ) |>
+        gt::tab_spanner(
+            label = "Virus History",
+            columns = c(
+                "Days to Confirm",
+                "Latest Detection", "Prior Detection",
+                "Days Between",
+                "Nt Changes", "Vaccine Origin"
+            )
+        ) |>
+        gt::tab_style(
+            style = list(
+                gt::cell_fill(color = "#fee0d2")
+            ),
+            locations = gt::cells_body(
+                columns = `Days to Confirm`,
+                rows = `Delayed Report` == TRUE
+            )
+        ) |>
+        gt::tab_style(
+            style = list(
+                gt::cell_fill(color = "#deebf7")
+            ),
+            locations = gt::cells_body(
+                columns = `Virus`,
+                rows = `New VDPV Class` == TRUE &
+                    `Virus` != "WPV1"
+            )
+        ) |>
+        gt::tab_style(
+            style = list(
+                gt::cell_fill(color = "#efedf5")
+            ),
+            locations = gt::cells_body(
+                columns = `Nt Changes`,
+                rows = Ntchanges > 11
+            )
+        ) |>
+        gt::cols_hide(columns = c(
+            "Ntchanges", "New VDPV Class", "Delayed Report",
+            "New Emergence", "Days Since SIA"
+        )) |>
+        gt::tab_footnote(
+            footnote = gt::md(
+                "Latest Detection: Latest reported to HQ this week; may not be newest virus detection in country<br>
+     Prior Detection: Last detection of this virus type in the country before current reporting week<br>
+     * Due to lab delay, virus may have been detected earlier and not reported until this week<br>
+     ** If VDPV and no Nt Changes from Closest Match, Nt Changes from Sabin is used."
+            )
+        ) |>
+        gt::tab_style(
+            style = gt::cell_text(weight = "bold"),
+            locations = gt::cells_column_spanners(
+                spanners = dplyr::everything()
+            )
+        ) |>
+        gt::tab_source_note(
+            gt::html(paste0(
+                '<pre style="display: inline;font-family: Avenir, Verdana, sans-serif; font-size: 15px">',
+                '<span style="background-color: #deebf7;">        </span> = New linkage to ongoing outbreak</pre>   ',
+                '<pre style="display: inline;font-family: Avenir, Verdana, sans-serif; font-size: 15px">',
+                '<span style="background-color: #de2d26;">        </span> = New Emergence</pre>   ',
+                '<pre style="display: inline;font-family: Avenir, Verdana, sans-serif; font-size: 15px">',
+                '<span style="background-color: #fee0d2;">        </span> = Days to Confirm > 90</pre>  ',
+                '<pre style="display: inline;font-family: Avenir, Verdana, sans-serif; font-size: 15px">',
+                '<span style="background-color: #efedf5;">        </span> = Nt Changes > 11</pre>  '
+            ))
+        ) |>
+        gt::tab_header(
+            title = "Poliovirus Detections Summary",
+            subtitle = glue::glue(
+                "Confirmed detections between {poliprep::format_date_ord(polis_old_maxdate)} and ",
+                "{poliprep::format_date_ord(polis_new_maxdate)}"
+            )
+        ) |>
+        gt::tab_options(
+            table.font.size = gt::px(24),
+            table.width = gt::pct(100)
+        )
 
-
-
-        if (is.null(output_path)) {
-            output_path <- "new_detections_report.docx"
-        }
-
-        print(doc, target = output_path)
+    if (!include_sia) {
+        gt_table <- gt_table |>
+            gt::cols_hide(
+                columns = c("Last SIA Date", "Vaccine Type")
+            )
     }
 
-    list(
-        detections_table = overview,
-        country_specific = country_specific,
-        result = result
-    )
+    if (save_table) {
+        if (is.null(output_path)) {
+            output_path <- getwd()
+        }
+
+        today <- format(Sys.Date(), "%Y%m%d")
+        file_prefix <- glue::glue(
+            "poliovirus_detections_summary_{today}"
+        )
+
+        html_path <- file.path(output_path, glue::glue("{file_prefix}.html"))
+        png_path <- file.path(output_path, glue::glue("{file_prefix}.png"))
+
+        gt_table |> gt::gtsave(html_path)
+
+        webshot::webshot(html_path, png_path, vheight = vheight, vwidth = vwidth)
+
+        file.remove(html_path)
+    }
+
+    return(gt_table)
 }

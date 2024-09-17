@@ -33,6 +33,21 @@ globalVariables(
     "Previous Detection", "SurveillanceTypeName", "VdpvEmergenceGroupName",
     "VirusDate", "VirusTypeName", "WildClusterName",
     "Days Since Last Detections", "BaseVdpvEmergenceGroup",
-    "New Emergence", "unique_emerg_grp"
+    "New Emergence", "unique_emerg_grp", "ActivityDateFrom",
+    "ActivityStatus", "Country", "Date of Any Last SIA Campagin",
+    "Days Since SIA and Detection", "Days between
+     Previous and Most Recent Detection",
+    "Delayed Reporting Detections to Confirmation (days)", "Emergence Group",
+    "Emergence Group", "Last SIA Date", "Most Recent Detection",
+    "MostRecentVirusDate", "New VDPV Class", "New VDPV Classification",
+    "Nt Changes", "Nt Changes from Closest Match", "Ntchanges",
+    "VDPV Classification Change Date", "Vaccine Origin",
+    "Vaccine Type", "VaccineOrigin", "VdpvClassificationChangeDate",
+    "VdpvNtChangesClosestMatch", "VdpvNtChangesFromSabin",
+    "VdpvReportedToHQDate", "Virus", "Virus Reported to HQ Date",
+    "new_epids", "ActivityVaccineType", "Days to Confirm",
+    "Days between Previous and Most Recent Detection",
+    "Delayed Reporting", "Delayed Report",
+    "Detections to Confirmation (days)"
   )
 )
