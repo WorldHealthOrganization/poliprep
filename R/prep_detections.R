@@ -154,7 +154,7 @@ prep_new_detections_table <- function(polis_df_old,
         ) |>
         dplyr::filter(
             year > lubridate::year(Sys.Date()) - 3 &
-                !EPID %in% unique(new_epids),
+                !EPID %in% unique(polis_df_old$EPID),
             stringr::str_detect(VirusTypeName, "^WILD|^VDPV|^cVDPV"),
             SurveillanceTypeName %in% c("AFP", "Environmental")
         ) |>
