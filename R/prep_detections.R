@@ -130,10 +130,14 @@ prep_new_detections_table <- function(polis_df_old,
     prev_detection <- polis_df_old |>
         dplyr::mutate(across(where(is.factor), as.character)) |>
         dplyr::mutate(
-            VirusTypeName = ifelse(VirusTypeName == "WILD1", "WPV1", VirusTypeName)
+            VirusTypeName = ifelse(
+                VirusTypeName == "WILD1", "WPV1", VirusTypeName
+            )
         ) |>
-        dplyr::filter(stringr::str_detect(VirusTypeName, "^WPV|^VDPV|^cVDPV")) |>
-        dplyr::filter(SurveillanceTypeName %in% c("AFP", "Environmental")) |>
+        dplyr::filter(
+            stringr::str_detect(VirusTypeName, "^WPV|^VDPV|^cVDPV") &
+                SurveillanceTypeName %in% c("AFP", "Environmental")
+        ) |>
         dplyr::mutate(VirusDate = as.Date(VirusDate)) |>
         dplyr::group_by(Admin0Name, VirusTypeName) |>
         dplyr::reframe(`Previous Detection` = max(VirusDate))

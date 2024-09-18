@@ -2334,11 +2334,17 @@ get_polis_detections <- function(data, case_type = c("ES", "AFP")) {
       !is.na(if (case_type == "ES") CollectionDate else ParalysisOnsetDate)
     ) |>
     dplyr::mutate(
-      cVDPV1 = "VDPV1" %in% names(data) & VDPV1 &
-        VdpvClassifications == "Circulating",
-      cVDPV2 = "VDPV2" %in% names(data) & VDPV2 &
-        VdpvClassifications == "Circulating",
-      WPV1 = "WILD1" %in% names(data) & WILD1
+      cVDPV1 = if ("VDPV1" %in% names(data)) {
+        VDPV1 & VdpvClassifications == "Circulating"
+      } else {
+        FALSE
+      },
+      cVDPV2 = if ("VDPV2" %in% names(data)) {
+        VDPV2 & VdpvClassifications == "Circulating"
+      } else {
+        FALSE
+      },
+      WPV1 = if ("WILD1" %in% names(data)) WILD1 else FALSE
     ) |>
     dplyr::mutate(
       virus_type = dplyr::case_when(
@@ -2350,24 +2356,26 @@ get_polis_detections <- function(data, case_type = c("ES", "AFP")) {
     )
 }
 
-#' Compare AFP POLIS Snapshots
+#' Compare POLIS Snapshots
 #'
-#' This function performs a detailed comparison between two POLIS datasets,
-#' focusing on Acute Flaccid Paralysis (AFP) cases. It conducts various
-#' validations and analyses to identify differences and changes.
+#' This function performs a detailed comparison between two POLIS snapshots,
+#' focusing on either Acute Flaccid Paralysis (AFP) cases or Environmental
+#' Surveillance (ES) samples. It conducts various validations and analyses
+#' to identify differences and changes between the two snapshots.
 #'
 #' Key operations include:
 #' 1. Checking for removed columns
 #' 2. Identifying new blank columns
-#' 3. Detecting removed EPIDs
+#' 3. Detecting removed EPIDs/SampleIds
 #' 4. Finding lost detections
-#' 5. Analyzing changes in AFP detections, comparing various fields
+#' 5. Analyzing changes in detections, comparing various fields
 #'
 #' The function outputs informative CLI messages throughout the process,
 #' providing insights into the differences between the datasets.
 #'
 #' @param data1 First POLIS dataset (data frame)
 #' @param data2 Second POLIS dataset (data frame)
+#' @param type Type of data to compare: "AFP" or "ES"
 #'
 #' @return A list containing:
 #'   - results: Detailed validation results
@@ -2378,19 +2386,31 @@ get_polis_detections <- function(data, case_type = c("ES", "AFP")) {
 #'
 #' @examples
 #' \dontrun{
-#' results <- compare_polis_afp_snapshots(old_data, new_data)
-#' print(results$gt_tab)
+#' results_afp <- compare_polis_snapshots(old_data_afp, new_data_afp, "AFP")
+#' results_es <- compare_polis_snapshots(old_data_es, new_data_es, "ES")
+#' print(results_afp$gt_tab)
+#' print(results_es$gt_tab)
 #' }
-compare_polis_afp_snapshots <- function(data1, data2) {
+compare_polis_snapshots <- function(data1, data2, type) {
+  if (!type %in% c("AFP", "ES")) {
+    stop("Type must be either 'AFP' or 'ES'")
+  }
+
   # Get detections table
-  detections1 <- get_polis_detections(data1, "AFP") |>
+  detections1 <- get_polis_detections(data1, type) |>
     dplyr::filter(cVDPV1 | cVDPV2 | WPV1)
-  detections2 <- get_polis_detections(data2, "AFP") |>
+  detections2 <- get_polis_detections(data2, type) |>
     dplyr::filter(cVDPV1 | cVDPV2 | WPV1)
 
+  data1 <- data1 |>
+    dplyr::mutate(across(where(is.factor), as.character))
+
+  data2 <- data2 |>
+    dplyr::mutate(across(where(is.factor), as.character))
+
   # Establish labels for the different datasets
-  lab_date1 <- format(as.Date(max(data1$LastUpdateDate)), "%d %b %Y")
-  lab_date2 <- format(as.Date(max(data2$LastUpdateDate)), "%d %b %Y")
+  lab_date1 <- format(as.Date(max(data1$LastUpdateDate, na.rm = T)), "%d %b %Y")
+  lab_date2 <- format(as.Date(max(data2$LastUpdateDate, na.rm = T)), "%d %b %Y")
 
   # Create labels for CLI messages and table headers
   cli_label1 <- paste0("Dataset 1 (", lab_date1, ")")
@@ -2450,45 +2470,48 @@ compare_polis_afp_snapshots <- function(data1, data2) {
   results$blank_columns_new <- new_blank_cols
   results$blank_columns_new_count <- length(new_blank_cols)
 
-  # 3. Check for removed EPIDs -----------------------------------------------
-  cli::cli_h1("Checking for removed EPIDs")
+  # 3. Check for removed EPIDs/SampleIds ---------------------------------------
+  cli::cli_h1(
+    paste0("Checking for removed ", ifelse(type == "AFP", "EPIDs", "SampleIds"))
+  )
 
-  removed_epids <- setdiff(data1$EPID, data2$EPID)
+  id_col <- ifelse(type == "AFP", "EPID", "SampleId")
+  removed_ids <- setdiff(data1[[id_col]], data2[[id_col]])
 
   # Get the number of detections in the first dataset
   number_detections <- detections1 |>
-    dplyr::filter(EPID %in% removed_epids) |>
+    dplyr::filter(!!rlang::sym(id_col) %in% removed_ids) |>
     nrow()
 
-  if (length(removed_epids) > 0) {
+  if (length(removed_ids) > 0) {
     cli::cli_alert_warning(paste0(
-      "Number of EPIDs from {cli_label1} removed in {cli_label2}: ",
-      crayon::red(big_mark(length(removed_epids))), "\n",
+      "Number of ", id_col, "s from {cli_label1} removed in {cli_label2}: ",
+      crayon::red(big_mark(length(removed_ids))), "\n",
       "Number of these that were detections in {cli_label1}: ",
       crayon::red(big_mark(number_detections))
     ))
   } else {
     cli::cli_alert_success(
-      "All EPIDs from {cli_label1} are present in {cli_label2}"
+      "All ", id_col, "s from {cli_label1} are present in {cli_label2}"
     )
   }
-  results$removed_epids <- removed_epids
-  results$removed_epids_count <- length(removed_epids)
+  results$removed_ids <- removed_ids
+  results$removed_ids_count <- length(removed_ids)
 
   # 4. Check for removed detections in dataset --------------------------------
 
-  cli::cli_h1("Checking for lost AFP detections")
+  cli::cli_h1(paste0("Checking for lost ", type, " detections"))
 
   data1_counts <- detections1 |>
-    dplyr::group_by(EPID) |>
+    dplyr::group_by(!!rlang::sym(id_col)) |>
     dplyr::summarise(n = dplyr::n_distinct(virus_type))
 
   data2_counts <- detections2 |>
-    dplyr::group_by(EPID) |>
+    dplyr::group_by(!!rlang::sym(id_col)) |>
     dplyr::summarise(n = dplyr::n_distinct(virus_type))
 
   lost_detections <- dplyr::full_join(data1_counts, data2_counts,
-    by = "EPID",
+    by = id_col,
     suffix = c("_data1", "_data2")
   ) |>
     dplyr::filter(!is.na(n_data1), !is.na(n_data2), n_data2 < n_data1) |>
@@ -2496,7 +2519,7 @@ compare_polis_afp_snapshots <- function(data1, data2) {
 
   if (nrow(lost_detections) > 0) {
     cli::cli_alert_warning(paste0(
-      "Number of EPIDs with lost detections between ",
+      "Number of ", id_col, "s with lost detections between ",
       "{cli_label1} and {cli_label2}: ",
       crayon::red(big_mark(nrow(lost_detections)))
     ))
@@ -2504,56 +2527,52 @@ compare_polis_afp_snapshots <- function(data1, data2) {
     cli::cli_alert_success("No detections were lost between datasets")
   }
 
-  results$lost_detections <- unique(lost_detections$EPID)
+  results$lost_detections <- unique(lost_detections[[id_col]])
   results$lost_detections_count <- nrow(lost_detections)
 
   # 5. Check for changes in detections dataset ---------------------------------
-  cli::cli_h1("Checking for changes in AFP detections dataset")
+  cli::cli_h1(paste0("Checking for changes in ", type, " detections dataset"))
+
+  # Define columns to compare based on type
+  columns_to_compare <- if (type == "AFP") {
+    c(
+      "CountryISO3Code", "Admin0Name", "Admin0GUID", "Admin1GUID",
+      "Admin2GUID", "Admin1Name", "Admin2Name", "Latitude", "Longitude",
+      "PersonSex", "PersonAgeInMonths", "PersonAgeInYears", "DosesIPVNumber",
+      "DosesTotal", "DosesIPVRoutine", "TotalNumberOfDoses",
+      "ParalysisOnsetDate", "VdpvClassifications", "Stool1Condition",
+      "Stool2Condition", "NotificationDate", "InvestigationDate",
+      "Stool1CollectionDate", "Stool2CollectionDate",
+      "DateNotificationtoHQ", "SurveillanceTypeName",
+      "PolioVirusTypes", "VdpvEmergenceGroupNames", "FinalCultureResult",
+      "NtChanges"
+    )
+  } else {
+    c(
+      "CountryISO3Code", "Admin0Name", "Admin0GUID", "Admin1GUID",
+      "Admin2GUID", "Admin1Name", "Admin2Name", "SiteXCoordinate",
+      "SiteYCoordinate", "SiteName", "CollectionDate",
+      "DateFinalSeqResult", "DateFinalResultsReported", "DateReceivedInLab",
+      "SampleCondition", "FinalCellCultureResult", "VaccineOrigins",
+      "NtChanges", "DateShippedToRefLab", "VirusTypes", "VirusClusters"
+    )
+  }
 
   # Compare with corresponding rows in data2 and identify changes
   changed_rows <- detections1 |>
-    dplyr::left_join(data2, by = "EPID") |>
+    dplyr::left_join(data2,
+      by = id_col,
+      relationship = "many-to-many"
+    ) |>
     dplyr::mutate(
       changes = dplyr::case_when(
-        CountryISO3Code.x != CountryISO3Code.y ~ "CountryISO3Code",
-        Admin0Name.x != Admin0Name.y ~ "Admin0Name",
-        Admin0GUID.x != Admin0GUID.y ~ "Admin0GUID",
-        Admin1GUID.x != Admin1GUID.y ~ "Admin1GUID",
-        Admin2GUID.x != Admin2GUID.y ~ "Admin2GUID",
-        Admin1Name.x != Admin1Name.y ~ "Admin1Name",
-        Admin2Name.x != Admin2Name.y ~ "Admin2Name",
-        Latitude.x != Latitude.y ~ "Latitude",
-        Longitude.x != Longitude.y ~ "Longitude",
-        PersonSex.x != PersonSex.y ~ "PersonSex",
-        PersonAgeInMonths.x != PersonAgeInMonths.y ~ "PersonAgeInMonths",
-        PersonAgeInYears.x != PersonAgeInYears.y ~ "PersonAgeInYears",
-        DosesIPVNumber.x != DosesIPVNumber.y ~ "DosesIPVNumber",
-        DosesTotal.x != DosesTotal.y ~ "DosesTotal",
-        DosesIPVRoutine.x != DosesIPVRoutine.y ~ "DosesIPVRoutine",
-        TotalNumberOfDoses.x != TotalNumberOfDoses.y ~ "TotalNumberOfDoses",
-        ParalysisOnsetDate.x != ParalysisOnsetDate.y ~ "ParalysisOnsetDate",
-        VdpvClassifications.x != VdpvClassifications.y ~ "VdpvClassifications",
-        TotalNumberOfDoses.x != TotalNumberOfDoses.y ~ "TotalNumberOfDoses",
-        Stool1Condition.x != Stool1Condition.y ~ "Stool1Condition",
-        Stool2Condition.x != Stool2Condition.y ~ "Stool2Condition",
-        NotificationDate.x != NotificationDate.y ~ "NotificationDate",
-        InvestigationDate.x != InvestigationDate.y ~ "InvestigationDate",
-        Stool1CollectionDate.x != Stool1CollectionDate.y ~
-          "Stool1CollectionDate",
-        Stool2CollectionDate.x != Stool2CollectionDate.y ~
-          "Stool2CollectionDate",
-        DateNotificationtoHQ.x != DateNotificationtoHQ.y ~
-          "DateNotificationtoHQ",
-        VdpvClassifications.x != VdpvClassifications.y ~
-          "VdpvClassifications",
-        SurveillanceTypeName.x != SurveillanceTypeName.y ~
-          "SurveillanceTypeName",
-        PolioVirusTypes.x != PolioVirusTypes.y ~ "PolioVirusTypes",
-        VdpvEmergenceGroupNames.x != VdpvEmergenceGroupNames.y ~
-          "VdpvEmergenceGroupNames",
-        # Classification.x != Classification.y ~ "Classification",
-        FinalCultureResult.x != FinalCultureResult.y ~ "FinalCultureResult",
-        NtChanges.x != NtChanges.y ~ "NtChanges",
+        !!!lapply(columns_to_compare, function(col) {
+          rlang::expr(
+            !!rlang::sym(
+              paste0(col, ".x")
+            ) != !!rlang::sym(paste0(col, ".y")) ~ !!col
+          )
+        }),
         TRUE ~ NA_character_
       )
     ) |>
@@ -2567,7 +2586,7 @@ compare_polis_afp_snapshots <- function(data1, data2) {
   # Total number of changed rows
   total_changed <- nrow(changed_rows)
   cli::cli_alert_info(paste0(
-    "Number of changed rows in AFP detections dataset from ",
+    "Number of changed rows in ", type, " detections dataset from ",
     "{cli_label1} to {cli_label2}: ",
     crayon::red(big_mark(total_changed))
   ))
@@ -2593,19 +2612,19 @@ compare_polis_afp_snapshots <- function(data1, data2) {
     val_type = c(
       "Removed Columns",
       "New Blank Columns",
-      "Removed EPIDs",
+      paste0("Removed ", id_col, "s"),
       "Lost Detections"
     ),
     Validation = c(
       glue::glue("Removed Columns in {table_header2}"),
       glue::glue("New Blank Columns in {table_header2}"),
-      glue::glue("Removed EPIDs in {table_header2}"),
+      glue::glue("Removed {id_col}s in {table_header2}"),
       glue::glue("Lost Detections in {table_header2}")
     ),
     Difference = c(
       results$removed_columns_count,
       results$blank_columns_new_count,
-      results$removed_epids_count,
+      results$removed_ids_count,
       results$lost_detections_count
     )
   ) |>
@@ -2615,7 +2634,7 @@ compare_polis_afp_snapshots <- function(data1, data2) {
         dplyr::mutate(
           `Validation Type` = "Changes in Detections Dataset",
           changes = glue::glue(
-            "Changes in {changes} in AFP Detections in {table_header2}"
+            "Changes in {changes} in {type} Detections in {table_header2}"
           )
         ) |> dplyr::select(
           `Validation Type`,
@@ -2627,7 +2646,6 @@ compare_polis_afp_snapshots <- function(data1, data2) {
     gt::gt() |>
     gt::data_color(
       columns = 3,
-      # rows = row_start:nrow(summary_df),
       fn = function(x) {
         # Handle potential negative values or NAs for this row
         x_clean <- pmax(x, 0, na.rm = TRUE)
@@ -2644,7 +2662,7 @@ compare_polis_afp_snapshots <- function(data1, data2) {
       }
     ) |>
     gt::tab_header(
-      title = "Comparison of POLIS AFP Snapshots",
+      title = paste0("Comparison of POLIS ", type, " Snapshots"),
       subtitle = glue::glue("{table_header1} Vs {table_header2}")
     ) |>
     gt::cols_align(align = "left", columns = 2) |>

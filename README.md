@@ -32,12 +32,10 @@ We plan to add a number of functions which do the following:
 - [x] Clean and fix names of places including geolocations.
 - [x] Check and clean geo-coordinates.
 - [x] Match variables naming conventions & datatypes within two dataframes.
-- [x] Validate POLIS data.
+- [x] Validate AFP & ES POLIS data.
 - [x] Validate AFP Surveillance data.
-- [ ] Validate Environmental Surveillance data.
-- [ ] Validate all Lab data.
-- [ ] Produce validation reports and scorecards.
-
+- [x] Validate A Surveillance data.
+- [x] Create New Detections Table from POLIS data.
 
 ## :incoming_envelope: Contacting us
 
