@@ -4,7 +4,14 @@
 \alias{handle_user_interaction}
 \title{Interact with Users for Data Cleaning Choices}
 \usage{
-handle_user_interaction(input_data, levels, level, clear_console = T, stratify)
+handle_user_interaction(
+  input_data,
+  levels,
+  level,
+  clear_console = TRUE,
+  stratify,
+  max_options
+)
 }
 \arguments{
 \item{input_data}{Data frame containing admin names etc.,.}
@@ -15,6 +22,11 @@ handle_user_interaction(input_data, levels, level, clear_console = T, stratify)
 
 \item{clear_console}{Logical, whether to clear the console before showing
 prompts; defaults to TRUE.}
+
+\item{stratify}{Logical, whether to stratify the cleaning process.}
+
+\item{max_options}{Maximum number of options to display in the menu.
+Default is 200.}
 }
 \value{
 Data frame of user-selected replacements if any; otherwise,
@@ -23,11 +35,11 @@ provides feedback based on user actions.
 \description{
 Presents an interactive CLI menu using \code{cli} for users to make selections on
 data cleaning choices, particularly for administrative names like countries,
-provinces, and districts. It allows users to replace, skip, save, or exit,
-incorporating user feedback into the data cleaning process.
+provinces, districts, and subdistricts. It allows users to replace, skip,
+save, or exit, incorporating user feedback into the data cleaning process.
 }
 \examples{
-# handle_user_interaction(my_data, "level1", TRUE)
+# handle_user_interaction(my_data, "level1", TRUE, TRUE, 20)
 
 }
 \keyword{internal}

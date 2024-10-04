@@ -10,11 +10,13 @@ prep_geonames(
   level0 = NULL,
   level1 = NULL,
   level2 = NULL,
+  level3 = NULL,
   region = NULL,
   cache_path = NULL,
   method = "jw",
   stratify = TRUE,
-  interactive = TRUE
+  interactive = TRUE,
+  max_options = 200
 )
 }
 \arguments{
@@ -29,6 +31,8 @@ attached to poliprep is used.}
 \item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
 
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
+
+\item{level3}{level3 col name (subdistrict) in both 'data' and 'lookup_data'.}
 
 \item{region}{If using the internal version of WHO geoname data, you can]
 specify the region name of interest to speed up the name matching.
@@ -57,6 +61,9 @@ admin levels to maintain hierarchical consistency.}
 
 \item{interactive}{Logical; if TRUE, prompts the user for interactive
 matching decisions. Defaults to FALSE.}
+
+\item{max_options}{Maximum number of options to output for string distance
+matching. Default is 200.}
 }
 \value{
 A data frame with cleaned administrative names and saved data frame
@@ -100,14 +107,15 @@ user choices and algorithmic matching.
 # target_df <- data.frame(
 # country = c("ANGOLA", "UGA", "ZAMBIA"),
 # province = c("CABONDA", "TESO", "LUSAKA"),
-# district = c("BALIZE", "BOKEDEA", "RAFUNSA")
+# district = c("BALIZE", "BOKEDEA", "RAFUNSA"),
+# subdistrict = c("AREA1", "AREA2", "AREA3")
 # )
 
 # Interactively clean geonames
 # prep_geonames(
 # target_df,
 # level0 ="country", level1 = 'province',
-# level2 = "district"
+# level2 = "district", level3 = "subdistrict"
 # )
 
 }

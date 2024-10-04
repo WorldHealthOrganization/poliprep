@@ -28,7 +28,7 @@ actions, capturing user selection through a custom prompt.
 \examples{
 # display_custom_menu("Choose an option:", "Main Menu",
 #                     c("Option 1", "Option 2"),
-#                     list(x = "Skip", y = "Save"), "Your choice:")
+#                     list(x = "Skip", y = "Save"), "Your choice:", 20)
 
 }
 \keyword{internal}

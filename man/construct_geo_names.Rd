@@ -4,7 +4,7 @@
 \alias{construct_geo_names}
 \title{Construct Long Geographic Names}
 \usage{
-construct_geo_names(data, level0, level1, level2)
+construct_geo_names(data, level0, level1, level2, level3 = NULL)
 }
 \arguments{
 \item{data}{A dataframe containing the geographic data.}
@@ -14,6 +14,8 @@ construct_geo_names(data, level0, level1, level2)
 \item{level1}{level1 col name (province) in both 'data' and 'lookup_data'.}
 
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
+
+\item{level3}{level3 col name (subdistrict) in both 'data' and 'lookup_data'.}
 }
 \value{
 Returns the dataframe with an additional column \code{long_geo} that
@@ -24,11 +26,14 @@ This function creates a composite geographic identifier by concatenating
 values from specified administrative level columns within a dataframe.
 }
 \examples{
-# Assuming `data` is a dataframe with columns 'country', 'state', and 'city':
+# Assuming `data` is a dataframe with columns 'country', 'state', 'city',
+# and 'subdistrict':
 # data <- data.frame(
 # country = c("USA", "USA", "Canada"),
 #  state = c("California", NA, "Ontario"),
-#  city = c("Los Angeles", "New York", "Toronto")
+#  city = c("Los Angeles", "New York", "Toronto"),
+#  subdistrict = c("Downtown", "Manhattan", "Scarborough")
 # )
-# result <- construct_geo_names(data, "country", "state", "city")
+# result <- construct_geo_names(data, "country", "state", "city",
+# subdistrict")
 }
