@@ -4,18 +4,12 @@
 \alias{get_ona_page}
 \title{Get a Page of Data from an API}
 \usage{
-get_ona_page(api_url, api_token, start = 0, api_limit, times = 12)
+get_ona_page(api_url, api_token, times = 12)
 }
 \arguments{
 \item{api_url}{The base URL of the API endpoint.}
 
 \item{api_token}{Authentication token for API access, prefixed with "Token".}
-
-\item{start}{An integer specifying the starting point for data retrieval.
-Defaults to 0.}
-
-\item{api_limit}{An integer specifying the maximum number of items to
-retrieve per page.}
 
 \item{times}{The number of attempts to retry the request in case of failure.
 Defaults to 12.}

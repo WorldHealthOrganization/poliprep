@@ -36,7 +36,7 @@ globalVariables(
     "New Emergence", "unique_emerg_grp", "ActivityDateFrom",
     "ActivityStatus", "Country", "Date of Any Last SIA Campagin",
     "Days Since SIA and Detection", "Days between
-     Previous and Most Recent Detection",
+     Previous and Most Recent Detection", "level3_prepped",
     "Delayed Reporting Detections to Confirmation (days)", "Emergence Group",
     "Emergence Group", "Last SIA Date", "Most Recent Detection",
     "MostRecentVirusDate", "New VDPV Class", "New VDPV Classification",
@@ -48,6 +48,6 @@ globalVariables(
     "new_epids", "ActivityVaccineType", "Days to Confirm",
     "Days between Previous and Most Recent Detection",
     "Delayed Reporting", "Delayed Report",
-    "Detections to Confirmation (days)"
+    "Detections to Confirmation (days)", "ADM3_NAME"
   )
 )

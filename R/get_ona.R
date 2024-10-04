@@ -20,8 +20,8 @@ check_status_api <- function(response) {
   # Conditional loading for packages
   if (!requireNamespace("httpcode", quietly = TRUE)) {
     stop(
-    "Package 'httpcode' is required but is not installed. Please install it.", 
-    call. = FALSE)
+      "Package 'httpcode' is required but is not installed. Please install it.", 
+      call. = FALSE)
   }
   
   # get resoinse code 
@@ -98,36 +98,25 @@ prep_ona_data_endpoints <- function(
 #'
 #' @param api_url The base URL of the API endpoint.
 #' @param api_token Authentication token for API access, prefixed with "Token".
-#' @param start An integer specifying the starting point for data retrieval.
-#'              Defaults to 0.
-#' @param api_limit An integer specifying the maximum number of items to 
-#'                  retrieve per page.
 #' @param times The number of attempts to retry the request in case of failure.
 #'              Defaults to 12.
 #' @return A list containing the retrieved data parsed from JSON format. If
 #'         the specified content is not found or an error occurs, the function
 #'         stops and returns an error message.
-get_ona_page <- function(api_url, api_token, start = 0, api_limit, times = 12) {
-  tryCatch({
-    resp <- httr::RETRY(
-      verb = "GET",
-      url = api_url,
-      config = httr::add_headers(Authorization = paste("Token", api_token)),
-      query = list(
-        start = start,
-        limit = api_limit
-      ),
-      times = times,  
-      pause_cap = 180,
-      httr::progress(type = "down")
-    )
-    
-    content <- httr::content(resp, "text", encoding = "UTF-8")
-    jsonlite::fromJSON(content, simplifyDataFrame = TRUE)
-  }, error = function(e) {
-    message("Error encountered: ", e$message)
-    NULL
-  })
+get_ona_page <- function(api_url, api_token, times = 12) {
+  tryCatch(
+    httr::RETRY(
+      "GET", api_url,
+      httr::add_headers(Authorization = paste("Token", api_token)),
+      times = times, pause_cap = 180, httr::progress("down")
+    ) |> 
+      httr::content("text", encoding = "UTF-8") |> 
+      jsonlite::fromJSON(simplifyDataFrame = TRUE),
+    error = function(e) {
+      message("Error encountered: ", e$message)
+      NULL
+    }
+  )
 }
 
 #' Validate and Normalize a Base URL
@@ -164,23 +153,29 @@ validate_base_url <- function(base_url) {
 #' # api_token <- "your_api_token_here"
 #' # data <- get_paginated_data(api_url, api_token)
 get_paginated_data <- function(api_url, api_token) {
-  api_limit = 100000
+  
+  api_limit <- 100000
   results <- list()
-  get_next_page <- TRUE
-  start <- 0
-  while (get_next_page) {
-    current_page <- get_ona_page(api_url, api_token, start, api_limit) |> 
+  page_number <- 1
+  
+  repeat {
+    
+    paged_url <- paste0(api_url, 
+                        "?page=", page_number,
+                        "&page_size=100000")
+    
+    current_page <- get_ona_page(paged_url, api_token) |> 
       as.data.frame() |> 
       dplyr::mutate(dplyr::across(tidyselect::everything(), as.character))
     
     results <- dplyr::bind_rows(results, current_page)
-    if (nrow(current_page) < api_limit) {
-      get_next_page <- FALSE
-    } else {
-      start <- start + api_limit
-    }
+    
+    if (nrow(current_page) < api_limit || nrow(current_page) == 0) break
+    
+    page_number <- page_number + 1
   }
-  results
+  
+  return(dplyr::distinct(results))
 }
 
 #' Generate a Random Emoji for Successful Results
@@ -558,7 +553,7 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
                         file_path, data_file_name, base_url, form_ids)
   
   
-  # If getting multiple columns, include these in url ---------------------------
+  # If getting multiple columns, include these in url --------------------------
   
   if (!is.null(selected_columns)) {
     # Construct query parameters with quotes around column names
@@ -594,56 +589,56 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
   # update the existing data ---------------------------------------------------
   
   # Combine new data with existing data
-    full_data <- dplyr::bind_rows(full_data_orig, new_data) |> 
-      dplyr::arrange(
-        `_id`,
-        dplyr::desc(date_last_updated),
-        dplyr::desc(date_last_updated)) |>
-      dplyr::group_by(`_id`, form_id_num) |>
-      dplyr::slice(1) |>
-      dplyr::ungroup()
+  full_data <- dplyr::bind_rows(full_data_orig, new_data) |> 
+    dplyr::arrange(
+      `_id`,
+      dplyr::desc(date_last_updated),
+      dplyr::desc(date_last_updated)) |>
+    dplyr::group_by(`_id`, form_id_num) |>
+    dplyr::slice(1) |>
+    dplyr::ungroup()
   
   # log results ----------------------------------------------------------------
   
   if (log_results) {
-  
-  logs = NULL
-  
-  for (form_id in unique(full_data$form_id_num)) {
     
-    if (nrow(full_data_orig) != 0) {
-      df <- full_data_orig |> 
+    logs = NULL
+    
+    for (form_id in unique(full_data$form_id_num)) {
+      
+      if (nrow(full_data_orig) != 0) {
+        df <- full_data_orig |> 
+          dplyr::filter(form_id_num == form_id) |> 
+          janitor::remove_empty(which = "cols") } else {df <- data.frame()}
+      
+      df_new <- new_data |> 
         dplyr::filter(form_id_num == form_id) |> 
-        janitor::remove_empty(which = "cols") } else {df <- data.frame()}
-    
-    df_new <- new_data |> 
-      dplyr::filter(form_id_num == form_id) |> 
-      janitor::remove_empty(which = "cols")
-    
-    # Construct the log message
-    log_message <- data.frame(
-      form_id = form_id,
-      update_date = Sys.Date(),
-      total_columns = ncol(df_new),
-      total_rows = format(nrow(df) + nrow(df_new), big.mark = ","),
-      new_columns = ncol(df_new) - ncol(df),
-      new_rows = format(nrow(df_new), big.mark = ",")
-    )
-    
-    logs[[form_id]] <- log_message |> 
-      dplyr::mutate(
-        new_rows = ifelse(
-          new_rows == total_rows, " Initial Download", new_rows
-        ),
-        new_columns = ifelse(
-          new_columns == total_columns, " Initial Download", new_columns
-        )
+        janitor::remove_empty(which = "cols")
+      
+      # Construct the log message
+      log_message <- data.frame(
+        form_id = form_id,
+        update_date = Sys.Date(),
+        total_columns = ncol(df_new),
+        total_rows = format(nrow(df) + nrow(df_new), big.mark = ","),
+        new_columns = ncol(df_new) - ncol(df),
+        new_rows = format(nrow(df_new), big.mark = ",")
       )
+      
+      logs[[form_id]] <- log_message |> 
+        dplyr::mutate(
+          new_rows = ifelse(
+            new_rows == total_rows, " Initial Download", new_rows
+          ),
+          new_columns = ifelse(
+            new_columns == total_columns, " Initial Download", new_columns
+          )
+        )
+      
+    }
     
-  }
-  
-  log_messages <- do.call(rbind, logs)
-  
+    log_messages <- do.call(rbind, logs)
+    
     # construct file names for logging
     log_file_name <- paste0(file_path, "/", "ona_data_update_log.rds")
     
