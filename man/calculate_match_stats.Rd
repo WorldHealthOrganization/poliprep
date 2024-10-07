@@ -10,7 +10,8 @@ calculate_match_stats(
   level0 = NULL,
   level1 = NULL,
   level2 = NULL,
-  level3 = NULL
+  level3 = NULL,
+  level4 = NULL
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ calculate_match_stats(
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 
 \item{level3}{level3 col name (subdistrict) in both 'data' and 'lookup_data'.}
+
+\item{level4}{level4 col name (settlements) in both 'data' and 'lookup_data'.}
 }
 \value{
 Invisible NULL. The primary purpose of this function is to reporting
@@ -34,7 +37,7 @@ match stats rather than return a value.
 \description{
 Compares entries in a given dataset against a lookup dataset across specified
 admn levels (e.g., countries, (province/state/region), districts,
-subdistricts) to calculate and report match statistics.
+subdistricts, settlements) to calculate and report match statistics.
 }
 \details{
 Calculates unique matches across administrative levels, reports
@@ -42,7 +45,8 @@ match and mismatch counts.
 }
 \examples{
 # calculate_match_stats(
-#      my_data, my_lookup, "country", "province", "district", "subdistrict")
+#      my_data, my_lookup, "country", "province", "district", "subdistrict",
+#      settlements)
 
 }
 \keyword{internal}

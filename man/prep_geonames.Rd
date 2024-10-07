@@ -11,6 +11,7 @@ prep_geonames(
   level1 = NULL,
   level2 = NULL,
   level3 = NULL,
+  level4 = NULL,
   region = NULL,
   cache_path = NULL,
   method = "jw",
@@ -33,6 +34,8 @@ attached to poliprep is used.}
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 
 \item{level3}{level3 col name (subdistrict) in both 'data' and 'lookup_data'.}
+
+\item{level4}{level4 col name (settlement) in both 'data' and 'lookup_data'.}
 
 \item{region}{If using the internal version of WHO geoname data, you can]
 specify the region name of interest to speed up the name matching.

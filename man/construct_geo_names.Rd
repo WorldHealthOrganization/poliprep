@@ -4,7 +4,7 @@
 \alias{construct_geo_names}
 \title{Construct Long Geographic Names}
 \usage{
-construct_geo_names(data, level0, level1, level2, level3 = NULL)
+construct_geo_names(data, level0, level1, level2, level3 = NULL, level4 = NULL)
 }
 \arguments{
 \item{data}{A dataframe containing the geographic data.}
@@ -16,6 +16,8 @@ construct_geo_names(data, level0, level1, level2, level3 = NULL)
 \item{level2}{level2 col name (district) in both 'data' and 'lookup_data'.}
 
 \item{level3}{level3 col name (subdistrict) in both 'data' and 'lookup_data'.}
+
+\item{level4}{level3 col name (settlements) in both 'data' and 'lookup_data'.}
 }
 \value{
 Returns the dataframe with an additional column \code{long_geo} that

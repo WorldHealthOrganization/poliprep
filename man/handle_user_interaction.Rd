@@ -35,8 +35,9 @@ provides feedback based on user actions.
 \description{
 Presents an interactive CLI menu using \code{cli} for users to make selections on
 data cleaning choices, particularly for administrative names like countries,
-provinces, districts, and subdistricts. It allows users to replace, skip,
-save, or exit, incorporating user feedback into the data cleaning process.
+provinces, districts, subdistricts and settlements. It allows users to
+replace, skip, save, or exit, incorporating user feedback into the data
+cleaning process.
 }
 \examples{
 # handle_user_interaction(my_data, "level1", TRUE, TRUE, 20)
