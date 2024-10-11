@@ -22,6 +22,3 @@ initial API response status. Then it validates the base URL and constructs
 the full API endpoint URL to retrieve a dataframe of all the available for
 forms/data.
 }
-\examples{
-# prep_ona_data_endpoints(api_token = "your_api_token_here")
-}

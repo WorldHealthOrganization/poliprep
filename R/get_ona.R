@@ -54,8 +54,7 @@ check_status_api <- function(response) {
 #'
 #' @return Data frame of the API endpoint data.
 #' 
-#' @examples
-#' # prep_ona_data_endpoints(api_token = "your_api_token_here")
+#' @export
 prep_ona_data_endpoints <- function(
     base_url = "https://api.whonghub.org", api_token) {
   
