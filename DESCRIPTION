@@ -18,6 +18,8 @@ URL: https://github.com/WorldHealthOrganization/poliprep
 BugReports: https://github.com/WorldHealthOrganization/poliprep/issues
 Depends:
   R (>= 3.5.0)
+Remotes:
+    github::coolbutuseless/optout
 Imports:
   rio, 
   cli,
@@ -59,7 +61,9 @@ Suggests:
     zoo,
     epoxy,
     officer,
-    ggplot2
+    ggplot2,
+    optout,
+    progress
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
