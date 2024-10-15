@@ -36,7 +36,9 @@ This function supports a wide range of date formats, including:
 \code{"Ymd HMS"}, \code{"Ydm HMS"}, \code{"dmy HMS"}, \code{"mdy HMS"},
 \code{"ymd HMS"}, \code{"ydm HMS"}
 \item Additional formats: \code{"Y-m-d"}, \code{"Y-m-d H:M:S"},
-\code{"d B Y"}, \code{"d.m.Y H:M"}, and more.
+\code{"Y-m-d H:M"}, \code{"d-m-Y H:M:S"}, \code{"d.m.Y H:M:S"},
+\code{"d.m.Y H:M"}, \code{"d-m-Y H:M"}, \code{"d.m.Y"}
+\item ISO 8601 format: e.g., \code{"2021-03-20T00:01:00.513+01:00"}
 }
 }
 \examples{
@@ -108,6 +110,10 @@ df <- data.frame(
     "25-12-2021 23:59", "15-08-2020 00:00"
   ),
   `d.m.Y` = c("03.10.2023", "11.09.2022", "25.12.2021", "15.08.2020"),
+  `iso8601` = c("2021-03-20T00:01:00.513+01:00", 
+                "2022-11-05T23:15:59.123+01:00",
+                "2023-06-15T12:30:45.789Z", 
+                "2020-01-01T00:00:00.000-05:00"),
   stringsAsFactors = FALSE
 )
 
