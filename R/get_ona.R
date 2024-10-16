@@ -160,7 +160,7 @@ get_paginated_data <- function(api_url, api_token) {
   repeat {
     
     paged_url <- paste0(api_url, 
-                        "?page=", page_number,
+                        "page=", page_number,
                         "&page_size=100000")
     
     current_page <- get_ona_page(paged_url, api_token) |> 
@@ -273,8 +273,10 @@ get_ona_data <- function(base_url = "https://api.whonghub.org", form_id,
           collapse = ','), ']'))
     
     # Build the full URL with query parameters using modify_url from httr
-    api_url <- httr::modify_url(api_url, query = query_params) 
-  }
+    api_url <- 
+      paste0(
+        httr::modify_url(api_url, query = query_params), "&")
+  } else { api_url <- paste0(api_url, "?") }
   
   # Download data (use pagination if necessary) --------------------------------
   
@@ -312,7 +314,6 @@ get_ona_data <- function(base_url = "https://api.whonghub.org", form_id,
 #'        IDs, and includes from_id column.
 #' @examples
 #' # api_token <- "your_api_token_here"
-#' # data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
 #' @importFrom foreach %dopar%
 #' @export
 get_multi_ona_data <- function(base_url = "https://api.whonghub.org", 

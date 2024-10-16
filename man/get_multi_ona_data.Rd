@@ -33,5 +33,4 @@ the data in a structured format if the request is successful.
 }
 \examples{
 # api_token <- "your_api_token_here"
-# data <- get_multi_ona_data(form_ids = c(623, 432, 643), api_token)
 }
