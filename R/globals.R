@@ -49,6 +49,7 @@ globalVariables(
     "Days between Previous and Most Recent Detection",
     "Delayed Reporting", "Delayed Report", "level4",
     "Detections to Confirmation (days)", "ADM3_NAME",
-    "ADM4_NAME", "date_categ", "end", "label", "start"
+    "ADM4_NAME", "date_categ", "end", "label", "start",
+    "ClusterID", "as.dist", "cutree", "dist", "hclust", "round_group"
   )
 )
