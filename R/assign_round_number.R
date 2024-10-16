@@ -36,60 +36,60 @@
 #' print(result)
 #' 
 #' @export
-assign_round_number <- function(df, 
-                                date_col = "today", 
-                                additional_grouping = NULL, 
+# Define the function to assign round numbers based on proximity
+assign_round_number <- function(df,
+                                date_col = "today",
+                                additional_grouping = NULL,
                                 threshold = 7) {
   # Ensure dates are of Date type
   df[[date_col]] <- as.Date(df[[date_col]])
   
-  # Check if there are enough dates to perform clustering
-  if (nrow(df) < 2) {
-    return(rep(NA, nrow(df)))  # Return NA if insufficient data
+  # Get distinct dates for clustering
+  distinct_dates <- df |>
+    dplyr::distinct(!!rlang::sym(date_col)) |>
+    dplyr::arrange(!!rlang::sym(date_col))
+  
+  # Check if there are enough distinct dates to perform clustering
+  if (nrow(distinct_dates) < 2) {
+    df$round_group <- NA # Return NA if insufficient data
+    return(df)
   }
   
   # Create a distance matrix
-  distance_matrix <- as.matrix(dist(df[[date_col]]))
+  distance_matrix <- as.matrix(dist(distinct_dates[[date_col]]))
   
   # Perform hierarchical clustering
   hc <- hclust(as.dist(distance_matrix))
   
   # Cut the dendrogram to form groups
-  clusters <- cutree(hc, h = threshold)  # Cut tree at specified height
+  clusters <- cutree(hc, h = threshold) # Cut tree at specified height
   
-  # Add clusters to the data frame
-  df$ClusterID <- clusters
+  # Create a round group label for the distinct dates
+  distinct_dates$ClusterID <- clusters
+  round_labels <- unique(format(distinct_dates[[date_col]], "%B %Y"))
   
-  # Create a round group label for the entire dataset
-  round_labels <- unique(format(df[[date_col]], "%B %Y"))  
-  
-  # Group by ClusterID and any additional grouping columns
-  if (!is.null(additional_grouping)) {
-    df_grouped <- df |>
-      dplyr::group_by(ClusterID, !!!rlang::syms(additional_grouping)) |>
-      dplyr::mutate(
-        # Label each group with the month and year of the first date 
-        # in the group
-        round_group = format(dplyr::first(.data[[date_col]]), "%B %Y")) |> 
-      dplyr::ungroup()
-  } else {
-    df_grouped <- df |>
-      dplyr::group_by(ClusterID) |>
-      dplyr::mutate(
-        # Label each group with the month and year of the first date 
-        # in the group
-        round_group = format(dplyr::first(.data[[date_col]]), "%B %Y")
-      ) |>   dplyr::ungroup()
-  }
-  
-  df_grouped <- df_grouped |> 
+  # Create round group labels based on clusters
+  distinct_dates <- distinct_dates |>
+    dplyr::group_by(ClusterID) |>
     dplyr::mutate(
-      # Convert round_group to a factor with ordered levels 
-      # based on unique dates
-      round_group = factor(round_group, 
-                           levels = round_labels,
-                           ordered = TRUE)) |>
-    dplyr::select(-ClusterID)
+      round_group = format(dplyr::first(.data[[date_col]]), "%B %Y")
+    ) |>
+    dplyr::ungroup()
   
-  return(df_grouped)
+  df <- df |>
+    dplyr::left_join(
+      distinct_dates |>
+        dplyr::select(!!rlang::sym(date_col), ClusterID, round_group),
+      by = date_col
+    )
+  
+  df <- df |>
+    dplyr::mutate(
+      round_group = factor(round_group,
+                           levels = round_labels,
+                           ordered = TRUE
+      )
+    )
+  
+  return(df)
 }
