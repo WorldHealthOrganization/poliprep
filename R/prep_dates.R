@@ -150,7 +150,9 @@ autoparse_dates <- function(data, date_cols,
       dplyr::across(dplyr::all_of(date_cols), \(x) {
         parsed <- try_parsing(x)
         parse_results[[dplyr::cur_column()]] <<- sum(is.na(parsed))
-        format(parsed, output_format)
+        
+        if (output_format %in% "%Y-%m-%d") {
+          as.Date(parsed)  } else { as.Date(parsed) |> format(output_format) }
       })) -> data
   
   if (verbose) {
