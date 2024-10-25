@@ -1941,14 +1941,14 @@ validate_polis_snapshots <- function(path, data_type = "AFP",
   return(results)
 }
 
-#' Validate AFRO Data
+
+#' Validate Dataset
 #'
-#' This function performs data quality checks on AFRO (African Regional Office)
-#' data before it is sent to POLIS (Polio Information System).
+#' This function performs data quality checks on a given dataset and produces 
+#' a gt table with metadata
 #'
 #' @param data A dataframe containing the AFRO data to be validated.
-#' @param type Character string specifying the data type. Either "AFP" or "ES".
-#' @param group_var Optional. The column name to group the data by. If NULL,
+#' @param group_var Optional. The column name to group the data by. If NULL, 
 #'    uses default.
 #' @param id_col Optional. The column name for the unique identifier. If NULL,
 #'    uses default.
@@ -1963,7 +1963,7 @@ validate_polis_snapshots <- function(path, data_type = "AFP",
 #' @param date_pair_cols Optional. A list of date column pairs for comparison.
 #'    If NULL, uses default.
 #' @param n_groups Integer. The number of groups to display in the summary.
-#'    Default is 8.
+#'    Default is 10.
 #' @param decreasing Logical. Whether to sort the groups in decreasing order.
 #'    Default is FALSE.
 #' @param plots_path Optional. The file path to save output plots. Required if
@@ -1971,13 +1971,14 @@ validate_polis_snapshots <- function(path, data_type = "AFP",
 #' @param custom_title Optional. A custom title for the output table.
 #' @param save_output Logical. Whether to save the output as HTML and PNG.
 #'    Default is FALSE.
+#' @param save_preffix Optional. A prefix for the saved output file name.
 #' @param vheight Integer. The height of the output image in pixels.
 #'    Default is 1400.
 #' @param vwidth Integer. The width of the output image in pixels. Default
 #'    is 1550.
 #' @param autoscale_nanoplot Logical. Whether to autoscale the nanoplot.
 #'    Default is FALSE.
-#' @param ... Additional arguments passed to internal functions.
+#' @param ... Additional arguments passed to create_summary_by_group function.
 #'
 #' @return A list containing two elements:
 #'   \item{gt_table}{A gt table object with the validation summary}
@@ -1995,9 +1996,11 @@ validate_polis_snapshots <- function(path, data_type = "AFP",
 #' (AFP or ES) if custom parameters are not provided. It also checks if all
 #' specified columns exist in the dataset before proceeding with the analysis.
 #'
+#' @seealso [create_summary_by_group()]
+#'
 #' @examples
 #' # Assuming afro_data is your dataset and you have the necessary dependencies
-#' # result <- validate_afro(afro_data, type = "AFP",
+#' # result <- validate_data(afro_data,
 #' #                        group_var = "ReportingYear",
 #' #                        n_groups = 8,
 #' #                        decreasing = FALSE,
@@ -2010,7 +2013,7 @@ validate_polis_snapshots <- function(path, data_type = "AFP",
 #' # id_data <- result$id_data
 #'
 #' @export
-validate_afro <- function(data, type = "AFP",
+validate_data <- function(data, 
                           group_var = NULL,
                           id_col = NULL,
                           geo_name_cols = NULL,
@@ -2018,22 +2021,26 @@ validate_afro <- function(data, type = "AFP",
                           lat_long_cols = NULL,
                           date_cols = NULL,
                           date_pair_cols = NULL,
-                          n_groups = 8,
+                          n_groups = 10,
                           decreasing = FALSE,
                           plots_path = NULL,
-                          custom_title = NULL, save_output = FALSE,
+                          custom_title = NULL, 
+                          save_output = FALSE,
+                          save_preffix = NULL, 
                           vheight = 1400, vwidth = 1550,
-                          autoscale_nanoplot = FALSE, ...) {
+                          autoscale_nanoplot = FALSE,
+                          ...) {
+  
   # Conditional loading for packages
   required_packages <- c(
     "scales", "zoo", "gt", "glue", "webshot"
   )
-
+  
   missing_packages <- required_packages[!sapply(
     required_packages, requireNamespace,
     quietly = TRUE
   )]
-
+  
   if (length(missing_packages) > 0) {
     stop(
       paste0(
@@ -2043,643 +2050,86 @@ validate_afro <- function(data, type = "AFP",
       call. = FALSE
     )
   }
-
-  # Define parameters based on data type
-  default_params <- list(
-    AFP = list(
-      group_var = group_var,
-      id_col = "EpidNumber",
-      geo_name_cols = c("ctry", "Province", "District"),
-      geo_id_cols = NULL,
-      date_cols = c(
-        "DateReceived", "DateOfOnset",
-        "DateNotified", "DateCaseinvestigated",
-        "Date1stStool", "Date2ndStool",
-        "DateStoolSentolab", "DateSpecRecbyNatLab",
-        "DateFinalCellcultureResults"
-      ),
-      date_pair_cols = list(
-        c("DateOfOnset", "DateNotified"),
-        c("DateNotified", "DateCaseinvestigated"),
-        c("DateOfOnset", "DateCaseinvestigated"),
-        c("DateOfOnset", "Date1stStool"),
-        c("DateOfOnset", "Date2ndStool"),
-        c("Date1stStool", "Date2ndStool"),
-        c("DateSpecRecbyNatLab", "DateStoolSentolab"),
-        c("DateSpecRecbyNatLab", "DateOfOnset"),
-        c("DateFinalCellcultureResults", "DateOfOnset"),
-        c("DateSpecRecbyNatLab", "DateCaseinvestigated"),
-        c("DateFinalCellcultureResults", "DateCaseinvestigated")
-      ),
-      lat_long_cols = c("Latitude", "Longitude")
-    )
-  )
-
-  if (!type %in% names(default_params)) {
-    stop(
-      "Invalid data type. Supported types are: ",
-      paste(names(default_params), collapse = ", ")
-    )
-  }
-
-  # Use provided parameters if not NULL, otherwise use defaults
-  params <- list(
-    group_var = if (!is.null(group_var)) {
-      group_var
-    } else {
-      default_params[[type]]$group_var
-    },
-    id_col = if (!is.null(id_col)) {
-      id_col
-    } else {
-      default_params[[type]]$id_col
-    },
-    geo_name_cols = if (!is.null(geo_name_cols)) {
-      geo_name_cols
-    } else {
-      default_params[[type]]$geo_name_cols
-    },
-    geo_id_cols = if (!is.null(geo_id_cols)) {
-      geo_id_cols
-    } else {
-      default_params[[type]]$geo_id_cols
-    },
-    lat_long_cols = if (!is.null(lat_long_cols)) {
-      lat_long_cols
-    } else {
-      default_params[[type]]$lat_long_cols
-    },
-    date_cols = if (!is.null(date_cols)) {
-      date_cols
-    } else {
-      default_params[[type]]$date_cols
-    },
-    date_pair_cols = if (!is.null(date_pair_cols)) {
-      date_pair_cols
-    } else {
-      default_params[[type]]$date_pair_cols
-    }
-  )
-
+  
   # Check if all specified columns exist in the dataset
   all_cols <- c(
-    params$group_var, params$id_col, params$geo_name_cols,
-    params$geo_id_cols, params$lat_long_cols, params$date_cols,
-    unlist(params$date_pair_cols)
+    group_var, id_col, geo_name_cols,
+    geo_id_cols, lat_long_cols, date_cols,
+    unlist(date_pair_cols)
   )
   missing_cols <- setdiff(all_cols, names(data))
-
+  
   if (length(missing_cols) > 0) {
     stop(paste(
       "The following columns are not present in the dataset:",
       paste(missing_cols, collapse = ", ")
     ))
   }
-
-
-  summary <- create_summary_by_group(
+  
+  summary <- poliprep::create_summary_by_group(
     data = data,
-    group_var = params$group_var,
-    id_col = params$id_col,
-    geo_name_cols = params$geo_name_cols,
-    geo_id_cols = params$geo_id_cols,
-    lat_long_cols = params$lat_long_cols,
-    date_cols = params$date_cols,
-    date_pair_cols = params$date_pair_cols,
+    group_var = group_var,
+    id_col = id_col,
+    geo_name_cols = geo_name_cols,
+    geo_id_cols = geo_id_cols,
+    lat_long_cols = lat_long_cols,
+    date_cols = date_cols,
+    date_pair_cols = date_pair_cols,
     n_groups = n_groups,
     decreasing = decreasing,
     ...
   )
-
+  
   # set up time lab
   time_labs <- paste0(
     "For ", zoo::as.yearmon(Sys.Date()),
     " in Epiweek ",
     lubridate::epiweek(Sys.Date())
   )
-
+  
   title <- if (is.null(custom_title)) {
     glue::glue(
-      "AFRO {type} Data Quality Checks ",
-      "{time_labs}"
+      "Data Quality Checks ",
+      "{time_labs} - N = {poliprep::big_mark(nrow(data))}"
     )
   } else {
     custom_title
   }
-
-  gt_table <- create_gt_table(
+  
+  gt_table <- poliprep::create_gt_table(
     summary$summary_table |> dplyr::filter(
       Column != "Total Null Columns"
     ),
     autoscale_nanoplot = autoscale_nanoplot,
     title = title
   )
-
+  
+  output_list <- list(gt_table = gt_table, id_data = summary$id_data)
+  
   if (save_output) {
     if (is.null(plots_path)) {
       stop("plots_path must be provided when save_output is TRUE")
     }
-
+    
     today <- format(Sys.Date(), "%Y%m%d")
+    
     file_prefix <- glue::glue(
-      "afro_quality_check_{type}_validation_{today}}"
+      "{save_preffix}_data_validation_{today}"
     )
-
+    
     html_path <- file.path(plots_path, glue::glue("{file_prefix}.html"))
     png_path <- file.path(plots_path, glue::glue("{file_prefix}.png"))
-
+    
     gt_table |> gt::gtsave(html_path)
-
+    
     webshot::webshot(html_path, png_path, vheight = vheight, vwidth = vwidth)
-
+    
     file.remove(html_path)
+    
+    saveRDS(output_list, 
+            file.path(plots_path, glue::glue("metadata_{file_prefix}.rds")))
+    
   }
-
-  return(list(gt_table = gt_table, id_data = summary$id_data))
-}
-
-#' Summarize Validation Results
-#'
-#' Summarizes validation results and optionally creates a plot.
-#'
-#' @param data Data frame containing validation results.
-#' @param metadata Data frame with test metadata.
-#' @param id_col Character. Column name for unique identifiers.
-#' @param test_type_name Character. Name of test type to summarize.
-#' @param agg_vars Character vector. Column(s) to aggregate results by.
-#' @param create_plot Logical. Whether to create a summary plot (default FALSE).
-#' @param return_cols Character vector. Additional columns to return for culprit
-#'    identification (default NULL).
-#'
-#' @return List with:
-#'   \item{summary}{Data frame of summarized results, grouped by agg_vars.}
-#'   \item{plot}{ggplot object if create_plot is TRUE, else NULL.}
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' result <- summarize_validation_results(
-#'   data, metadata, "ID", "missing coord",
-#'   c("Region", "Year"),
-#'   create_plot = TRUE
-#' )
-#' print(result$summary)
-#' if (!is.null(result$plot)) print(result$plot)
-#' }
-summarize_validation_results <- function(data,
-                                         metadata, id_col,
-                                         test_type_name, agg_vars,
-                                         create_plot = FALSE,
-                                         return_cols = NULL) {
-  # Validate inputs
-  if (!id_col %in% names(data)) {
-    stop("id_col not found in the dataset")
-  }
-
-  if (length(agg_vars) == 0) {
-    stop("At least one aggregation variable must be provided")
-  }
-  for (var in agg_vars) {
-    if (!var %in% names(data)) {
-      stop(paste("Aggregation variable", var, "not found in the dataset"))
-    }
-  }
-  if (!test_type_name %in% metadata$Test) {
-    stop("test_type not found in metadata")
-  }
-
-  # Get relevant IDs for the specified test type
-  ids <- metadata |>
-    dplyr::filter(Test %in% test_type_name) |>
-    dplyr::pull(!!rlang::sym(id_col))
-
-  # Summarize test results
-  summary <- data |>
-    dplyr::filter(!!rlang::sym(id_col) %in% ids) |>
-    dplyr::select(!!!rlang::syms(c(agg_vars, id_col))) |>
-    dplyr::group_by(!!!rlang::syms(agg_vars)) |>
-    dplyr::summarise(Total = dplyr::n_distinct(!!rlang::sym(id_col))) |>
-    dplyr::arrange(dplyr::desc(Total)) |>
-    dplyr::ungroup()
-
-  # Get culprit columns if return_cols is provided
-  culprits <- NULL
-  if (!is.null(return_cols)) {
-    culprits <- data |>
-      dplyr::filter(!!rlang::sym(id_col) %in% ids) |>
-      dplyr::select(!!rlang::sym(id_col), !!!rlang::syms(return_cols))
-  }
-
-  plot <- NULL
-  if (create_plot) {
-    if (length(agg_vars) == 1) {
-      plot <- summary |>
-        dplyr::arrange(dplyr::desc(Total)) |>
-        ggplot2::ggplot(ggplot2::aes(
-          x = stats::reorder(!!rlang::sym(agg_vars), Total),
-          y = Total,
-          fill = !!rlang::sym(agg_vars)
-        )) +
-        ggplot2::geom_bar(stat = "identity", show.legend = FALSE) +
-        ggplot2::coord_flip() +
-        ggplot2::theme_minimal() +
-        ggplot2::labs(
-          title = paste("Summary of", test_type_name),
-          x = NULL,
-          y = "Total"
-        ) +
-        ggplot2::scale_y_continuous(labels = scales::comma)
-    } else if (length(agg_vars) == 2) {
-      plot <- summary |>
-        dplyr::group_by(!!rlang::sym(agg_vars[2])) |>
-        dplyr::arrange(dplyr::desc(Total), .by_group = TRUE) |>
-        dplyr::ungroup() |>
-        ggplot2::ggplot(ggplot2::aes(
-          x = stats::reorder(!!rlang::sym(agg_vars[1]), Total),
-          y = Total,
-          fill = !!rlang::sym(agg_vars[1])
-        )) +
-        ggplot2::geom_bar(stat = "identity", show.legend = FALSE) +
-        ggplot2::facet_wrap(
-          ggplot2::vars(!!rlang::sym(agg_vars[2])),
-          scales = "free_y"
-        ) +
-        ggplot2::coord_flip() +
-        ggplot2::theme_minimal() +
-        ggplot2::labs(
-          title = paste("Summary of", test_type_name),
-          x = NULL,
-          y = "Total"
-        ) +
-        ggplot2::scale_y_continuous(labels = scales::comma)
-    } else {
-      warning("Plot can only be created for one or two aggregation variables.")
-    }
-  }
-
-  list(summary = summary, plot = plot, culprits = culprits)
-}
-
-#' Get detections from POLIS data
-#'
-#' @param data A POLIS dataset
-#' @param case_type Type of cases to filter ("ES" or "AFP")
-#' @return Filtered dataset containing only specified case type
-get_polis_detections <- function(data, case_type = c("ES", "AFP")) {
-  case_type <- match.arg(case_type)
-
-  data |>
-    dplyr::filter(
-      !is.na(if (case_type == "ES") CollectionDate else ParalysisOnsetDate)
-    ) |>
-    dplyr::mutate(
-      cVDPV1 = if ("VDPV1" %in% names(data)) {
-        VDPV1 & VdpvClassifications == "Circulating"
-      } else {
-        FALSE
-      },
-      cVDPV2 = if ("VDPV2" %in% names(data)) {
-        VDPV2 & VdpvClassifications == "Circulating"
-      } else {
-        FALSE
-      },
-      WPV1 = if ("WILD1" %in% names(data)) WILD1 else FALSE
-    ) |>
-    dplyr::mutate(
-      virus_type = dplyr::case_when(
-        cVDPV1 ~ "cVDPV1",
-        cVDPV2 ~ "cVDPV2",
-        WPV1 ~ "WPV1",
-        TRUE ~ NA_character_
-      )
-    )
-}
-
-#' Compare POLIS Snapshots
-#'
-#' This function performs a detailed comparison between two POLIS snapshots,
-#' focusing on either Acute Flaccid Paralysis (AFP) cases or Environmental
-#' Surveillance (ES) samples. It conducts various validations and analyses
-#' to identify differences and changes between the two snapshots.
-#'
-#' Key operations include:
-#' 1. Checking for removed columns
-#' 2. Identifying new blank columns
-#' 3. Detecting removed EPIDs/SampleIds
-#' 4. Finding lost detections
-#' 5. Analyzing changes in detections, comparing various fields
-#'
-#' The function outputs informative CLI messages throughout the process,
-#' providing insights into the differences between the datasets.
-#'
-#' @param data1 First POLIS dataset (data frame)
-#' @param data2 Second POLIS dataset (data frame)
-#' @param type Type of data to compare: "AFP" or "ES"
-#'
-#' @return A list containing:
-#'   - results: Detailed validation results
-#'   - summary: A summary data frame of key changes
-#'   - gt_tab: A formatted GT table for easy visualization
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' results_afp <- compare_polis_snapshots(old_data_afp, new_data_afp, "AFP")
-#' results_es <- compare_polis_snapshots(old_data_es, new_data_es, "ES")
-#' print(results_afp$gt_tab)
-#' print(results_es$gt_tab)
-#' }
-compare_polis_snapshots <- function(data1, data2, type) {
-  if (!type %in% c("AFP", "ES")) {
-    stop("Type must be either 'AFP' or 'ES'")
-  }
-
-  # Get detections table
-  detections1 <- get_polis_detections(data1, type) |>
-    dplyr::filter(cVDPV1 | cVDPV2 | WPV1)
-  detections2 <- get_polis_detections(data2, type) |>
-    dplyr::filter(cVDPV1 | cVDPV2 | WPV1)
-
-  data1 <- data1 |>
-    dplyr::mutate(across(where(is.factor), as.character))
-
-  data2 <- data2 |>
-    dplyr::mutate(across(where(is.factor), as.character))
-
-  # Establish labels for the different datasets
-  lab_date1 <- format(as.Date(max(data1$LastUpdateDate, na.rm = T)), "%d %b %Y")
-  lab_date2 <- format(as.Date(max(data2$LastUpdateDate, na.rm = T)), "%d %b %Y")
-
-  # Create labels for CLI messages and table headers
-  cli_label1 <- paste0("Dataset 1 (", lab_date1, ")")
-  cli_label2 <- paste0("Dataset 2 (", lab_date2, ")")
-  table_header1 <- paste0(lab_date1, " (Dataset 1)")
-  table_header2 <- paste0(lab_date2, " (Dataset 2)")
-
-  results <- list()
-
-  # 1. Check for removed columns ---------------------------------------------
-
-  cli::cli_h1("Checking for removed columns")
-  removed_cols <- setdiff(names(data1), names(data2))
-  if (length(removed_cols) > 0) {
-    cli::cli_alert_info(paste0(
-      "Columns removed in {cli_label2}: ", paste(removed_cols, collapse = ", ")
-    ))
-  } else {
-    cli::cli_alert_success(
-      "All columns from {cli_label1} are present in {cli_label2}"
-    )
-  }
-
-  results$removed_columns <- removed_cols
-  results$removed_columns_count <- length(removed_cols)
-
-  # 2. Check for blank columns ------------------------------------------------
-
-  cli::cli_h1("Checking for blank columns")
-
-  # Convert blank spaces to NA in both datasets
-  data1 <- data1 |>
-    dplyr::mutate(dplyr::across(where(is.character), ~ dplyr::na_if(., "")))
-  data2 <- data2 |>
-    dplyr::mutate(dplyr::across(where(is.character), ~ dplyr::na_if(., "")))
-
-  # Find columns that are completely NA in each dataset
-  blank_cols1 <- names(data1)[sapply(data1, \(x) all(is.na(x)))]
-  blank_cols2 <- names(data2)[sapply(data2, \(x) all(is.na(x)))]
-
-  # Compare blank columns between datasets
-  blank_cols_diff <- setdiff(blank_cols1, blank_cols2)
-  new_blank_cols <- setdiff(blank_cols2, blank_cols1)
-
-  if (length(blank_cols_diff) > 0 || length(new_blank_cols) > 0) {
-    cli::cli_alert_info(paste0(
-      "Differences in blank columns:\n",
-      "  Columns blank in {cli_label1} but not in {cli_label2}: ",
-      paste(big_mark(blank_cols_diff), collapse = ", "), "\n",
-      "  New blank columns in {cli_label2}: ",
-      paste(big_mark(new_blank_cols), collapse = ", ")
-    ))
-  } else {
-    cli::cli_alert_success("Blank columns are identical in both datasets")
-  }
-
-  results$blank_columns_new <- new_blank_cols
-  results$blank_columns_new_count <- length(new_blank_cols)
-
-  # 3. Check for removed EPIDs/SampleIds ---------------------------------------
-  cli::cli_h1(
-    paste0("Checking for removed ", ifelse(type == "AFP", "EPIDs", "SampleIds"))
-  )
-
-  id_col <- ifelse(type == "AFP", "EPID", "SampleId")
-  removed_ids <- setdiff(data1[[id_col]], data2[[id_col]])
-
-  # Get the number of detections in the first dataset
-  number_detections <- detections1 |>
-    dplyr::filter(!!rlang::sym(id_col) %in% removed_ids) |>
-    nrow()
-
-  if (length(removed_ids) > 0) {
-    cli::cli_alert_warning(paste0(
-      "Number of ", id_col, "s from {cli_label1} removed in {cli_label2}: ",
-      crayon::red(big_mark(length(removed_ids))), "\n",
-      "Number of these that were detections in {cli_label1}: ",
-      crayon::red(big_mark(number_detections))
-    ))
-  } else {
-    cli::cli_alert_success(
-      "All ", id_col, "s from {cli_label1} are present in {cli_label2}"
-    )
-  }
-  results$removed_ids <- removed_ids
-  results$removed_ids_count <- length(removed_ids)
-
-  # 4. Check for removed detections in dataset --------------------------------
-
-  cli::cli_h1(paste0("Checking for lost ", type, " detections"))
-
-  data1_counts <- detections1 |>
-    dplyr::group_by(!!rlang::sym(id_col)) |>
-    dplyr::summarise(n = dplyr::n_distinct(virus_type))
-
-  data2_counts <- detections2 |>
-    dplyr::group_by(!!rlang::sym(id_col)) |>
-    dplyr::summarise(n = dplyr::n_distinct(virus_type))
-
-  lost_detections <- dplyr::full_join(data1_counts, data2_counts,
-    by = id_col,
-    suffix = c("_data1", "_data2")
-  ) |>
-    dplyr::filter(!is.na(n_data1), !is.na(n_data2), n_data2 < n_data1) |>
-    dplyr::arrange(dplyr::desc(n_data1 - n_data2))
-
-  if (nrow(lost_detections) > 0) {
-    cli::cli_alert_warning(paste0(
-      "Number of ", id_col, "s with lost detections between ",
-      "{cli_label1} and {cli_label2}: ",
-      crayon::red(big_mark(nrow(lost_detections)))
-    ))
-  } else {
-    cli::cli_alert_success("No detections were lost between datasets")
-  }
-
-  results$lost_detections <- unique(lost_detections[[id_col]])
-  results$lost_detections_count <- nrow(lost_detections)
-
-  # 5. Check for changes in detections dataset ---------------------------------
-  cli::cli_h1(paste0("Checking for changes in ", type, " detections dataset"))
-
-  # Define columns to compare based on type
-  columns_to_compare <- if (type == "AFP") {
-    c(
-      "CountryISO3Code", "Admin0Name", "Admin0GUID", "Admin1GUID",
-      "Admin2GUID", "Admin1Name", "Admin2Name", "Latitude", "Longitude",
-      "PersonSex", "PersonAgeInMonths", "PersonAgeInYears", "DosesIPVNumber",
-      "DosesTotal", "DosesIPVRoutine", "TotalNumberOfDoses",
-      "ParalysisOnsetDate", "VdpvClassifications", "Stool1Condition",
-      "Stool2Condition", "NotificationDate", "InvestigationDate",
-      "Stool1CollectionDate", "Stool2CollectionDate",
-      "DateNotificationtoHQ", "SurveillanceTypeName",
-      "PolioVirusTypes", "VdpvEmergenceGroupNames", "FinalCultureResult",
-      "NtChanges"
-    )
-  } else {
-    c(
-      "CountryISO3Code", "Admin0Name", "Admin0GUID", "Admin1GUID",
-      "Admin2GUID", "Admin1Name", "Admin2Name", "SiteXCoordinate",
-      "SiteYCoordinate", "SiteName", "CollectionDate",
-      "DateFinalSeqResult", "DateFinalResultsReported", "DateReceivedInLab",
-      "SampleCondition", "FinalCellCultureResult", "VaccineOrigins",
-      "NtChanges", "DateShippedToRefLab", "VirusTypes", "VirusClusters"
-    )
-  }
-
-  # Compare with corresponding rows in data2 and identify changes
-  changed_rows <- detections1 |>
-    dplyr::left_join(data2,
-      by = id_col,
-      relationship = "many-to-many"
-    ) |>
-    dplyr::mutate(
-      changes = dplyr::case_when(
-        !!!lapply(columns_to_compare, function(col) {
-          rlang::expr(
-            !!rlang::sym(
-              paste0(col, ".x")
-            ) != !!rlang::sym(paste0(col, ".y")) ~ !!col
-          )
-        }),
-        TRUE ~ NA_character_
-      )
-    ) |>
-    dplyr::filter(!is.na(changes))
-
-  # Count changes by column
-  change_summary <- changed_rows |>
-    dplyr::count(changes, name = "count") |>
-    dplyr::arrange(dplyr::desc(count))
-
-  # Total number of changed rows
-  total_changed <- nrow(changed_rows)
-  cli::cli_alert_info(paste0(
-    "Number of changed rows in ", type, " detections dataset from ",
-    "{cli_label1} to {cli_label2}: ",
-    crayon::red(big_mark(total_changed))
-  ))
-  # Output the columns changed
-  if (nrow(change_summary) > 0) {
-    cli::cli_alert_info("Columns changed:")
-    for (i in 1:nrow(change_summary)) {
-      cli::cli_alert_info(paste0(
-        "  ", crayon::blue(change_summary$changes[i]), ": ",
-        crayon::red(big_mark(change_summary$count[i]))
-      ))
-    }
-  } else {
-    cli::cli_alert_success("No changes detected in the columns of interest.")
-  }
-
-  results$changed_detection_rows <- changed_rows
-  results$changed_detection_rows_count <- total_changed
-  results$changed_detection_rows_summary <- change_summary
-
-  # 6. Create summary dataframe ----------------------------------------------
-  summary_df <- data.frame(
-    val_type = c(
-      "Removed Columns",
-      "New Blank Columns",
-      paste0("Removed ", id_col, "s"),
-      "Lost Detections"
-    ),
-    Validation = c(
-      glue::glue("Removed Columns in {table_header2}"),
-      glue::glue("New Blank Columns in {table_header2}"),
-      glue::glue("Removed {id_col}s in {table_header2}"),
-      glue::glue("Lost Detections in {table_header2}")
-    ),
-    Difference = c(
-      results$removed_columns_count,
-      results$blank_columns_new_count,
-      results$removed_ids_count,
-      results$lost_detections_count
-    )
-  ) |>
-    dplyr::rename(`Validation Type` = val_type) |>
-    dplyr::bind_rows(
-      results$changed_detection_rows_summary |>
-        dplyr::mutate(
-          `Validation Type` = "Changes in Detections Dataset",
-          changes = glue::glue(
-            "Changes in {changes} in {type} Detections in {table_header2}"
-          )
-        ) |> dplyr::select(
-          `Validation Type`,
-          Validation = changes, Difference = count
-        )
-    )
-
-  gt_tab <- summary_df |>
-    gt::gt() |>
-    gt::data_color(
-      columns = 3,
-      fn = function(x) {
-        # Handle potential negative values or NAs for this row
-        x_clean <- pmax(x, 0, na.rm = TRUE)
-        row_max <- max(x_clean, na.rm = TRUE) * 1.3
-
-        if (row_max == 0) {
-          return(rep("white", length(x)))
-        }
-
-        scales::col_numeric(
-          palette = c("#FFFFFF", "#FF9999", "#FF0000"),
-          domain = c(0, row_max)
-        )(x_clean)
-      }
-    ) |>
-    gt::tab_header(
-      title = paste0("Comparison of POLIS ", type, " Snapshots"),
-      subtitle = glue::glue("{table_header1} Vs {table_header2}")
-    ) |>
-    gt::cols_align(align = "left", columns = 2) |>
-    gt::fmt_number(
-      columns = dplyr::where(is.numeric),
-      decimals = 0
-    ) |>
-    gt::tab_style(
-      style = gt::cell_text(weight = "bold"),
-      locations = gt::cells_column_labels(everything())
-    )
-
-
-  # Return results
-  list(
-    gt_tab = gt_tab,
-    results = results,
-    summary = summary_df
-  )
+  
+  return(output_list)
 }

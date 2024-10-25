@@ -41,15 +41,15 @@ proximity, the function effectively handles edge cases and provides coherent
 round groupings.
 }
 \examples{
-df <- data.frame(
-  today = as.Date(
-    c("2024-04-28", "2024-05-03", "2024-05-04", "2024-05-03",
-     "2024-06-01", "2024-06-02", "2024-07-29", "2024-07-30")),
-  states = c("State1", "State1", "State1", "State1", "State2", "State2", 
-  "State2", "State2")
-)
-result <- assign_round_number(df, date_col = "today", 
-                              additional_grouping = "states")
-print(result)
+#  df <- data.frame(
+#    today = as.Date(
+#     c("2024-04-28", "2024-05-03", "2024-05-04", "2024-05-03",
+#       "2024-06-01", "2024-06-02", "2024-07-29", "2024-07-30")),
+#   states = c("State1", "State1", "State1", "State1", "State2", "State2", 
+#  "State2", "State2")
+# )
+# result <- assign_round_number(df, date_col = "today", 
+#                             additional_grouping = "states")
+# print(result)
 
 }
