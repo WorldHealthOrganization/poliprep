@@ -88,8 +88,8 @@ assign_round_number <- function(df,
       round_group = factor(round_group,
                            levels = round_labels,
                            ordered = TRUE
-      ) |> dplyr::select(-ClusterID)
-    )
+      ) 
+    ) |> dplyr::select(-ClusterID)
   
   return(df)
 }

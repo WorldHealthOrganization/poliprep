@@ -469,7 +469,7 @@ handle_user_interaction <- function(input_data, levels, level,
       str_long_geo <- stringr::str_to_title(long_geo)
       title <- glue::glue(
         "Which {level} name would you like to replace {b(red(str_cache))}",
-        " with in {bl(str_long_geo)}?"
+        " within {bl(str_long_geo)}?"
       )
     } else if (!is.na(levels[3]) && stratify && level == levels[3]) {
       level_label <- "level2"
@@ -483,7 +483,7 @@ handle_user_interaction <- function(input_data, levels, level,
       str_cache <- stringr::str_to_title(name_to_clean)
       title <- glue::glue(
         "Which {level} name would you like to replace {b(red(str_cache))}",
-        " with in the {gr(long_geo_province)} province ",
+        " within the {gr(long_geo_province)} {levels[2]} ",
         "of {bl(long_geo_country)}?"
       )
     } else if (!is.na(levels[4]) && stratify && level == levels[4]) {
@@ -496,8 +496,8 @@ handle_user_interaction <- function(input_data, levels, level,
       str_cache <- stringr::str_to_title(name_to_clean)
       title <- glue::glue(
         "Which {level} name would you like to replace {b(red(str_cache))}",
-        " with in the {gr(long_geo_district)} district of ",
-        "{gr(long_geo_province)} province in {bl(long_geo_country)}?"
+        " within the {gr(long_geo_district)} {levels[3]} of ",
+        "{gr(long_geo_province)} {levels[2]} in {bl(long_geo_country)}?"
       )
     } else if (!is.na(levels[5]) && stratify && level == levels[5]) {
       level_label <- "level4"
@@ -510,9 +510,9 @@ handle_user_interaction <- function(input_data, levels, level,
       str_cache <- stringr::str_to_title(name_to_clean)
       title <- glue::glue(
         "Which {level} name would you like to replace {b(red(str_cache))}",
-        " with in the {gr(long_geo_ward)} ward of ",
-        "{gr(long_geo_district)} district of ",
-        "{gr(long_geo_province)} province in {bl(long_geo_country)}?"
+        " within the {gr(long_geo_ward)} {levels[4]} of ",
+        "{gr(long_geo_district)} {levels[3]} of ",
+        "{gr(long_geo_province)} {levels[2]} in {bl(long_geo_country)}?"
       )
     } else if (!is.na(levels[1]) && stratify && level == levels[1]) {
       level_label <- "level0"
@@ -747,7 +747,7 @@ construct_geo_names <- function(data, level0, level1, level2,
 #'        session. If NULL or the file does not exist at the provided path,
 #'        users will be prompted to specify a new path or create a new cache
 #'        data frame.
-#' @param region If using the internal version of WHO geoname data, you can]
+#' @param who_region If using the internal version of WHO geoname data, you can]
 #'        specify the region name of interest to speed up the name matching.
 #'        The default is NULL which includes all regions, however, users can
 #'        pick from the following regions: AFRO, AMRO, EMRO, EURO, SEARO & WPRO.
@@ -811,7 +811,7 @@ prep_geonames <- function(target_df, lookup_df = NULL,
                           level2 = NULL,
                           level3 = NULL,
                           level4 = NULL,
-                          region = NULL,
+                          who_region = NULL,
                           cache_path = NULL,
                           method = "jw",
                           stratify = TRUE,
@@ -928,8 +928,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   if (is.null(lookup_df)) {
     lookup_df <- poliprep::shp_global
 
-    if (!is.null(region)) {
-      lookup_df <- dplyr::filter(lookup_df, WHO_REGION == toupper(region))
+    if (!is.null(who_region)) {
+      lookup_df <- dplyr::filter(lookup_df, WHO_REGION == toupper(who_region))
     }
 
     if (!is.null(level0)) {
