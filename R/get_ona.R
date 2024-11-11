@@ -330,14 +330,20 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
   query_params <- list()
   
   # Convert selected_columns to JSON array string
-  fields_json <- jsonlite::toJSON(selected_columns, auto_unbox = TRUE)
-  
-  
-  # parse filters input
-  if (!is.null(filters)) {filters <-  process_query_filters(filters)}
+  if (!is.null(selected_columns)) {
+    fields_json <- jsonlite::toJSON(selected_columns, auto_unbox = FALSE)
+  } else {
+    fields_json <- NULL
+  }
   
   # Convert filters to JSON string
-  query_json <- jsonlite::toJSON(filters, auto_unbox = TRUE)
+  if (!is.null(filters)) {
+    filters <-  process_query_filters(filters)
+    query_json <- jsonlite::toJSON(filters, auto_unbox = FALSE)
+  } else {
+    query_json <- NULL
+  }
+  
   
   # Build the full URL with query parameters
   full_url <- httr::modify_url(
