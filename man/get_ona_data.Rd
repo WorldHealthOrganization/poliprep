@@ -8,7 +8,8 @@ get_ona_data(
   base_url = "https://api.whonghub.org",
   form_id,
   api_token,
-  selected_columns = NULL
+  selected_columns = NULL,
+  filters = NULL
 )
 }
 \arguments{
@@ -23,9 +24,13 @@ Could be found by looking at the URL of the form on ONA.}
 
 \item{selected_columns}{Selected columns to download. Default is NULL.
 It's in stringed list like c("year", "form_id")}
+
+\item{filters}{Optional. A named list where each name corresponds to a
+column in your dataset, and each value is a vector of values to filter by.
+Supports single or multiple values per column.}
 }
 \value{
-A list containing the data geted from the ONA API.
+A list containing the data donwloaded from the ONA API.
 }
 \description{
 This function getes data for a specified form from the ONA API using a
@@ -37,7 +42,11 @@ returns an error message indicating the failure reason.
 # base_url <- https://api.ona.io/api/v1/data
 # api_token <- "your_api_token_here"
 # form_id <- 123456
-# data <- get_ona_data(base_url, form_id, api_token)
+# data <- get_ona_data(base_url, form_id, 
+#                      api_token, 
+#                      filters = list(state = c("BORNO"),
+#                                     lgas = c("JERE"))
+# )
 }
 \seealso{
 \url{https://api.ona.io/api/v1/data/} for more info on ONA API

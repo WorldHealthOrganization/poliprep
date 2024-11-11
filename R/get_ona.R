@@ -91,6 +91,61 @@ prep_ona_data_endpoints <- function(
   return(response)
 }
 
+#' Process Query Filters for MongoDB-style Queries
+#' 
+#' @description
+#' Processes a list of filters and converts them into MongoDB-style query 
+#' format. The function handles both single value conditions and multiple 
+#' value conditions, automatically applying appropriate logical operators.
+#'
+#' @param filters A list containing field names and their corresponding filter 
+#'   values. Each field can have either a single value or multiple values.
+#'
+process_query_filters <- function(filters) {
+  # List of logical operators
+  logical_operators <- c("$and", "$or", "$nor", "$not")
+  
+  # Check if filters already contain logical operators
+  if (any(names(filters) %in% logical_operators)) {
+    # Return filters as-is
+    return(filters)
+  }
+  
+  single_conditions <- list()
+  or_conditions <- list()
+  
+  for (field_name in names(filters)) {
+    field_values <- filters[[field_name]]
+    
+    if (length(field_values) == 1) {
+      # Single value, add directly
+      single_conditions[[field_name]] <- field_values
+    } else {
+      # Multiple values, create list of conditions for '$or'
+      for (value in field_values) {
+        condition <- list()
+        condition[[field_name]] <- value
+        or_conditions[[length(or_conditions) + 1]] <- condition
+      }
+    }
+  }
+  
+  if (length(or_conditions) > 0 && length(single_conditions) > 0) {
+    # Combine single conditions and or conditions with '$and'
+    final_query <- list('$and' = c(list(single_conditions), 
+                                   list('$or' = or_conditions)))
+  } else if (length(or_conditions) > 0) {
+    # Only '$or' conditions
+    final_query <- list('$or' = or_conditions)
+  } else {
+    # Only single conditions
+    final_query <- single_conditions
+  }
+  
+  return(final_query)
+}
+
+
 #' Get a Page of Data from an API
 #'
 #' This function retrieves a single page of data from a specified API endpoint.
@@ -159,7 +214,9 @@ get_paginated_data <- function(api_url, api_token) {
   
   repeat {
     
+    # Append page and page_size parameters
     paged_url <- paste0(api_url, 
+                        ifelse(grepl("\\?", api_url), "&", "?"),
                         "page=", page_number,
                         "&page_size=100000")
     
@@ -206,7 +263,6 @@ praise_emoji <- function() {
   sample(emoji, 1)
 }
 
-
 #' Get Data from ONA API
 #'
 #' This function getes data for a specified form from the ONA API using a 
@@ -222,75 +278,87 @@ praise_emoji <- function() {
 #' @param api_token A string specifying the API token for ONA
 #' @param selected_columns Selected columns to download. Default is NULL.
 #'    It's in stringed list like c("year", "form_id")
-#' @return A list containing the data geted from the ONA API.
+#' @param filters Optional. A named list where each name corresponds to a 
+#'    column in your dataset, and each value is a vector of values to filter by.
+#'    Supports single or multiple values per column.
+#'
+#' @return A list containing the data donwloaded from the ONA API.
 #'
 #' @examples
 #' # base_url <- https://api.ona.io/api/v1/data
 #' # api_token <- "your_api_token_here"
 #' # form_id <- 123456
-#' # data <- get_ona_data(base_url, form_id, api_token)
+#' # data <- get_ona_data(base_url, form_id, 
+#' #                      api_token, 
+#' #                      filters = list(state = c("BORNO"),
+#' #                                     lgas = c("JERE"))
+#' # )
 #' @export
 #' @seealso \url{https://api.ona.io/api/v1/data/} for more info on ONA API
-get_ona_data <- function(base_url = "https://api.whonghub.org", form_id, 
-                         api_token, selected_columns = NULL) {
+get_ona_data <- function(base_url = "https://api.whonghub.org", 
+                         form_id, 
+                         api_token, 
+                         selected_columns = NULL, 
+                         filters = NULL) {
   
-  
-  # check base url validity
+  # Check base URL validity
   base_url <- validate_base_url(base_url)
   
-  # set up URL
-  api_url <- paste0(base_url,"/api/v1/data/", form_id)
+  # Set up API URL
+  api_url <- paste0(base_url, "/api/v1/data/", form_id)
   
+  # Start the CLI process
   process_id <- cli::cli_process_start(
-    paste0("geting form '", form_id, "' from ONA server")); cat("\n")
+    paste0("Getting form '", form_id, "' from ONA server"))
+  cat("\n")
   
-  # Check if the form id is available for download -----------------------------
-  
+  # Check if the form id is available for download
   resp_data <- prep_ona_data_endpoints(
     base_url = base_url,
     api_token = api_token)
   
   if (!(form_id %in% unique(resp_data$id))) {
     cli::cli_abort(
-      paste0("Form IDs ", 
-             toString(form_id), 
+      paste0("Form ID ", 
+             form_id, 
              " not found. Use `prep_ona_data_endpoints()` ",
              "to check available forms for download.")
     )
   }
   
-  # If getting multiple columns, include these in url ---------------------------
+  # Initialize query parameters list
+  query_params <- list()
   
-  if (!is.null(selected_columns)) {
-    # Construct query parameters with quotes around column names
-    query_params <- list(
-      fields = paste0(
-        '[', 
-        paste(
-          sapply(
-            selected_columns, 
-            function(col) paste0('"', col, '"')), 
-          collapse = ','), ']'))
-    
-    # Build the full URL with query parameters using modify_url from httr
-    api_url <- 
-      paste0(
-        httr::modify_url(api_url, query = query_params), "&")
-  } else { api_url <- paste0(api_url, "?") }
+  # Convert selected_columns to JSON array string
+  fields_json <- jsonlite::toJSON(selected_columns, auto_unbox = TRUE)
+  
+  
+  # parse filters input
+  if (!is.null(filters)) {filters <-  process_query_filters(filters)}
+  
+  # Convert filters to JSON string
+  query_json <- jsonlite::toJSON(filters, auto_unbox = TRUE)
+  
+  # Build the full URL with query parameters
+  full_url <- httr::modify_url(
+    api_url,
+    query = list(
+      fields = fields_json,
+      query = query_json
+    )
+  )
   
   # Download data (use pagination if necessary) --------------------------------
   
-  # Retrieve data handling pagination
-  results <- get_paginated_data(api_url, api_token) |> 
-    # drop any empty columns
+  results <- get_paginated_data(full_url, api_token) |> 
+    # Drop any empty columns
     dplyr::select(
       dplyr::where(
         ~ any(!is.na(.))))
   
-  # Return output message and save results -------------------------------------
-  
-  # praise for successful results
-  cat("\n"); cli::cli_process_done(
+  # Finish the CLI process
+  cat("\n")
+  cli::cli_process_done(
     process_id, 
     msg_done = "Download complete! {praise_emoji()}")
   
