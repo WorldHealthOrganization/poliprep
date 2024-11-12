@@ -4,7 +4,13 @@
 \alias{autoparse_dates}
 \title{Parse Dates in a Data Frame}
 \usage{
-autoparse_dates(data, date_cols, output_format = "\%Y-\%m-\%d", verbose = TRUE)
+autoparse_dates(
+  data,
+  date_cols,
+  output_format = "\%Y-\%m-\%d",
+  additional_format = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{data}{A data frame containing columns with date values to parse.}
@@ -14,6 +20,10 @@ date values.}
 
 \item{output_format}{A character string specifying the desired output format
 for the parsed dates. Default is \code{"\%Y-\%m-\%d"}.}
+
+\item{additional_format}{A character string specifying any additional formats
+that are not included in the default formats
+(see \code{available_date_formats}). Default is NULL.}
 
 \item{verbose}{Logical. If \code{TRUE}, prints messages about parsing
 success or failure for each column. Default is \code{TRUE}.}
@@ -114,6 +124,8 @@ df <- data.frame(
                 "2022-11-05T23:15:59.123+01:00",
                 "2023-06-15T12:30:45.789Z", 
                 "2020-01-01T00:00:00.000-05:00"),
+  `mixed_formats` = c("2023-10-03", "11.09.2022",
+                     "25-12-21 23:59", "2020-08-15T00:00:00Z"),
   stringsAsFactors = FALSE
 )
 
