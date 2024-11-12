@@ -339,7 +339,7 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
   # Convert filters to JSON string
   if (!is.null(filters)) {
     filters <-  process_query_filters(filters)
-    query_json <- jsonlite::toJSON(filters, auto_unbox = FALSE)
+    query_json <- jsonlite::toJSON(filters, auto_unbox = TRUE)
   } else {
     query_json <- NULL
   }
