@@ -91,17 +91,134 @@ prep_ona_data_endpoints <- function(
   return(response)
 }
 
-#' Process Query Filters for MongoDB-style Queries
+#' Process and Convert R Filters to MongoDB Query Format
 #' 
 #' @description
-#' Processes a list of filters and converts them into MongoDB-style query 
-#' format. The function handles both single value conditions and multiple 
-#' value conditions, automatically applying appropriate logical operators.
+#' Converts R filtering expressions into MongoDB query format and returns a 
+#' JSON string. Handles single conditions, multiple conditions combined with &, 
+#' and vector filters.
+#' 
+#' @param ... One or more filter expressions. Can be formulas (e.g.,
+#'   ~field > value), vectors, or single values
 #'
-#' @param filters A list containing field names and their corresponding filter 
-#'   values. Each field can have either a single value or multiple values.
+#' @return A JSON string containing the MongoDB query filters
+#' 
+#' @details
+#' Supports the following R operators that are mapped to MongoDB operators:
+#' \itemize{
+#'   \item > maps to $gt
+#'   \item >= maps to $gte 
+#'   \item < maps to $lt
+#'   \item <= maps to $lte
+#'   \item == maps to $eq
+#'   \item != maps to $ne
+#' }
 #'
-process_query_filters <- function(filters) {
+#' @examples
+#' # Single condition
+#' # process_comparison_filters(~age >= 21)
+#' 
+#' # Multiple conditions
+#' # process_comparison_filters(~age >= 21 & age <= 65)
+#' 
+#' # Vector filter
+#' # process_comparison_filters(status = c("active", "pending"))
+process_comparison_filters <- function(...) {
+  filters <- list(...)
+  converted_filters <- list()
+  
+  for (filter in filters) {
+    # Check if the filter is a formula
+    if (inherits(filter, "formula")) {
+      filter_expr <- filter[[2]]
+      
+      # If the formula contains multiple conditions combined with &
+      if (filter_expr[[1]] == as.name("&")) {
+        # Initialize a temporary list to hold conditions for the same field
+        field_conditions <- list()
+        
+        # Process each condition individually
+        sub_conditions <- as.list(filter_expr)[-1]
+        for (cond in sub_conditions) {
+          op <- as.character(cond[[1]])
+          field_name <- as.character(cond[[2]])
+          value <- as.character(cond[[3]])
+          
+          # Map R operators to MongoDB operators
+          operator_map <- list(
+            ">" = "$gt",
+            ">=" = "$gte",
+            "<" = "$lt",
+            "<=" = "$lte",
+            "==" = "$eq",
+            "!=" = "$ne"
+          )
+          mongo_op <- operator_map[[op]]
+          
+          # Add each condition to the field's condition list
+          field_conditions[[mongo_op]] <- value
+        }
+        
+        # Assign combined conditions to the field name in the main filter
+        converted_filters[[field_name]] <- field_conditions
+        
+      } else {
+        # Handle single comparison formulas
+        operator <- as.character(filter_expr[[1]])
+        field_name <- as.character(filter_expr[[2]])
+        value <- as.character(filter_expr[[3]])
+        
+        # Map operators
+        operator_map <- list(
+          ">" = "$gt",
+          ">=" = "$gte",
+          "<" = "$lt",
+          "<=" = "$lte",
+          "==" = "$eq",
+          "!=" = "$ne"
+        )
+        mongo_operator <- operator_map[[operator]]
+        
+        # Single condition with correct field name
+        converted_filters[[field_name]] <- setNames(list(value), mongo_operator)
+      }
+      
+      # Handle vector filters as simple arrays without $in
+    } else if (is.vector(filter) && length(filter) > 1) {
+      field_name <- names(filter)[1]
+      converted_filters[[field_name]] <- filter[[1]]
+      
+      # Handle single-value fields
+    } else {
+      field_name <- names(filter)[1]
+      converted_filters[[field_name]] <- filter[[1]]
+    }
+  }
+  
+  # Convert to JSON format
+  return(jsonlite::toJSON(converted_filters, auto_unbox = TRUE))
+}
+
+#' Process Logical Filters for MongoDB-style Queries
+#' 
+#' @description
+#' Processes a list of filters and converts them into MongoDB-style logical 
+#' queries. If multiple values exist for a field, they are combined with an OR 
+#' operator. Single value conditions are combined with AND operator if OR 
+#' conditions exist.
+#' 
+#' @param filters A list containing field-value pairs for filtering
+#' 
+#' @return A list with MongoDB-style query operators ($and, $or) or simple 
+#'   conditions
+#' 
+#' @examples
+#' # filters <- list(
+#' #   status = c("active", "pending"),
+#' #   type = "user"
+#' # )
+#' # process_logical_filters(filters)
+process_logical_filters <- function(filters) {
   # List of logical operators
   logical_operators <- c("$and", "$or", "$nor", "$not")
   
@@ -142,7 +259,8 @@ process_query_filters <- function(filters) {
     final_query <- single_conditions
   }
   
-  return(final_query)
+  return(jsonlite::toJSON(final_query,
+                          auto_unbox = TRUE))
 }
 
 
@@ -265,41 +383,55 @@ praise_emoji <- function() {
 
 #' Get Data from ONA API
 #'
-#' This function getes data for a specified form from the ONA API using a 
-#' provided API token and form ID. It returns the data in a structured format 
-#' if the request is successful. If the request fails, the function stops and 
+#' This function gets data for a specified form from the ONA API using a
+#' provided API token and form ID. It returns the data in a structured format
+#' if the request is successful. If the request fails, the function stops and
 #' returns an error message indicating the failure reason.
 #'
-#' @param base_url A string specifying the URL for the ONA API, 
-#'                could be https://esurv.afro.who.int/api/v1/data eSurv.
-#'                Default is https://api.whonghub.org/api/v1/data
-#' @param form_id A string or numeric value as the dataset id. 
-#'                Could be found by looking at the URL of the form on ONA.
-#' @param api_token A string specifying the API token for ONA
-#' @param selected_columns Selected columns to download. Default is NULL.
-#'    It's in stringed list like c("year", "form_id")
-#' @param filters Optional. A named list where each name corresponds to a 
-#'    column in your dataset, and each value is a vector of values to filter by.
-#'    Supports single or multiple values per column.
+#' @param base_url A string specifying the URL for the ONA API.
+#'                Default is "https://api.whonghub.org"
+#' @param form_id A string or numeric value specifying the dataset ID.
+#'                Can be found in the URL of the form on ONA.
+#' @param api_token A string specifying the API token for authentication
+#' @param selected_columns Optional. A character vector of column names to 
+#'                download. Default is NULL which downloads all columns.
+#'                Example: c("year", "form_id")
+#' @param logical_filters Optional. A named list for filtering with logical 
+#'                operators. Names are column names, values are vectors to 
+#'                filter by. Uses OR within groups and AND between groups.
+#' @param comparison_filters Optional. A named list for filtering with 
+#'                comparisons. Names are column names, values are comparison 
+#'                conditions. Supports >, <, >=, <=, =, != operators.
 #'
-#' @return A list containing the data donwloaded from the ONA API.
+#' @return A data frame containing the filtered data downloaded from the ONA 
+#'         API, with empty columns removed.
 #'
 #' @examples
-#' # base_url <- https://api.ona.io/api/v1/data
-#' # api_token <- "your_api_token_here"
-#' # form_id <- 123456
-#' # data <- get_ona_data(base_url, form_id, 
-#' #                      api_token, 
-#' #                      filters = list(state = c("BORNO"),
-#' #                                     lgas = c("JERE"))
-#' # )
+#' \dontrun{
+#' # Basic usage
+#' data <- get_ona_data(
+#'   form_id = "123456",
+#'   api_token = "your_api_token_here"
+#' )
+#'
+#' # Basic usage with selected columns and filters
+#' ona_eim_ipds_ih_epm <- get_ona_data(
+#'   form_id = 7178,
+#'   api_token = ONA_TOKEN,
+#'   selected_columns = c("states", "endtime", "today", "_duration"),
+#'   logical_filters = list(states = c("BORNO", "KANO")),
+#'   comparison_filters = (~ `today` >= "2023-02-04" & `today` <= "2025-02-04")
+#' )
+#' }
+#'
 #' @export
-#' @seealso \url{https://api.ona.io/api/v1/data/} for more info on ONA API
+#' @seealso \url{https://api.ona.io/api/v1/data/} for ONA API documentation
 get_ona_data <- function(base_url = "https://api.whonghub.org", 
                          form_id, 
                          api_token, 
                          selected_columns = NULL, 
-                         filters = NULL) {
+                         logical_filters = NULL,
+                         comparison_filters = NULL) {
   
   # Check base URL validity
   base_url <- validate_base_url(base_url)
@@ -336,14 +468,25 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
     fields_json <- NULL
   }
   
-  # Convert filters to JSON string
-  if (!is.null(filters)) {
-    filters <-  process_query_filters(filters)
-    query_json <- jsonlite::toJSON(filters, auto_unbox = TRUE)
+  # Process filters and combine them if both are present
+  query_json <- if (!is.null(logical_filters) && !is.null(comparison_filters)) {
+    comparison <- process_comparison_filters(comparison_filters) |>
+      jsonlite::minify() |>
+      gsub("^\\{|\\}$", "", x = _)
+    
+    logical <- process_logical_filters(logical_filters) |>
+      jsonlite::minify() |>
+      gsub("^\\{|\\}$", "", x = _)
+    
+    paste0("{", comparison, ",", logical, "}") |> 
+      jsonlite::minify()
+  } else if (!is.null(comparison_filters)) {
+    process_comparison_filters(comparison_filters)
+  } else if (!is.null(logical_filters)) {
+    process_logical_filters(logical_filters)
   } else {
-    query_json <- NULL
+    NULL
   }
-  
   
   # Build the full URL with query parameters
   full_url <- httr::modify_url(
@@ -370,6 +513,7 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
   
   return(results)
 }
+
 
 #' Get Data from ONA for Multiple Forms
 #'
