@@ -196,7 +196,7 @@ process_comparison_filters <- function(...) {
   }
   
   # Convert to JSON format
-  return(jsonlite::toJSON(converted_filters, auto_unbox = TRUE))
+  jsonlite::toJSON(converted_filters, auto_unbox = TRUE)
 }
 
 #' Process Logical Filters for MongoDB-style Queries
@@ -259,8 +259,8 @@ process_logical_filters <- function(filters) {
     final_query <- single_conditions
   }
   
-  return(jsonlite::toJSON(final_query,
-                          auto_unbox = TRUE))
+  jsonlite::toJSON(final_query,
+                   auto_unbox = TRUE)
 }
 
 
