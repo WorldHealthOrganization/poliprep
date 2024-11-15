@@ -315,8 +315,6 @@ cleaned_df <- prep_geonames(
 ```
 Here is a short video to demonstrate the full interactivity of `prep_geonames`:
 
-[![Watch the video](https://raw.githubusercontent.com/WorldHealthOrganization/poliprep/feature_dev/inst/extdata/demo_screenshot.png)](https://raw.githubusercontent.com/WorldHealthOrganization/poliprep/feature_dev/inst/extdata/prep_geoname_demo.mov)
-
 ### Date Handling
 
 #### `autoparse_dates` for Parsing Dates in a Data Frame
