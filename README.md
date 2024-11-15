@@ -313,14 +313,9 @@ cleaned_df <- prep_geonames(
   interactive = TRUE
 )
 ```
+Here is a short video to demonstrate the full interactivity of `prep_geonames`:
 
-Here is a GIF to demonstrate the full interactivity of `prep_geonames`:
-
-<video width="640" height="360" controls>
-  <source src="https://raw.githubusercontent.com/WorldHealthOrganization/poliprep/feature_dev/inst/extdata/prep_geoname_demo.mov" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
+[![Watch the video](https://raw.githubusercontent.com/WorldHealthOrganization/poliprep/feature_dev/inst/extdata/demo_screenshot.png)](https://raw.githubusercontent.com/WorldHealthOrganization/poliprep/feature_dev/inst/extdata/prep_geoname_demo.mov)
 
 ### Date Handling
 
