@@ -94,11 +94,7 @@ Before downloading anything using an API, it’s good practice to save your API 
 
 To securely set your access token in the R environment, you can add it to your .Renviron file. This allows you to access the token across sessions without explicitly including it in your code.
 
-Where the key is stored depends on the environment you’re working in—user or project. If you’re working within an RStudio project (which is generally recommended), you can specify the scope to control where the key is saved:
-
--   User Scope: Setting the token in your `.Renviron` file at the user level `(scope = "user"`) makes it available globally for all R projects on your machine.
-
--   Project Scope: If you want to keep the token specific to your current project, specify `scope = "project"` when editing your .Renviron file:
+Where the key is stored depends on the environment you’re working in—user or project. If you’re working within an RStudio project (which is generally recommended), you need to specify the scope as "project" so that the key is saved within your environment. Otherwise the default is 'user'.
 
 ``` r
 usethis::edit_r_environ(scope = "project")
@@ -142,9 +138,7 @@ data_ona <- get_ona_data(
               )
 ```
 
-You can also filter your dataset before downloading. There are two parameters to do this, `logical_filters` and `comparison_filters`. To select specific elements in a column, you can now use `logical_filters`. For example, to select 'BORNO' and 'KANO' in the states column within the form 7178, you can assign `list(states = c("BORNO", "KANO"))` to `logical_filters`.
-
-For filtering ranges, you can use `comparison_filters`, which always starts with a tilde (\~) and then the conditions are written in a standard R syntax. For example: `~ "today" >= "2023-02-04" & "today" <= "2025-02-04"`. This filter selects rows where the today column falls within the specified date range.
+You can also filter your dataset before downloading. There are two parameters to do this, `logical_filters` and `comparison_filters`. To select specific elements in a column, you can now use `logical_filters`. For filtering ranges, you can use `comparison_filters`, which always starts with a tilde (\~) and then the conditions are written in a standard R syntax. See below to see how this can be done:
 
 ``` r
 data_ona <- get_ona_data(
@@ -160,11 +154,7 @@ Before applying any of these filters, double-check both the column names and the
 
 #### `get_multi_ona_data` for Downloading Data from Multiple ONA Forms
 
-In cases where you need to download data from multiple ONA forms simultaneously, `poliprep` provides the `get_multi_ona_data` function. This function uses parallel processing in the background to speed up the download process. It’s particularly useful when the forms have identical structures (e.g., the same survey conducted across different administrative levels or countries) but need to be downloaded together for combined analysis.
-
-Important Notes:
--   Ensure that any selected columns and filters exist in all forms of interest; otherwise, the function will fail.
--   The form ID for each downloaded row is appended to the dataset, allowing you to track its source for future checks.
+In cases where you need to download data from multiple ONA forms simultaneously, `poliprep` provides the `get_multi_ona_data` function. This function uses parallel processing in the background to speed up the download process. It’s particularly useful when the forms have identical structures (e.g., the same survey conducted across different administrative levels or countries) but need to be downloaded together together. Ensure that any selected columns and filters exist in all forms of interest; otherwise, the function will fail. Also, the form ID for each downloaded row is appended to the dataset, allowing you to track its source for future checks.
 
 ```r
 data_ona2 <- get_multi_ona_data(
@@ -184,7 +174,6 @@ When working with datasets from multiple ONA forms, you may prefer to fetch only
 -   The function supports downloading data from multiple form IDs simultaneously.
 -   Do not change parameters for the filters (e.g., logical_filters or comparison_filters) when updating, as this may result in mismatched datasets.
 -   Specify the file path where the previously downloaded data is stored. If this is the first run, the function downloads all matching data and saves it to the given location.
--   Logging: Optionally, you can enable logging to keep track of each download/update for future reference.
 
 ``` r
 get_updated_ona_data(
@@ -243,8 +232,6 @@ colnames(target_dataframe)
 all(names(ref_dataframe) == names(target_dataframe))
 #> [1] TRUE
 ```
-
-
 
 #### `prep_match_datatypes` for Matching Data Types Between Dataframes
 
@@ -326,6 +313,14 @@ cleaned_df <- prep_geonames(
   interactive = TRUE
 )
 ```
+
+Here is a GIF to demonstrate the full interactivity of `prep_geonames`:
+
+<video width="640" height="360" controls>
+  <source src="https://raw.githubusercontent.com/WorldHealthOrganization/poliprep/feature_dev/inst/extdata/prep_geoname_demo.mov" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 
 ### Date Handling
 
