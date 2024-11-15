@@ -19,9 +19,6 @@ Returns a list all all the extracted tables indexed by their names.
 Function to extract tables from multiple Microsoft Access databases.
 }
 \examples{
-
 # How to run the function
 prep_mdb_table_extract(mdb_folder, target_table)
-
-
 }

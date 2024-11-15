@@ -37,7 +37,7 @@
 #' data_spss <- read(file_path = file.path(path, "test_data.sav"))
 #' 
 #' # Import an shapefiles file (GeoJSON/json)
-#' data_spss <- read(file_path = file.path(path, "test_data.GeoJSON"))
+#' data_geojson <- read(file_path = file.path(path, "test_data.GeoJSON"))
 #'
 #' @seealso \code{\link[=rio]{rio::import()}} and 
 #'         \code{\link[=sf]{sf::read_sf()}},  which this function is based on.

@@ -774,22 +774,21 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
   # If getting multiple columns, include these in url --------------------------
   
   if (!is.null(selected_columns)) {
-    # Construct query parameters with quotes around column names
-    query_params <- list(
-      fields = paste0(
-        '[', 
-        paste(
-          sapply(
-            selected_columns, 
-            function(col) paste0('"', col, '"')), 
-          collapse = ','), ']'))
     
+    # Convert selected_columns to JSON array string
+    if (!is.null(selected_columns)) {
+      # selected_columns <- c("_id", selected_columns) # ensure there is id col
+      fields_json <- jsonlite::toJSON(selected_columns, auto_unbox = FALSE)
+    } else {
+      fields_json <- NULL
+    }
+
     url_list <-  NULL
     
     for (url in urls) {
       
       # Build the full URL for each form id
-      results <- httr::modify_url(url, query = query_params) 
+      results <- httr::modify_url(url, query = fields_json) 
       
       url_list[[url]] <- results
     }

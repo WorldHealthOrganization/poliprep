@@ -1,9 +1,3 @@
-################################################################################
-#                                                                              #
-#               FUNCTION FOR MERGING DIFFERENT MDB FILES                       #
-#                                                                              #
-################################################################################
-
 #' Function to extract tables from multiple Microsoft Access databases.
 #'
 #' @param mdb_folder Path to the folder containing the .mdb files
@@ -11,22 +5,19 @@
 #'                     unique name accross all the .mdb files.
 #'
 #' @return Returns a list all all the extracted tables indexed by their names.
-#' @export
 #'
 #' @examples
-#' 
 #' # How to run the function
 #' prep_mdb_table_extract(mdb_folder, target_table)
-#' 
-#' 
-
+#' @export
 prep_mdb_table_extract <- function(mdb_folder, target_table){
   # Get the start time of the function
   start_time <- Sys.time()
   tryCatch({
     # a) check if the foldername exist
     if(!dir.exists(mdb_folder)){
-      cli::cli_alert_warning(paste("Folder path", mdb_folder, "does not exist."))
+      cli::cli_alert_warning(paste("Folder path", 
+                                   mdb_folder, "does not exist."))
     }
     
     # b) get the list of all the files with mdb extension from the folder
@@ -54,10 +45,13 @@ prep_mdb_table_extract <- function(mdb_folder, target_table){
         tables <- tables$TABLE_NAME[tables$TABLE_TYPE == "TABLE"]
         # Check if the target table exist in list of tables in an .mdb
         if(target_table %in% tables){
-          query <- RODBC::sqlQuery(ch1, query = paste("select * from ", target_table))
+          query <- RODBC::sqlQuery(ch1, 
+                                   query = paste("select * from ", 
+                                                 target_table))
           afp_list[[paste0(basename(mdb_file), "_", target_table)]] <- query
         }else{
-          cli::cli_text(paste("No table named : ", target_table, " in ", basename(mdb_file)))
+          cli::cli_text(paste("No table named : ", 
+                              target_table, " in ", basename(mdb_file)))
         }
         # close db connection
         RODBC::odbcCloseAll()
@@ -86,8 +80,5 @@ prep_mdb_table_extract <- function(mdb_folder, target_table){
     cli::cli_alert_warning(w$message)
   })
 }
-
-
-#prep_mdb_table_extract(mdb_folder, target_table)
 
 
