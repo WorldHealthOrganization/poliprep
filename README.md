@@ -11,8 +11,7 @@
 The package offers a number of functions for various tasks, including importing and exporting data, pulling data from relevant APIs, data processing and cleaning, as well as performing validations and checks. It also features the capability to generate reports or scorecards highlighting areas of concern identified during the validation process.
 
 ## :wrench: Installation
-
-The package can be installed directly using `devtools`. The steps are as follows:
+The package is yet to be available on Cran, but can be installed using `devtools` in R. The steps are as follows:
 
 ```r
 # 1) Install devtools if you haven't already
