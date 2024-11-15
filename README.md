@@ -315,6 +315,8 @@ cleaned_df <- prep_geonames(
 ```
 Here is a short video to demonstrate the full interactivity of `prep_geonames`:
 
+https://github.com/user-attachments/assets/ffa69a93-a982-43c4-9673-1165f997fd96
+
 ### Date Handling
 
 #### `autoparse_dates` for Parsing Dates in a Data Frame
