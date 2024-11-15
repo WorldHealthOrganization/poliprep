@@ -2,6 +2,7 @@
 
 export(assign_round_number)
 export(autoparse_dates)
+export(available_date_formats)
 export(big_mark)
 export(calculate_distance)
 export(categorize_biannual)

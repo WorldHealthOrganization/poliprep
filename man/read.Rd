@@ -47,7 +47,7 @@ data_rdata <- read(file_path = file.path(path, "test_data.RData"))
 data_spss <- read(file_path = file.path(path, "test_data.sav"))
 
 # Import an shapefiles file (GeoJSON/json)
-data_spss <- read(file_path = file.path(path, "test_data.GeoJSON"))
+data_geojson <- read(file_path = file.path(path, "test_data.GeoJSON"))
 
 }
 \seealso{

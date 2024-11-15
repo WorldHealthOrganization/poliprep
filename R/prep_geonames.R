@@ -973,8 +973,30 @@ prep_geonames <- function(target_df, lookup_df = NULL,
       )
     )
 
-  # Step 1: Configure cache if saved cache file exists availabel ---------------
+  # Step 1: Configure cache if saved cache file exists available ---------------
 
+  if (!is.null(cache_path) && !file.exists(cache_path)) {
+    
+    # Alert the user about the missing cache file, including the path
+    cli::cli_alert_info(
+      paste0("The specified cache file '", cache_path, "' does not exist.")
+    )
+    
+    # Ask the user if they want to proceed and create a new cache file
+    user_input <- readline(
+      paste0("Are you aware that the cache file is missing?",
+             " Proceed to create a new one? (yes/no): "))
+    
+    # Check the user's response
+    if (!(tolower(user_input) %in% c("yes", "y"))) {
+      cli::cli_alert_info("Exiting without creating a new cache file.")
+      # Exit the function or stop execution as appropriate
+    } else {
+      cli::cli_alert_info("Proceeding to create a new cache file...")
+    }
+    
+  }
+  
   # load saved cache file
   if (!is.null(cache_path) && file.exists(cache_path)) {
     # load the cache file

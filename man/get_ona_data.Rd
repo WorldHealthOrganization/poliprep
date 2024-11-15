@@ -8,37 +8,61 @@ get_ona_data(
   base_url = "https://api.whonghub.org",
   form_id,
   api_token,
-  selected_columns = NULL
+  selected_columns = NULL,
+  logical_filters = NULL,
+  comparison_filters = NULL
 )
 }
 \arguments{
-\item{base_url}{A string specifying the URL for the ONA API,
-could be https://esurv.afro.who.int/api/v1/data eSurv.
-Default is https://api.whonghub.org/api/v1/data}
+\item{base_url}{A string specifying the URL for the ONA API.
+Default is "https://api.whonghub.org"}
 
-\item{form_id}{A string or numeric value as the dataset id.
-Could be found by looking at the URL of the form on ONA.}
+\item{form_id}{A string or numeric value specifying the dataset ID.
+Can be found in the URL of the form on ONA.}
 
-\item{api_token}{A string specifying the API token for ONA}
+\item{api_token}{A string specifying the API token for authentication}
 
-\item{selected_columns}{Selected columns to download. Default is NULL.
-It's in stringed list like c("year", "form_id")}
+\item{selected_columns}{Optional. A character vector of column names to
+download. Default is NULL which downloads all columns.
+Example: c("year", "form_id")}
+
+\item{logical_filters}{Optional. A named list for filtering with logical
+operators. Names are column names, values are vectors to
+filter by. Uses OR within groups and AND between groups.}
+
+\item{comparison_filters}{Optional. A named list for filtering with
+comparisons. Names are column names, values are comparison
+conditions. Supports >, <, >=, <=, =, != operators.}
 }
 \value{
-A list containing the data geted from the ONA API.
+A data frame containing the filtered data downloaded from the ONA
+API, with empty columns removed.
 }
 \description{
-This function getes data for a specified form from the ONA API using a
+This function gets data for a specified form from the ONA API using a
 provided API token and form ID. It returns the data in a structured format
 if the request is successful. If the request fails, the function stops and
 returns an error message indicating the failure reason.
 }
 \examples{
-# base_url <- https://api.ona.io/api/v1/data
-# api_token <- "your_api_token_here"
-# form_id <- 123456
-# data <- get_ona_data(base_url, form_id, api_token)
+\dontrun{
+# Basic usage
+data <- get_ona_data(
+  form_id = "123456",
+  api_token = "your_api_token_here"
+)
+
+# Basic usage with selected columns and filters
+ona_eim_ipds_ih_epm <- get_ona_data(
+  form_id = 7178,
+  api_token = ONA_TOKEN,
+  selected_columns = c("states", "endtime", "today", "_duration"),
+  logical_filters = list(states = c("BORNO", "KANO")),
+  comparison_filters = (~ `today` >= "2023-02-04" & `today` <= "2025-02-04")
+)
+}
+
 }
 \seealso{
-\url{https://api.ona.io/api/v1/data/} for more info on ONA API
+\url{https://api.ona.io/api/v1/data/} for ONA API documentation
 }

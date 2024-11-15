@@ -1,3 +1,64 @@
+#' Try parsing dates with multiple formats
+#' 
+#' This helper function attempts to parse dates using specified formats and 
+#' handles ISO 8601 formatted dates (containing 'T') separately using ymd_hms.
+#'
+#' @param x A character vector of dates to parse
+#' @param formats A character vector of date formats to try (see ?strptime for 
+#'   format specifications)
+#' @return A POSIXct vector of parsed dates
+try_parsing <- function(x, formats) {
+  
+  parsed <- lubridate::parse_date_time(x,
+                                       orders = formats, quiet = TRUE
+  )
+  
+  # Handle special cases
+  iso_indices <- grepl("T", x)
+  parsed[iso_indices] <- lubridate::ymd_hms(x[iso_indices], quiet = TRUE)
+  
+  return(parsed)
+}
+
+#' Available date formats for `autoparse_dates` function
+#' 
+#' A character vector containing all supported date formats that can be parsed 
+#' by `autoparse_dates()`. These formats follow standard date-time components:
+#' \itemize{
+#'   \item d: day
+#'   \item m: month
+#'   \item Y/y: year (Y=4 digits, y=2 digits)
+#'   \item B: full month name
+#'   \item b: abbreviated month name
+#'   \item H: hour
+#'   \item M: minute
+#'   \item S: second
+#' }
+#' @format A character vector of date format strings
+#' @examples
+#' head(available_date_formats)
+#' @export
+available_date_formats <- c(
+  "dmY", "mdY", "Ymd", "Ydm",
+  "dmy", "mdy", "ymd", "ydm",
+  "dmY HMS", "mdY HMS", "Ymd HMS", "Ydm HMS",
+  "dmy HMS", "mdy HMS", "ymd HMS", "ydm HMS",
+  "Y-m-d", "Y-m-d H:M:S", "Y-m-d H:M",
+  "y-m-d", "y-m-d H:M:S", "y-m-d H:M",
+  "d-m-Y H:M:S", "d.m.Y H:M:S", "d.m.Y H:M",
+  "d-m-y H:M:S", "d.m.y H:M:S", "d.m.y H:M",
+  "d B Y", "B d, Y", "Y B d",
+  "d B y", "B d, y", "y B d",
+  "d b Y", "b d, Y", "Y b d",
+  "d b y", "b d, y", "y b d",
+  "dmY", "mdY", "d-m-Y H:M", "d.m.Y", "d.m.Y H:M",
+  "dmy", "mdy", "d-m-y H:M", "d.m.y", "d.m.y H:M",
+  "d/m/Y", "d/m/Y H:M:S", "d/m/Y H:M", "d/m/Y HMS", "d/m/Y HM",
+  "d/m/y", "d/m/y H:M:S", "d/m/y H:M", "d/m/y HMS", "d/m/y HM",
+  "Y/m/d", "Y/m/d H:M:S", "Y/m/d H:M", "Y/m/d HMS", "Y/m/d HM",
+  "y/m/d", "y/m/d H:M:S", "y/m/d H:M", "y/m/d HMS", "y/m/d HM"
+)
+
 #' Parse Dates in a Data Frame
 #'
 #' This function parses date columns in a data frame using various date
@@ -9,6 +70,9 @@
 #'    date values.
 #' @param output_format A character string specifying the desired output format
 #'    for the parsed dates. Default is \code{"\%Y-\%m-\%d"}.
+#' @param additional_format A character string specifying any additional formats 
+#'    that are not included in the default formats 
+#'    (see `available_date_formats`). Default is NULL.
 #' @param verbose Logical. If \code{TRUE}, prints messages about parsing
 #'   success or failure for each column. Default is \code{TRUE}.
 #'
@@ -102,6 +166,8 @@
 #'                 "2022-11-05T23:15:59.123+01:00",
 #'                 "2023-06-15T12:30:45.789Z", 
 #'                 "2020-01-01T00:00:00.000-05:00"),
+#'   `mixed_formats` = c("2023-10-03", "11.09.2022",
+#'                      "25-12-21 23:59", "2020-08-15T00:00:00Z"),
 #'   stringsAsFactors = FALSE
 #' )
 #'
@@ -113,42 +179,21 @@
 #'
 #' @export
 autoparse_dates <- function(data, date_cols,
-                            output_format = "%Y-%m-%d", verbose = TRUE) {
+                            output_format = "%Y-%m-%d", 
+                            additional_format = NULL,
+                            verbose = TRUE) {
   if (!is.character(date_cols)) date_cols <- as.character(date_cols)
   
   parse_results <- vector("list", length(date_cols))
   names(parse_results) <- date_cols
   
-  try_parsing <- function(x) {
-    formats <- c(
-      "dmY", "mdY", "Ymd", "Ydm",
-      "dmy", "mdy", "ymd", "ydm",
-      "dmY HMS", "mdY HMS", "Ymd HMS", "Ydm HMS",
-      "dmy HMS", "mdy HMS", "ymd HMS", "ydm HMS",
-      "Y-m-d", "Y-m-d H:M:S", "Y-m-d H:M",
-      "d-m-Y H:M:S", "d.m.Y H:M:S", "d.m.Y H:M",
-      "d B Y", "B d, Y", "Y B d",
-      "d b Y", "b d, Y", "Y b d",
-      "dmY", "mdY", "d-m-Y H:M", "d.m.Y", "d.m.Y H:M",
-      "d/m/Y",  "d/m/Y H:M:S", "d/m/Y H:M",  "d/m/Y HMS", "d/m/Y HM", 
-      "Y/m/d", "Y/m/d H:M:S", "Y/m/d H:M", "Y/m/d HMS", "Y/m/d HM"
-    )
-    
-    parsed <- lubridate::parse_date_time(x,
-                                         orders = formats, quiet = TRUE
-    )
-    
-    # Handle special cases
-    iso_indices <- grepl("T", x)
-    parsed[iso_indices] <- lubridate::ymd_hms(x[iso_indices], quiet = TRUE)
-    
-    return(parsed)
-  }
+  # set up formats by also including additional formats
+  formats <- c(available_date_formats, additional_format)
   
   data |>
     dplyr::mutate(
       dplyr::across(dplyr::all_of(date_cols), \(x) {
-        parsed <- try_parsing(x)
+        parsed <- try_parsing(x, formats)
         parse_results[[dplyr::cur_column()]] <<- sum(is.na(parsed))
         
         if (output_format %in% "%Y-%m-%d") {
@@ -256,7 +301,7 @@ validate_date <- function(data, date_col,
                           ),
                           min_year = 2000) {
   results <- list()
-
+  
   suppressWarnings(
     # parse datest correctly at the start
     data <- data |>
@@ -281,19 +326,19 @@ validate_date <- function(data, date_col,
       ) |>
       dplyr::select(-parsed_date)
   )
-
+  
   # 1: Check for missing dates -------------------------------------------------
   if ("missing" %in% tests) {
     cli::cli_h1("Check for missing dates")
     data[[paste0(date_col, "_missing")]] <- is.na(data[[date_col]])
-
+    
     if (any(data[[paste0(date_col, "_missing")]], na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col), " has ",
         crayon::red(
           format(
             sum(data[[paste0(date_col, "_missing")]],
-              na.rm = T
+                na.rm = T
             ),
             big.mark = ","
           )
@@ -304,18 +349,18 @@ validate_date <- function(data, date_col,
     } else {
       cli::cli_alert_success("Date column is non-missing!")
     }
-
+    
     results$missing <- data[[paste0(date_col, "_missing")]]
   }
-
+  
   # 2: Check for non-date values -----------------------------------------------
   if ("non_date" %in% tests) {
     cli::cli_h1("Check for non-date values")
     non_date <- is.na(as.Date(data[[date_col]], format = "%Y-%m-%d")) &
       !is.na(data[[date_col]])
-
+    
     data[[paste0(date_col, "_non_date")]] <- non_date
-
+    
     if (any(non_date, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col), " has ",
@@ -328,28 +373,28 @@ validate_date <- function(data, date_col,
     } else {
       cli::cli_alert_success("Date column has fully valid dates!")
     }
-
+    
     results$non_date <- non_date
   }
-
+  
   # 3: Check for sensible dates ------------------------------------------------
   if ("sensible" %in% tests) {
     cli::cli_h1("Check for sensible dates")
-
+    
     invalid_date <- !stringr::str_detect(
       data[[date_col]],
       paste0("^", substr(min_year, 1, 2) |> as.numeric())
     )
-
+    
     current_year <- lubridate::year(Sys.Date())
-
+    
     future_date <- lubridate::year(
       as.Date(data[[date_col]], format = "%Y-%m-%d")
     ) > current_year
-
+    
     data[[paste0(date_col, "_invalid")]] <- invalid_date
     data[[paste0(date_col, "_future")]] <- future_date
-
+    
     if (any(invalid_date, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col), " has ",
@@ -361,7 +406,7 @@ validate_date <- function(data, date_col,
         crayon::green(paste0(date_col, "_invalid")), "."
       ))
     }
-
+    
     if (any(future_date, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col), " has ",
@@ -375,20 +420,20 @@ validate_date <- function(data, date_col,
     if (!any(invalid_date, na.rm = TRUE) && !any(future_date, na.rm = TRUE)) {
       cli::cli_alert_success("Date column has sensible dates!")
     }
-
+    
     results$invalid <- invalid_date
     results$future <- future_date
   }
-
+  
   # 4: Check for leap year validity --------------------------------------------
   if ("leap_year" %in% tests) {
     cli::cli_h1("Check for leap year validity")
     na_issue <- is.na(data[[date_col]])
-
+    
     leap_issue <- check_leap_issue(data[[date_col]])
-
+    
     data[[paste0(date_col, "_leap_issue")]] <- leap_issue
-
+    
     if (any(leap_issue, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col), " has ",
@@ -401,26 +446,26 @@ validate_date <- function(data, date_col,
     } else {
       cli::cli_alert_success("Date column has no leap year issues!")
     }
-
+    
     results$leap_issue <- leap_issue
   }
-
+  
   # 5: Check for improper date formatting --------------------------------------
   if ("format" %in% tests) {
     cli::cli_h1("Check for improper date formatting")
     valid_indices <- !leap_issue & !na_issue
-
+    
     date_col_no_leap <- data[[date_col]][valid_indices]
-
+    
     date_col_converted <- as.Date(date_col_no_leap, format = "%Y-%m-%d")
-
+    
     format_issue <- is.na(date_col_converted)
-
+    
     full_format_issue <- rep(FALSE, nrow(data))
     full_format_issue[valid_indices] <- format_issue
-
+    
     data[[paste0(date_col, "_format_issue")]] <- full_format_issue
-
+    
     if (any(full_format_issue, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col), " has ",
@@ -433,10 +478,10 @@ validate_date <- function(data, date_col,
     } else {
       cli::cli_alert_success("Date column has no formatting issues!")
     }
-
+    
     results$format_issue <- full_format_issue
   }
-
+  
   return(data)
 }
 
@@ -503,7 +548,7 @@ validate_dates <- function(data, date_col1, date_col2,
                            ),
                            min_year = 2000) {
   results <- data
-
+  
   # parse datest correctly at the start
   suppressWarnings(
     data <- data |>
@@ -539,19 +584,19 @@ validate_dates <- function(data, date_col1, date_col2,
       ) |>
       dplyr::select(-parsed_date1, -parsed_date2)
   )
-
+  
   # 1: Check for missing dates -------------------------------------------------
   if ("missing" %in% tests) {
     cli::cli_h1("Check for missing dates")
     results[[paste0(date_col1, "_missing")]] <- is.na(data[[date_col1]])
     results[[paste0(date_col2, "_missing")]] <- is.na(data[[date_col2]])
-
+    
     if (any(results[[paste0(date_col1, "_missing")]], na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col1), " has ",
         crayon::red(
           format(sum(results[[paste0(date_col1, "_missing")]], na.rm = TRUE),
-            big.mark = ","
+                 big.mark = ","
           )
         ),
         " missing date(s)! Check column ",
@@ -563,7 +608,7 @@ validate_dates <- function(data, date_col1, date_col2,
         "Date column ", crayon::blue(date_col2), " has ",
         crayon::red(
           format(sum(results[[paste0(date_col2, "_missing")]], na.rm = TRUE),
-            big.mark = ","
+                 big.mark = ","
           )
         ),
         " missing date(s)! Check column ",
@@ -571,11 +616,11 @@ validate_dates <- function(data, date_col1, date_col2,
       ))
     }
     if (!any(results[[paste0(date_col1, "_missing")]], na.rm = TRUE) &&
-      !any(results[[paste0(date_col2, "_missing")]], na.rm = TRUE)) {
+        !any(results[[paste0(date_col2, "_missing")]], na.rm = TRUE)) {
       cli::cli_alert_success("Both date columns are non-missing!")
     }
   }
-
+  
   # 2: Check for non-date values -----------------------------------------------
   if ("non_date" %in% tests) {
     cli::cli_h1("Check for non-date values")
@@ -583,10 +628,10 @@ validate_dates <- function(data, date_col1, date_col2,
       !is.na(data[[date_col1]])
     non_date2 <- is.na(as.Date(data[[date_col2]], format = "%Y-%m-%d")) &
       !is.na(data[[date_col2]])
-
+    
     results[[paste0(date_col1, "_non_date")]] <- non_date1
     results[[paste0(date_col2, "_non_date")]] <- non_date2
-
+    
     if (any(non_date1, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col1), " has ",
@@ -611,32 +656,32 @@ validate_dates <- function(data, date_col1, date_col2,
       cli::cli_alert_success("Both date columns have fully valid dates!")
     }
   }
-
+  
   # 3: Check for sensible dates ------------------------------------------------
   if ("sensible" %in% tests) {
     cli::cli_h1("Check for sensible dates")
-
+    
     current_year <- lubridate::year(Sys.Date())
-
+    
     invalid_date1 <- !between(lubridate::year(
       as.Date(data[[date_col1]], format = "%Y-%m-%d")
     ), min_year, current_year)
     invalid_date2 <- !between(lubridate::year(
       as.Date(data[[date_col2]], format = "%Y-%m-%d")
     ), min_year, current_year)
-
+    
     future_date1 <- lubridate::year(
       as.Date(data[[date_col1]], format = "%Y-%m-%d")
     ) > current_year
     future_date2 <- lubridate::year(
       as.Date(data[[date_col2]], format = "%Y-%m-%d")
     ) > current_year
-
+    
     results[[paste0(date_col1, "_invalid")]] <- invalid_date1
     results[[paste0(date_col2, "_invalid")]] <- invalid_date2
     results[[paste0(date_col1, "_future")]] <- future_date1
     results[[paste0(date_col2, "_future")]] <- future_date2
-
+    
     if (any(invalid_date1, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col1), " has ",
@@ -680,20 +725,20 @@ validate_dates <- function(data, date_col1, date_col2,
       ))
     }
     if (!any(invalid_date1, na.rm = TRUE) && !any(invalid_date2, na.rm = TRUE) &&
-      !any(future_date1, na.rm = TRUE) && !any(future_date2, na.rm = TRUE)) {
+        !any(future_date1, na.rm = TRUE) && !any(future_date2, na.rm = TRUE)) {
       cli::cli_alert_success("Both date columns have sensible dates!")
     }
   }
-
+  
   # 4: Check for leap year validity --------------------------------------------
   if ("leap_year" %in% tests) {
     cli::cli_h1("Check for leap year validity")
     leap_issue1 <- check_leap_issue(data[[date_col1]])
     leap_issue2 <- check_leap_issue(data[[date_col2]])
-
+    
     results[[paste0(date_col1, "_leap_issue")]] <- leap_issue1
     results[[paste0(date_col2, "_leap_issue")]] <- leap_issue2
-
+    
     if (any(leap_issue1, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col1), " has ",
@@ -718,31 +763,31 @@ validate_dates <- function(data, date_col1, date_col2,
       cli::cli_alert_success("Both date columns have no leap year issues!")
     }
   }
-
+  
   # 5: Check for improper date formatting --------------------------------------
   if ("format" %in% tests) {
     cli::cli_h1("Check for improper date formatting")
     valid_indices1 <- !is.na(data[[date_col1]])
     valid_indices2 <- !is.na(data[[date_col2]])
-
+    
     date_col1_no_na <- data[[date_col1]][valid_indices1]
     date_col2_no_na <- data[[date_col2]][valid_indices2]
-
+    
     date_col1_converted <- as.Date(date_col1_no_na, format = "%Y-%m-%d")
     date_col2_converted <- as.Date(date_col2_no_na, format = "%Y-%m-%d")
-
+    
     format_issue1 <- is.na(date_col1_converted)
     format_issue2 <- is.na(date_col2_converted)
-
+    
     full_format_issue1 <- rep(FALSE, nrow(data))
     full_format_issue1[valid_indices1] <- format_issue1
-
+    
     full_format_issue2 <- rep(FALSE, nrow(data))
     full_format_issue2[valid_indices2] <- format_issue2
-
+    
     results[[paste0(date_col1, "_format_issue")]] <- full_format_issue1
     results[[paste0(date_col2, "_format_issue")]] <- full_format_issue2
-
+    
     if (any(full_format_issue1, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col1), " has ",
@@ -770,7 +815,7 @@ validate_dates <- function(data, date_col1, date_col2,
       cli::cli_alert_success("Both date columns have no formatting issues!")
     }
   }
-
+  
   # 6: Check similarity in date formatting -------------------------------------
   if ("similarity" %in% tests) {
     cli::cli_h1("Check similarity in date formatting")
@@ -780,7 +825,7 @@ validate_dates <- function(data, date_col1, date_col2,
     date2_fmt <- poliprep::detect_date_format(
       as.Date(data[[date_col2]][!is.na(data[[date_col2]])], format = "%Y-%m-%d")
     )
-
+    
     if (date1_fmt != date2_fmt) {
       cli::cli_alert_info(paste0(
         "Date column ", crayon::blue(date_col1), " has format ", date1_fmt,
@@ -792,7 +837,7 @@ validate_dates <- function(data, date_col1, date_col2,
       cli::cli_alert_success("Both date columns have the same format!")
     }
   }
-
+  
   # 7: Check if the first date is before the second date -----------------------
   if ("order" %in% tests) {
     cli::cli_h1("Check if the first date is before the second date")
@@ -800,9 +845,9 @@ validate_dates <- function(data, date_col1, date_col2,
       data[[date_col1]],
       format = "%Y-%m-%d"
     ) > as.Date(data[[date_col2]], format = "%Y-%m-%d")
-
+    
     results[[paste0(date_col1, "_invalid_order")]] <- invalid_order
-
+    
     if (any(invalid_order, na.rm = TRUE)) {
       cli::cli_alert_info(paste0(
         "There are ", crayon::red(
@@ -815,6 +860,6 @@ validate_dates <- function(data, date_col1, date_col2,
       cli::cli_alert_success("All date pairs are in the correct order!")
     }
   }
-
+  
   return(results)
 }

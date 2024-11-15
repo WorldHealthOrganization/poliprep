@@ -1,7 +1,7 @@
 Package: poliprep
 Type: Package
-Title: For Processing and Validating Various Types of GPEI Data
-Version: 1.1.0
+Title: For Processing and Validating Various Types of Epidemiological Data
+Version: 1.3.0
 Authors@R: c(
   person("Mohamed A.", "Yusuf", 
          role = c("aut", "cre"),
@@ -10,9 +10,12 @@ Authors@R: c(
          second_email = "mohamedayusuf87@gmail.com")),
   person("Derrick", "Demeveng", 
          role = "aut",
-         email = "cheford@who.int")) 
-Description: A package by the Polio team at `WHO AFRO`, designed to support 
-    GPEI data users in data processing and validation.
+         email = "cheford@who.int"))
+Description: A package developed by the Polio team at WHO AFRO to support data 
+         users in processing and validating epidemiological data. It offers tidy
+         solutions with a range of functions for data management, cleaning and 
+         validation, ideal for epidemiologists and public health data
+         professionals.
 License: CC BY 4.0
 URL: https://github.com/WorldHealthOrganization/poliprep
 BugReports: https://github.com/WorldHealthOrganization/poliprep/issues
