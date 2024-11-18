@@ -527,7 +527,12 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
 #' @param api_token A string specifying the API token for ONA.
 #' @param selected_columns Selected columns to download. Default is NULL. 
 #'    It's in stringed list like c("year", "form_id")
-#' 
+#' @param logical_filters Optional. A named list for filtering with logical 
+#'                operators. Names are column names, values are vectors to 
+#'                filter by. Uses OR within groups and AND between groups.
+#' @param comparison_filters Optional. A named list for filtering with 
+#'                comparisons. Names are column names, values are comparison 
+#'                conditions. Supports >, <, >=, <=, =, != operators.
 #' @return A data frame containing the combined data from all specified form 
 #'        IDs, and includes from_id column.
 #' @examples
@@ -535,7 +540,9 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
 #' @importFrom foreach %dopar%
 #' @export
 get_multi_ona_data <- function(base_url = "https://api.whonghub.org", 
-                               form_ids, api_token, selected_columns = NULL) {
+                               form_ids, api_token, selected_columns = NULL,
+                               logical_filters = NULL,
+                               comparison_filters = NULL) {
   
   # Check if the form IDs are available for download ---------------------------
   resp_data <- prep_ona_data_endpoints(
@@ -564,7 +571,9 @@ get_multi_ona_data <- function(base_url = "https://api.whonghub.org",
       form_id = form_ids, .combine = 'bind_rows') %dopar% {
         data <- get_ona_data(form_id = form_id, 
                              api_token = api_token, 
-                             selected_columns = selected_columns)
+                             selected_columns = selected_columns,
+                             logical_filters = logical_filters, 
+                             comparison_filters = comparison_filters )
         # add form_id as a new column in each df
         dplyr::mutate(data, form_id_num = form_id)
       } 
