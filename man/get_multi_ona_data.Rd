@@ -8,7 +8,9 @@ get_multi_ona_data(
   base_url = "https://api.whonghub.org",
   form_ids,
   api_token,
-  selected_columns = NULL
+  selected_columns = NULL,
+  logical_filters = NULL,
+  comparison_filters = NULL
 )
 }
 \arguments{
@@ -21,6 +23,14 @@ get_multi_ona_data(
 
 \item{selected_columns}{Selected columns to download. Default is NULL.
 It's in stringed list like c("year", "form_id")}
+
+\item{logical_filters}{Optional. A named list for filtering with logical
+operators. Names are column names, values are vectors to
+filter by. Uses OR within groups and AND between groups.}
+
+\item{comparison_filters}{Optional. A named list for filtering with
+comparisons. Names are column names, values are comparison
+conditions. Supports >, <, >=, <=, =, != operators.}
 }
 \value{
 A data frame containing the combined data from all specified form
