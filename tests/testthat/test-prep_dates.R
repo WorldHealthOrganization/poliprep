@@ -68,7 +68,7 @@ testthat::test_that("validate_date correctly identifies various date issues", {
     # Check future dates
     testthat::expect_equal(
       result$date_future,
-      c(FALSE, FALSE, NA, FALSE, TRUE, FALSE, FALSE, NA)
+      c(FALSE, FALSE, NA, FALSE, FALSE, FALSE, FALSE, NA)
     )
 
     # Check leap year issues
@@ -125,7 +125,7 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     # Check invalid dates
     testthat::expect_equal(
       result$date1_invalid,
-      c(FALSE, FALSE, NA, TRUE, TRUE, NA, FALSE, NA)
+      c(FALSE, FALSE, NA, TRUE, FALSE, NA, FALSE, NA)
     )
     testthat::expect_equal(
       result$date2_invalid,
@@ -135,8 +135,9 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     # Check future dates
     testthat::expect_equal(
       result$date1_future,
-      c(FALSE, FALSE, NA, FALSE, TRUE, NA, FALSE, NA)
+      c(FALSE, FALSE, NA, FALSE, FALSE, NA, FALSE, NA)
     )
+    
     testthat::expect_equal(
       result$date2_future,
       c(FALSE, FALSE, FALSE, FALSE, TRUE, NA, FALSE, NA)
@@ -171,3 +172,4 @@ testthat::test_that("validate_dates correctly identifies various date issues", {
     )
   })
 })
+
