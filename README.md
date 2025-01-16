@@ -1,3 +1,5 @@
+# poliprep <img src="man/figures/logo.png" align="right" height="139" alt="" />
+
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)  [![CodeFactor](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep/badge)](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep) [![codecov](https://codecov.io/gh/WorldHealthOrganization/poliprep/graph/badge.svg?token=PCYAMB2S6Y)](https://codecov.io/gh/WorldHealthOrganization/poliprep)
 <!-- badges: end -->
