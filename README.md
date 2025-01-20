@@ -1,4 +1,4 @@
-# poliprep <img src="man/figures/logo.png" align="right" height="139" alt="" />
+# <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WorldHealthOrganization/poliprep/actions/workflows/R-CMD-check.yaml)  [![CodeFactor](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep/badge)](https://www.codefactor.io/repository/github/WorldHealthOrganization/poliprep) [![codecov](https://codecov.io/gh/WorldHealthOrganization/poliprep/graph/badge.svg?token=PCYAMB2S6Y)](https://codecov.io/gh/WorldHealthOrganization/poliprep)
@@ -55,11 +55,11 @@ library(poliprep)
 data_csv <- read("path/to/your/file.csv", sep = "\n")
 
 # Import the first sheet from an Excel file
-data_excel <- read("path/to/your/file.xlsx", sheet = 1)
+data_excel <- read("path/to/your/file/test_data.xlsx", sheet = 1)
 
 # Import any shapefiles file (GeoJSON/shp)
-data_geojson <- read(file_path = file.path(path, "test_data.GeoJSON"))
-data_shp <- read(file_path = file.path(path, "test_data.shp"))
+data_geojson <- read("path/to/your/file/test_data.GeoJSON")
+data_shp <- read("path/to/your/file/test_data.shp")
 
 # Export a Stata DTA file
 save(my_data, "path/to/your/file.dta")
@@ -73,7 +73,7 @@ save(my_shp, "path/to/your/file.shp")
 
 # Export an Excel file with sheets
 save(
-list(my_data = my_data1, my_data2 = my_data2), "path/to/your/file.xlsx")
+  list(my_data = my_data1, my_data2 = my_data2),"path/to/your/file.xlsx")
 ```
 
 ### `prep_mdb_table_extract` for Extracting Tables from Microsoft Access Databases
