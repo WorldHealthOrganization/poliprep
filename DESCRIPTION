@@ -3,17 +3,17 @@ Type: Package
 Title: For Processing and Validating Various Types of Epidemiological Data
 Version: 1.3.0
 Authors@R: c(
-  person("Mohamed A.", "Yusuf", 
+  person("Mohamed A.", "Yusuf",
          role = c("aut", "cre"),
-         email = "moyusuf@who.who",  
+         email = "moyusuf@who.who",
          comment = c(ORCID = "0000-0002-9339-4613",
          second_email = "mohamedayusuf87@gmail.com")),
-  person("Derrick", "Demeveng", 
+  person("Derrick", "Demeveng",
          role = "aut",
          email = "cheford@who.int"))
-Description: A package developed by the Polio team at WHO AFRO to support data 
+Description: A package developed by the Polio team at WHO AFRO to support data
          users in processing and validating epidemiological data. It offers tidy
-         solutions with a range of functions for data management, cleaning and 
+         solutions with a range of functions for data management, cleaning and
          validation, ideal for epidemiologists and public health data
          professionals.
 License: CC BY 4.0
@@ -24,7 +24,7 @@ Depends:
 Remotes:
     github::coolbutuseless/optout
 Imports:
-  rio, 
+  rio,
   cli,
   dplyr,
   tidyr,
@@ -36,15 +36,15 @@ Imports:
   tidyselect,
   tibble,
   lubridate,
-  doFuture, 
-  foreach, 
+  doFuture,
+  foreach,
   future,
   purrr,
   archive,
   doParallel,
   RODBC,
   geosphere
-Suggests: 
+Suggests:
     testthat,
     progressr,
     janitor,
@@ -66,7 +66,8 @@ Suggests:
     officer,
     ggplot2,
     optout,
-    progress
+    progress,
+    filelock
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
