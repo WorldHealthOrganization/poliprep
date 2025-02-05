@@ -27,10 +27,12 @@ parameters; otherwise, the URL will only contain the form ID.
 }
 \examples{
 \dontrun{
-generate_urls(file_path = "/path/to/data", 
-              data_file_name = "data_file", 
-              base_url = "https://example.com", 
-              form_ids = c(8417, 8734, 9056))
+generate_urls(
+  file_path = "/path/to/data",
+  data_file_name = "data_file",
+  base_url = "https://example.com",
+  form_ids = c(8417, 8734, 9056)
+)
 }
 
 }

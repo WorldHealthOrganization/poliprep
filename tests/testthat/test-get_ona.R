@@ -5,32 +5,29 @@ testthat::test_that("get_ona_page Successfully API call processes correctly", {
       api_token = NULL
     )
   )
-  
+
   testthat::expect_type(result$data, "list")
   testthat::expect_equal(result$status, "OK")
   testthat::expect_equal(result$code, 200)
   testthat::expect_equal(result$total, 10)
-} 
-)
+})
 
 testthat::test_that("check_status_api when its success", {
-  
   # get response
   response <- httr::HEAD(
-    "https://fakerapi.it/api/v1/addresses?_quantity=10")
-  
+    "https://fakerapi.it/api/v1/addresses?_quantity=10"
+  )
+
   # test response
   testthat::expect_invisible(check_status_api(response))
-} 
-)
+})
 
 testthat::test_that("check_status_api when it fails", {
-  
   # get response
   response <- httr::HEAD(
-    "https://fakerapi.it/api/add")
-  
+    "https://fakerapi.it/api/add"
+  )
+
   # test response
   testthat::expect_error(check_status_api(response))
-} 
-)
+})
