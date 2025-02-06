@@ -22,12 +22,12 @@ check_status_api <- function(response) {
       call. = FALSE
     )
   }
-
+  
   # get resoinse code
   response_status_code <- httr::status_code(response)
   # get http code
   code <- httpcode::http_code(response_status_code)
-
+  
   if (code$status_code != 200) {
     stop(
       glue::glue(
@@ -63,23 +63,23 @@ prep_ona_data_endpoints <- function(
   } else {
     stop(paste("Error: ", base_url, " is not a valid base url"))
   }
-
+  
   # set up URL
   api_url <- paste0(base_url, "/api/v1/data")
-
+  
   # Validate base url link first -----------------------------------------------
-
+  
   # get head before download
   response <- httr::HEAD(
     base_url,
     config = httr::add_headers(Authorization = paste("Token", api_token))
   )
-
+  
   # check status of call
   check_status_api(response)
-
+  
   # Validate url link before downloading ---------------------------------------
-
+  
   # get one data endpoint df
   response <- httr::GET(
     api_url,
@@ -87,7 +87,7 @@ prep_ona_data_endpoints <- function(
   ) |>
     httr::content("text", encoding = "UTF-8") |>
     jsonlite::fromJSON(simplifyDataFrame = TRUE)
-
+  
   return(response)
 }
 
@@ -126,24 +126,24 @@ prep_ona_data_endpoints <- function(
 process_comparison_filters <- function(...) {
   filters <- list(...)
   converted_filters <- list()
-
+  
   for (filter in filters) {
     # Check if the filter is a formula
     if (inherits(filter, "formula")) {
       filter_expr <- filter[[2]]
-
+      
       # If the formula contains multiple conditions combined with &
       if (filter_expr[[1]] == as.name("&")) {
         # Initialize a temporary list to hold conditions for the same field
         field_conditions <- list()
-
+        
         # Process each condition individually
         sub_conditions <- as.list(filter_expr)[-1]
         for (cond in sub_conditions) {
           op <- as.character(cond[[1]])
           field_name <- as.character(cond[[2]])
           value <- as.character(cond[[3]])
-
+          
           # Map R operators to MongoDB operators
           operator_map <- list(
             ">" = "$gt",
@@ -154,11 +154,11 @@ process_comparison_filters <- function(...) {
             "!=" = "$ne"
           )
           mongo_op <- operator_map[[op]]
-
+          
           # Add each condition to the field's condition list
           field_conditions[[mongo_op]] <- value
         }
-
+        
         # Assign combined conditions to the field name in the main filter
         converted_filters[[field_name]] <- field_conditions
       } else {
@@ -166,7 +166,7 @@ process_comparison_filters <- function(...) {
         operator <- as.character(filter_expr[[1]])
         field_name <- as.character(filter_expr[[2]])
         value <- as.character(filter_expr[[3]])
-
+        
         # Map operators
         operator_map <- list(
           ">" = "$gt",
@@ -177,23 +177,23 @@ process_comparison_filters <- function(...) {
           "!=" = "$ne"
         )
         mongo_operator <- operator_map[[operator]]
-
+        
         # Single condition with correct field name
         converted_filters[[field_name]] <- setNames(list(value), mongo_operator)
       }
-
+      
       # Handle vector filters as simple arrays without $in
     } else if (is.vector(filter) && length(filter) > 1) {
       field_name <- names(filter)[1]
       converted_filters[[field_name]] <- filter[[1]]
-
+      
       # Handle single-value fields
     } else {
       field_name <- names(filter)[1]
       converted_filters[[field_name]] <- filter[[1]]
     }
   }
-
+  
   # Convert to JSON format
   jsonlite::toJSON(converted_filters, auto_unbox = TRUE)
 }
@@ -220,19 +220,19 @@ process_comparison_filters <- function(...) {
 process_logical_filters <- function(filters) {
   # List of logical operators
   logical_operators <- c("$and", "$or", "$nor", "$not")
-
+  
   # Check if filters already contain logical operators
   if (any(names(filters) %in% logical_operators)) {
     # Return filters as-is
     return(filters)
   }
-
+  
   single_conditions <- list()
   or_conditions <- list()
-
+  
   for (field_name in names(filters)) {
     field_values <- filters[[field_name]]
-
+    
     if (length(field_values) == 1) {
       # Single value, add directly
       single_conditions[[field_name]] <- field_values
@@ -245,7 +245,7 @@ process_logical_filters <- function(filters) {
       }
     }
   }
-
+  
   if (length(or_conditions) > 0 && length(single_conditions) > 0) {
     # Combine single conditions and or conditions with '$and'
     final_query <- list("$and" = c(
@@ -259,9 +259,9 @@ process_logical_filters <- function(filters) {
     # Only single conditions
     final_query <- single_conditions
   }
-
+  
   jsonlite::toJSON(final_query,
-    auto_unbox = TRUE
+                   auto_unbox = TRUE
   )
 }
 
@@ -317,22 +317,22 @@ get_ona_form <- function(base_url = "https://api.whonghub.org",
                          comparison_filters = NULL) {
   # Check base URL validity
   base_url <- validate_base_url(base_url)
-
+  
   # Set up API URL
   api_url <- paste0(base_url, "/api/v1/data/", form_id)
-
+  
   # Start the CLI process
   process_id <- cli::cli_process_start(
     paste0("Getting form '", form_id, "' from ONA server")
   )
   cat("\n")
-
+  
   # Check if the form id is available for download
   resp_data <- prep_ona_data_endpoints(
     base_url = base_url,
     api_token = api_token
   )
-
+  
   if (!(form_id %in% unique(resp_data$id))) {
     cli::cli_abort(
       paste0(
@@ -343,27 +343,27 @@ get_ona_form <- function(base_url = "https://api.whonghub.org",
       )
     )
   }
-
+  
   # Initialize query parameters list
   query_params <- list()
-
+  
   # Convert selected_columns to JSON array string
   if (!is.null(selected_columns)) {
     fields_json <- jsonlite::toJSON(selected_columns, auto_unbox = FALSE)
   } else {
     fields_json <- NULL
   }
-
+  
   # Process filters and combine them if both are present
   query_json <- if (!is.null(logical_filters) && !is.null(comparison_filters)) {
     comparison <- process_comparison_filters(comparison_filters) |>
       jsonlite::minify() |>
       gsub("^\\{|\\}$", "", x = _)
-
+    
     logical <- process_logical_filters(logical_filters) |>
       jsonlite::minify() |>
       gsub("^\\{|\\}$", "", x = _)
-
+    
     paste0("{", comparison, ",", logical, "}") |>
       jsonlite::minify()
   } else if (!is.null(comparison_filters)) {
@@ -373,7 +373,7 @@ get_ona_form <- function(base_url = "https://api.whonghub.org",
   } else {
     NULL
   }
-
+  
   # Build the full URL with query parameters
   full_url <- httr::modify_url(
     api_url,
@@ -382,9 +382,9 @@ get_ona_form <- function(base_url = "https://api.whonghub.org",
       query = query_json
     )
   )
-
+  
   # Download data (use pagination if necessary) --------------------------------
-
+  
   results <- get_paginated_data(full_url, api_token) |>
     # Drop any empty columns
     dplyr::select(
@@ -392,14 +392,14 @@ get_ona_form <- function(base_url = "https://api.whonghub.org",
         ~ any(!is.na(.))
       )
     )
-
+  
   # Finish the CLI process
   cat("\n")
   cli::cli_process_done(
     process_id,
     msg_done = "Download complete! {praise_emoji()}"
   )
-
+  
   return(results)
 }
 
@@ -467,7 +467,7 @@ get_paginated_data <- function(api_url, api_token) {
   api_limit <- 100000
   results <- list()
   page_number <- 1
-
+  
   repeat {
     # Append page and page_size parameters
     paged_url <- paste0(
@@ -476,18 +476,18 @@ get_paginated_data <- function(api_url, api_token) {
       "page=", page_number,
       "&page_size=100000"
     )
-
+    
     current_page <- get_ona_page(paged_url, api_token) |>
       as.data.frame() |>
       dplyr::mutate(dplyr::across(tidyselect::everything(), as.character))
-
+    
     results <- dplyr::bind_rows(results, current_page)
-
+    
     if (nrow(current_page) < api_limit || nrow(current_page) == 0) break
-
+    
     page_number <- page_number + 1
   }
-
+  
   return(dplyr::distinct(results))
 }
 
@@ -507,7 +507,7 @@ praise_emoji <- function() {
   if (!cli::is_utf8_output()) {
     return("")
   }
-
+  
   emoji <- c(
     "\U0001f600",
     "\U0001f973",
@@ -542,7 +542,7 @@ get_multi_ona_data <- function(base_url = "https://api.whonghub.org",
     details =
       "Use `get_ona_data()` which now supports both single and multiple form IDs"
   )
-
+  
   get_ona_data(
     base_url = base_url,
     form_ids = form_ids,
@@ -667,7 +667,7 @@ generate_urls <- function(full_data, file_path,
           )
         ) |>
         dplyr::pull(date_last_updated)
-
+      
       # Construct URL with last edited parts
       paste0(
         base_url, "/api/v1/data/", form_id,
@@ -682,7 +682,7 @@ generate_urls <- function(full_data, file_path,
       )
     }
   })
-
+  
   urls
 }
 
@@ -749,6 +749,8 @@ call_urls <- function(urls, api_token) {
 #'    It's in stringed list like c("year", "form_id")
 #' @param data_file_name The base name for the data file, defaults to
 #'      "my_ona_data".
+#' @param return_results An option to return the full results as an output, 
+#'     in addition to the data being saved. Default is FALSE.
 #'
 #' @return Returns a data frame containing the combined new and existing data.
 #'
@@ -761,7 +763,8 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
                                  form_ids, api_token,
                                  log_results = TRUE, file_path = NULL,
                                  selected_columns = NULL,
-                                 data_file_name = "my_ona_data") {
+                                 data_file_name = "my_ona_data",
+                                 return_results = FALSE) {
   # check base url validity
   base_url <- validate_base_url(base_url)
   
@@ -930,11 +933,12 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
       log_data <- log_messages
     }
     
+    rownames(log_data) <- NULL
+    
     # Save log file
     poliprep::save(
       janitor::clean_names(log_data), log_file_name
     )
-    
     
     cat("\n") 
     if (nrow(new_data) > 0) {
@@ -948,13 +952,14 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
     } else {
       cli::cli_alert_info("No new data available. Everything is up to date.")
     }
-    
   }
   
   # Return output message and save results -------------------------------------
   
-  # save full data
-  poliprep::save(full_data, file_name)
+  if (nrow(full_data_orig) == 0 || nrow(new_data) > 0) {
+    # save full data
+    poliprep::save(full_data, file_name)
+  }
   
-  return(full_data)
+  if (return_results) { return(full_data) }
 }
