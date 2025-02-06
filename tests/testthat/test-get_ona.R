@@ -19,7 +19,7 @@ testthat::test_that("check_status_api when its success", {
   )
 
   # test response
-  testthat::expect_invisible(check_status_api(response))
+  testthat::expect_invisible(check_status_api(response$status_code))
 })
 
 testthat::test_that("check_status_api when it fails", {

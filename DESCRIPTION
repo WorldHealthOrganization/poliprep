@@ -44,6 +44,10 @@ Imports:
   RODBC,
   geosphere
 Suggests:
+    httr2,
+    xml2,
+    httpcode,
+    mockery,
     testthat,
     progressr,
     janitor,
@@ -52,7 +56,6 @@ Suggests:
     crayon,
     glue,
     stringi,
-    httpcode,
     yaml,
     scales,
     webshot,
