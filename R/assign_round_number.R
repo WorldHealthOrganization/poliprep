@@ -66,13 +66,13 @@ assign_round_number <- function(df,
   
   # Create a round group label for the distinct dates
   distinct_dates$ClusterID <- clusters
-  round_labels <- unique(format(distinct_dates[[date_col]], "%B %Y"))
+  round_labels <- unique(format(distinct_dates[[date_col]], "%b %Y"))
   
   # Create round group labels based on clusters
   distinct_dates <- distinct_dates |>
     dplyr::group_by(ClusterID) |>
     dplyr::mutate(
-      round_group = format(dplyr::first(.data[[date_col]]), "%B %Y")
+      round_group = format(dplyr::first(.data[[date_col]]), "%b %Y")
     ) |>
     dplyr::ungroup()
   
