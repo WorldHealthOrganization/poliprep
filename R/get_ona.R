@@ -944,7 +944,7 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
   
   cat("\n") 
   if (nrow(full_data_orig) == 0) {
-    cli::cli_alert_info("Initial download detected. Saving full dataset...")
+    cli::cli_alert_info("Initial download complete. Saving full dataset...")
     poliprep::save(full_data, file_name)
   } else if (nrow(new_data) > 0) {
     cli::cli_alert_success(
