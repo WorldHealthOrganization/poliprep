@@ -3,6 +3,9 @@
 #' Prompts the user for confirmation before saving a dataframe to a RDS file.
 #' If the specified file path does not exist or is NULL, the user is prompted to
 #' provide a new path. A default file name is used if no valid path is provided.
+#' If a cache file already exists, the function merges new data with existing
+#' data, ensuring that the most recent entries (based on `created_time`)
+#' are retained.
 #'
 #' @param data_to_save DataFrame to be saved.
 #' @param default_save_path Default path for saving the dataframe. If not
@@ -46,6 +49,24 @@ handle_file_save <- function(data_to_save, default_save_path = NULL) {
             " name will be used."
           ))
         }
+      }
+
+      # Set up file lock to prevent concurrent overwrites
+      lock_path <- paste0(cache_path, ".lock")
+      lock <- filelock::lock(lock_path, timeout = 10000)
+      on.exit(filelock::unlock(lock))
+
+      # Load existing cache if available
+      existing_cache <-
+        if (file.exists(cache_path)) readRDS(cache_path) else NULL
+
+      # Merge with existing cache and retain latest changes
+      if (!is.null(existing_cache) && nrow(existing_cache) > 0) {
+        merged_cache <- dplyr::bind_rows(existing_cache, data_to_save) |>
+          dplyr::arrange(dplyr::desc(created_time)) |>
+          dplyr::distinct(level, name_to_match, .keep_all = TRUE)
+      } else {
+        merged_cache <- data_to_save
       }
 
       # save the file
@@ -832,6 +853,45 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     stop("You cannot specify level3 without level0, level1, and level2.")
   }
 
+  # Prompt the user if using levels beyond level2 without a custom lookup_df
+  if (is.null(lookup_df) && (!is.null(level3) || !is.null(level4))) {
+    cli::cli_alert_warning(
+      paste0(
+        "The default lookup data only supports up to level2 (district). ",
+        "Levels 3 and 4 will not have lookup matches unless a custom ",
+        "lookup_df is provided."
+      )
+    )
+
+    user_choice <- tolower(
+      readline(
+        paste0(
+          "\nWould you like to:\n",
+          "1. Continue with cleaning only up to level2",
+          " (higher levels will be ignored)\n",
+          "2. Exit and provide a custom lookup_df for level3 and level4\n",
+          "Enter your choice (1 or 2): "
+        )
+      )
+    )
+
+    if (user_choice == "1") {
+      cli::cli_alert_info(
+        "Proceeding with cleaning up to level2 only. Ignoring level3 and level4."
+      )
+      level3 <- NULL
+      level4 <- NULL
+    } else {
+      cli::cli_alert_info(
+        paste0(
+          "Exiting function. Please provide a valid ",
+          "lookup_df to clean levels 3 and 4."
+        )
+      )
+      return(invisible(NULL))
+    }
+  }
+
   # Ensure lookup_df contains necessary columns if provided
   if (!is.null(lookup_df)) {
     required_columns <- NULL
@@ -976,17 +1036,19 @@ prep_geonames <- function(target_df, lookup_df = NULL,
   # Step 1: Configure cache if saved cache file exists available ---------------
 
   if (!is.null(cache_path) && !file.exists(cache_path)) {
-    
     # Alert the user about the missing cache file, including the path
     cli::cli_alert_info(
       paste0("The specified cache file '", cache_path, "' does not exist.")
     )
-    
+
     # Ask the user if they want to proceed and create a new cache file
     user_input <- readline(
-      paste0("Are you aware that the cache file is missing?",
-             " Proceed to create a new one? (yes/no): "))
-    
+      paste0(
+        "Are you aware that the cache file is missing?",
+        " Proceed to create a new one? (yes/no): "
+      )
+    )
+
     # Check the user's response
     if (!(tolower(user_input) %in% c("yes", "y"))) {
       cli::cli_alert_info("Exiting without creating a new cache file.")
@@ -994,9 +1056,8 @@ prep_geonames <- function(target_df, lookup_df = NULL,
     } else {
       cli::cli_alert_info("Proceeding to create a new cache file...")
     }
-    
   }
-  
+
   # load saved cache file
   if (!is.null(cache_path) && file.exists(cache_path)) {
     # load the cache file

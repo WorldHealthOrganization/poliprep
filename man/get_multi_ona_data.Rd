@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_ona.R
 \name{get_multi_ona_data}
 \alias{get_multi_ona_data}
-\title{Get Data from ONA for Multiple Forms}
+\title{Get Data from ONA for Multiple Forms (Deprecated)}
 \usage{
 get_multi_ona_data(
   base_url = "https://api.whonghub.org",
@@ -32,15 +32,9 @@ filter by. Uses OR within groups and AND between groups.}
 comparisons. Names are column names, values are comparison
 conditions. Supports >, <, >=, <=, =, != operators.}
 }
-\value{
-A data frame containing the combined data from all specified form
-IDs, and includes from_id column.
-}
 \description{
-This function retrieves data for a specified form from the ONA API using a
-provided API token and constructs a unique key for each dataset. It returns
-the data in a structured format if the request is successful.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+This function is deprecated. Please use \code{get_ona_data()} instead, which
+supports both single and multiple form IDs.
 }
-\examples{
-# api_token <- "your_api_token_here"
-}
+\keyword{internal}

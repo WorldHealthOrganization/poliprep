@@ -21,6 +21,9 @@ file, not to return a value.
 Prompts the user for confirmation before saving a dataframe to a RDS file.
 If the specified file path does not exist or is NULL, the user is prompted to
 provide a new path. A default file name is used if no valid path is provided.
+If a cache file already exists, the function merges new data with existing
+data, ensuring that the most recent entries (based on \code{created_time})
+are retained.
 }
 \examples{
 # handle_file_save(data_to_save, "path/to/default/location.rds")
