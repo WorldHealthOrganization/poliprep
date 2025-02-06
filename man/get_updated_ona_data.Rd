@@ -11,7 +11,8 @@ get_updated_ona_data(
   log_results = TRUE,
   file_path = NULL,
   selected_columns = NULL,
-  data_file_name = "my_ona_data"
+  data_file_name = "my_ona_data",
+  return_results = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,9 @@ It's in stringed list like c("year", "form_id")}
 
 \item{data_file_name}{The base name for the data file, defaults to
 "my_ona_data".}
+
+\item{return_results}{An option to return the full results as an output,
+in addition to the data being saved. Default is FALSE.}
 }
 \value{
 Returns a data frame containing the combined new and existing data.

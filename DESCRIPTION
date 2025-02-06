@@ -41,7 +41,6 @@ Imports:
   future,
   purrr,
   archive,
-  doParallel,
   RODBC,
   geosphere
 Suggests:

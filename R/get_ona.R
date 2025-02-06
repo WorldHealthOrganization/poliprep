@@ -940,25 +940,23 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
       janitor::clean_names(log_data), log_file_name
     )
     
-    cat("\n") 
-    if (nrow(new_data) > 0) {
-      cli::cli_alert_success(
-        paste0(
-          "Data update completed. \n",
-          "Total new rows added: ",
-          crayon::yellow(format(nrow(new_data), big.mark = ","))
-        )
-      )
-    } else {
-      cli::cli_alert_info("No new data available. Everything is up to date.")
-    }
   }
   
-  # Return output message and save results -------------------------------------
-  
-  if (nrow(full_data_orig) == 0 || nrow(new_data) > 0) {
-    # save full data
+  cat("\n") 
+  if (nrow(full_data_orig) == 0) {
+    cli::cli_alert_info("Initial download detected. Saving full dataset...")
     poliprep::save(full_data, file_name)
+  } else if (nrow(new_data) > 0) {
+    cli::cli_alert_success(
+      paste0(
+        "Data update completed. \n",
+        "Total new rows added: ",
+        crayon::yellow(nrow(new_data))
+      )
+    )
+    poliprep::save(full_data, file_name)
+  } else {
+    cli::cli_alert_info("No new data available. Everything is up to date.")
   }
   
   if (return_results) { return(full_data) }
