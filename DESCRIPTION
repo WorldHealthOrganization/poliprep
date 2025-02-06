@@ -68,7 +68,8 @@ Suggests:
     optout,
     progress,
     filelock,
-    lifecycle
+    lifecycle,
+    here
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
