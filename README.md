@@ -133,7 +133,7 @@ The function also allows you to download selected columns using the `selected_co
 
 ``` r
 data_ona <- get_ona_data(
-              base_url = "https://api.whonghub.org", form_id = 7178,
+              base_url = "https://api.whonghub.org", form_ids = 7178,
               api_token = Sys.getenv("MY_ONA_TOKEN"),
               selected_columns = c("states", "endtime", "today", "_duration")
               )
@@ -143,7 +143,7 @@ You can also filter your dataset before downloading. There are two parameters to
 
 ``` r
 data_ona <- get_ona_data(
-              base_url = "https://api.whonghub.org", form_id = 7178,
+              base_url = "https://api.whonghub.org", form_ids = 7178,
               api_token = Sys.getenv("MY_ONA_TOKEN"),
               selected_columns = c("states", "endtime", "today", "_duration"),
               logical_filters = list(states = c("BORNO", "KANO")),
@@ -153,12 +153,12 @@ data_ona <- get_ona_data(
 
 Before applying any of these filters, double-check both the column names and their contents to ensure they match your intended filters
 
-#### `get_multi_ona_data` for Downloading Data from Multiple ONA Forms
+#### `get_ona_data` for Downloading Data from Multiple ONA Forms
 
-In cases where you need to download data from multiple ONA forms simultaneously, `poliprep` provides the `get_multi_ona_data` function. This function uses parallel processing in the background to speed up the download process. It’s particularly useful when the forms have identical structures (e.g., the same survey conducted across different administrative levels or countries) but need to be downloaded together together. Ensure that any selected columns and filters exist in all forms of interest; otherwise, the function will fail. Also, the form ID for each downloaded row is appended to the dataset, allowing you to track its source for future checks.
+In cases where you need to download data from multiple ONA forms simultaneously, you can also use `get_ona_data` function to do this. This function uses parallel processing in the background to speed up the download process. It’s particularly useful when the forms have identical structures (e.g., the same survey conducted across different administrative levels or countries) but need to be downloaded together together. Ensure that any selected columns and filters exist in all forms of interest; otherwise, the function will fail. Also, the form ID for each downloaded row is appended to the dataset, allowing you to track its source for future checks.
 
 ```r
-data_ona2 <- get_multi_ona_data(
+data_ona2 <- get_ona_data(
   form_ids = c(7131, 7178), 
   selected_columns = c("states", "_duration"),
   api_token = Sys.getenv("MY_ONA_TOKEN"),
