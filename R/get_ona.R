@@ -885,21 +885,21 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
         
         df_new_tot_cols <- ncol(df_new)
         df_new_tot_rows <- nrow(df_new)
-        
       } else {
-        df_new <- NULL
+        df_new <- data.frame()
         df_new_tot_cols <- 0
         df_new_tot_rows <- 0
       }
       
-      # Construct the log message
       log_message <- data.frame(
         form_id = form_id,
         update_date = Sys.Date(),
-        total_columns = df_new_tot_cols,
+        total_columns = length(union(colnames(df), colnames(df_new))),
         total_rows = format(nrow(df) + df_new_tot_rows, big.mark = ","),
-        new_columns = df_new_tot_rows - ncol(df),
-        new_rows = format(df_new_tot_rows, big.mark = ",")
+        new_columns = length(setdiff(colnames(df_new), colnames(df))),
+        new_rows = if (
+          df_new_tot_rows == 0) "No new data" else format(
+            df_new_tot_rows, big.mark = ",")
       )
       
       logs[[form_id]] <- log_message |>
