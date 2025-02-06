@@ -935,6 +935,8 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
       janitor::clean_names(log_data), log_file_name
     )
     
+    
+    cat("\n") 
     if (nrow(new_data) > 0) {
       cli::cli_alert_success(
         paste0(
