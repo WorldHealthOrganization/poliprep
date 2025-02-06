@@ -41,7 +41,7 @@ install_suggested_packages <- function(libname = NULL, pkgname = NULL) {
     "stringi", "httpcode", "yaml", "scales",
     "webshot", "gt", "parzer", "readr",
     "zoo", "epoxy", "officer", "ggplot2",
-    "optout", "progress", "filelock", "lifecycle", "here"
+    "progress", "filelock", "lifecycle", "here"
   )
   
   missing_pkgs <- suggested_pkgs[!(
@@ -83,7 +83,7 @@ install_suggested_packages <- function(libname = NULL, pkgname = NULL) {
       }
       
       # Install CRAN packages
-      cran_pkgs <- missing_pkgs[missing_pkgs != "esri2sf"]
+      cran_pkgs <- missing_pkgs[missing_pkgs != "optout"]
       if (length(cran_pkgs) > 0) {
         for (pkg in cran_pkgs) {
           tryCatch({
@@ -100,10 +100,10 @@ install_suggested_packages <- function(libname = NULL, pkgname = NULL) {
       # Install GitHub packages
       if ("esri2sf" %in% missing_pkgs) {
         tryCatch({
-          remotes::install_github("yonghah/esri2sf", quiet = TRUE)
+          remotes::install_github("coolbutuseless/optout", quiet = TRUE)
         }, error = function(e) {
           cli::cli_alert_danger(paste0(
-            "Failed to install GitHub package 'esri2sf'. Error: ", e$message
+            "Failed to install GitHub package 'optout'. Error: ", e$message
           ))
         })
       }
@@ -121,7 +121,6 @@ install_suggested_packages <- function(libname = NULL, pkgname = NULL) {
   
   invisible(NULL)
 }
-
 
 #' Create a Standardized Project Folder Structure
 #'
