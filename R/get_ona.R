@@ -935,14 +935,12 @@ get_updated_ona_data <- function(base_url = "https://api.whonghub.org",
       janitor::clean_names(log_data), log_file_name
     )
     
-    total_new_rows <- sum(as.numeric(log_messages$new_rows), na.rm = TRUE)
-    
-    if (total_new_rows > 0) {
+    if (nrow(new_data) > 0) {
       cli::cli_alert_success(
         paste0(
           "Data update completed. \n",
           "Total new rows added: ",
-          crayon::yellow(total_new_rows)
+          crayon::yellow(format(nrow(new_data), big.mark = ","))
         )
       )
     } else {
