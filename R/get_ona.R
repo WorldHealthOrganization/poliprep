@@ -582,12 +582,13 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
                          selected_columns = NULL,
                          logical_filters = NULL,
                          comparison_filters = NULL) {
+  
   # Check if the form IDs are available for download ---------------------------
   resp_data <- prep_ona_data_endpoints(
     base_url = base_url,
     api_token = api_token
   )
-
+  
   if (!all(form_ids %in% unique(resp_data$id))) {
     missing_ids <- form_ids[!form_ids %in% unique(resp_data$id)]
     cli::cli_abort(
@@ -599,17 +600,11 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
       )
     )
   }
-
-  # Fetch data in parallel for each form ID ------------------------------------
-
-  # register cluster
-  doParallel::registerDoParallel(cores = (parallel::detectCores() - 2))
-  future::plan(future::multisession)
-
-  combined_data <-
-    foreach::foreach(
-      form_id = form_ids, .combine = "bind_rows"
-    ) %dopar% {
+  
+  # Fetch data sequentially for each form ID -----------------------------------
+  combined_data <- purrr::map_dfr(
+    form_ids,
+    function(form_id) {
       data <- get_ona_form(
         form_id = form_id,
         api_token = api_token,
@@ -617,10 +612,10 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
         logical_filters = logical_filters,
         comparison_filters = comparison_filters
       )
-      # add form_id as a new column in each df
       dplyr::mutate(data, form_id_num = form_id)
     }
-
+  )
+  
   # drop any empty columns
   combined_data <- combined_data |>
     dplyr::select(
@@ -628,12 +623,10 @@ get_ona_data <- function(base_url = "https://api.whonghub.org",
         ~ any(!is.na(.))
       )
     )
-
-  # stop the parallel backend when done
-  doParallel::stopImplicitCluster()
-
+  
   return(combined_data)
 }
+
 
 #' Generate URLs for Data Retrieval
 #'
