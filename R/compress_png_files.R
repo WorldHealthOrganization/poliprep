@@ -149,6 +149,9 @@ optimize_png <- function(path, auto_install = FALSE, force = FALSE,
     }
   }
 
+  # Normalize path to handle relative paths correctly
+  path <- normalizePath(path, mustWork = FALSE)
+
   # Check if path is a file or directory
   is_file <- FALSE
   if (file.exists(path)) {
@@ -166,7 +169,8 @@ optimize_png <- function(path, auto_install = FALSE, force = FALSE,
       return(invisible(NULL))
     }
   } else {
-    cli::cli_alert_warning("Path does not exist.")
+    cli::cli_alert_warning(paste0("Path does not exist: ", path))
+    cli::cli_alert_info("Please check that the path is correct and accessible.")
     return(invisible(NULL))
   }
 
