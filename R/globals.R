@@ -47,9 +47,9 @@ globalVariables(
     "VdpvReportedToHQDate", "Virus", "Virus Reported to HQ Date",
     "new_epids", "ActivityVaccineType", "Days to Confirm",
     "Days between Previous and Most Recent Detection",
-    "Delayed Reporting", "Delayed Report", "level4",'EntityType',
-    "Detections to Confirmation (days)", "ADM3_NAME", 
-    "ADM4_NAME", "date_categ", "end", "label", "start",
+    "Delayed Reporting", "Delayed Report", "level4", "EntityType",
+    "Detections to Confirmation (days)", "ADM3_NAME", "download.file",
+    "ADM4_NAME", "date_categ", "end", "label", "start", "unzip",
     "ClusterID", "as.dist", "cutree", "dist", "hclust", "round_group"
   )
 )
