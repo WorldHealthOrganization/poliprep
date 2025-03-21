@@ -13,7 +13,7 @@ compression_stats(filename, init_size, final_size, verbosity = 0)
 
 \item{final_size}{Numeric. Final file size in bytes after compression.}
 
-\item{verbosity}{Integer. Controls output verbosity. 0 = silent, >0 = verbose.}
+\item{verbosity}{Integer. Controls output verbosity. 0 = silent, 1 = verbose.}
 }
 \value{
 A list containing compression statistics:

@@ -14,32 +14,26 @@ find_pngquant <- function() {
 
   # More extensive search on Windows
   if (pngquant_path == "" && .Platform$OS.type == "windows") {
+    path_sep <- ifelse(.Platform$OS.type == "windows", "\\", "/")
     potential_paths <- c(
-      "pngquant_bin/pngquant.exe",
-      "pngquant/target/release/pngquant.exe",
+      file.path(Sys.getenv("LOCALAPPDATA"), "pngquant", "pngquant.exe"),
+      file.path(Sys.getenv("APPDATA"), "pngquant", "pngquant.exe"),
       file.path(
-        Sys.getenv("LOCALAPPDATA"),
-        "pngquant", "pngquant.exe"
+        Sys.getenv("USERPROFILE"), "Documents", "pngquant", "pngquant.exe"
       ),
       file.path(
-        Sys.getenv("APPDATA"),
-        "pngquant", "pngquant.exe"
+        Sys.getenv("USERPROFILE"), "Downloads", "pngquant", "pngquant.exe"
       ),
-      file.path(
-        Sys.getenv("USERPROFILE"),
-        "Documents", "pngquant", "pngquant.exe"
-      ),
-      file.path(
-        Sys.getenv("USERPROFILE"),
-        "Downloads", "pngquant", "pngquant.exe"
-      ),
-      file.path(
-        Sys.getenv("USERPROFILE"),
-        "pngquant", "pngquant.exe"
-      ),
-      "C:/Program Files/pngquant/pngquant.exe",
-      "C:/Program Files (x86)/pngquant/pngquant.exe"
+      file.path(Sys.getenv("USERPROFILE"), "pngquant", "pngquant.exe"),
+      file.path("pngquant_bin", "pngquant.exe"),
+      file.path("pngquant", "target", "release", " pngquant.exe"),
+      file.path("C:", "Program Files", "pngquant", "pngquant.exe"),
+      file.path("C:", "Program Files (x86)", "pngquant", "pngquant.exe")
     )
+    potential_paths <- sapply(potential_paths, function(p) {
+      normalizePath(p, winslash = path_sep, mustWork = FALSE)
+    })
+
     for (p in potential_paths) {
       if (file.exists(p)) {
         pngquant_path <- p
@@ -62,7 +56,10 @@ find_pngquant <- function() {
 
     # Set installation directory based on OS
     install_dir <- if (os == "Windows") {
-      file.path(Sys.getenv("LOCALAPPDATA"), "pngquant")
+      normalizePath(
+        file.path(Sys.getenv("LOCALAPPDATA"), "pngquant"),
+        winslash = path_sep, mustWork = FALSE
+      )
     } else {
       normalizePath("/usr/local/bin")
     }
@@ -286,6 +283,9 @@ compression_stats <- function(filename, init_size, final_size,
 #'
 #' @param file Character string specifying the path to the PNG file to compress
 #' @param verbosity Integer. Controls output verbosity. 0 = silent, 1 = verbose.
+#' @param speed Integer. Speed/quality trade-off from 1 (brute-force) to 10
+#' (fastest). Default is 3. Speed 10 has 5% lower quality but is 8 times
+#'    faster.
 #'
 #' @return A list containing:
 #'   \item{success}{Logical. TRUE if compression was successful, FALSE
@@ -297,7 +297,7 @@ compression_stats <- function(filename, init_size, final_size,
 #' - pngquant_path: Path to the pngquant executable
 #' - speed: Compression speed (1-11, where 1 is slowest but highest quality)
 #'
-pngquant_compress_single_file <- function(file, verbosity = 0) {
+pngquant_compress_single_file <- function(file, speed, verbosity = 0) {
   # Get initial file size before compression
   init_size <- file.info(file)$size
 
@@ -413,7 +413,7 @@ compress_png <- function(path, force = FALSE,
   # Process files
   if (is_file) {
     # Single file processing
-    result <- pngquant_compress_single_file(png_files, verbosity)
+    result <- pngquant_compress_single_file(png_files, speed, verbosity)
     if (result$success) {
       if (!is.null(result$already_compressed) && result$already_compressed) {
         cli::cli_alert_info("File is already compressed, skipping compression.")
@@ -437,7 +437,7 @@ compress_png <- function(path, force = FALSE,
     all_stats <- list()
 
     for (file in png_files) {
-      result <- pngquant_compress_single_file(file, verbosity)
+      result <- pngquant_compress_single_file(file, speed, verbosity)
       if (result$success) {
         if (!is.null(result$already_compressed) && result$already_compressed) {
           skipped_count <- skipped_count + 1

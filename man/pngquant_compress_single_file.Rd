@@ -4,10 +4,14 @@
 \alias{pngquant_compress_single_file}
 \title{Compress a single PNG file using pngquant}
 \usage{
-pngquant_compress_single_file(file, verbosity = 0)
+pngquant_compress_single_file(file, speed, verbosity = 0)
 }
 \arguments{
 \item{file}{Character string specifying the path to the PNG file to compress}
+
+\item{speed}{Integer. Speed/quality trade-off from 1 (brute-force) to 10
+(fastest). Default is 3. Speed 10 has 5\% lower quality but is 8 times
+faster.}
 
 \item{verbosity}{Integer. Controls output verbosity. 0 = silent, 1 = verbose.}
 }
