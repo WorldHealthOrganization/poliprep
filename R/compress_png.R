@@ -13,13 +13,32 @@ find_pngquant <- function() {
   pngquant_path <- Sys.which("pngquant")
 
   # More extensive search on Windows
-  if (pngquant_path == "" && os == "Windows") {
+  if (pngquant_path == "" && .Platform$OS.type == "windows") {
     potential_paths <- c(
+      "pngquant_bin/pngquant.exe",
+      "pngquant/target/release/pngquant.exe",
+      file.path(
+        Sys.getenv("LOCALAPPDATA"),
+        "pngquant", "pngquant.exe"
+      ),
+      file.path(
+        Sys.getenv("APPDATA"),
+        "pngquant", "pngquant.exe"
+      ),
+      file.path(
+        Sys.getenv("USERPROFILE"),
+        "Documents", "pngquant", "pngquant.exe"
+      ),
+      file.path(
+        Sys.getenv("USERPROFILE"),
+        "Downloads", "pngquant", "pngquant.exe"
+      ),
+      file.path(
+        Sys.getenv("USERPROFILE"),
+        "pngquant", "pngquant.exe"
+      ),
       "C:/Program Files/pngquant/pngquant.exe",
-      "pngquant_bin/pngquant/pngquant.exe",
-      "C:/Program Files (x86)/pngquant/pngquant.exe",
-      file.path(getwd(), "pngquant_bin/pngquant.exe"),
-      file.path(getwd(), "pngquant/target/release/pngquant.exe")
+      "C:/Program Files (x86)/pngquant/pngquant.exe"
     )
     for (p in potential_paths) {
       if (file.exists(p)) {
@@ -41,15 +60,18 @@ find_pngquant <- function() {
       return(invisible(NULL))
     }
 
-    if (os == "Windows") {
-      install_dir <- if (os == "Windows") {
-        "C:/Program Files/pngquant"
-      } else {
-        "/usr/local/bin"
-      }
-      dir.create(install_dir, showWarnings = FALSE, recursive = TRUE)
+    # Set installation directory based on OS
+    install_dir <- if (os == "Windows") {
+      file.path(Sys.getenv("LOCALAPPDATA"), "pngquant")
+    } else {
+      normalizePath("/usr/local/bin")
+    }
 
+    dir.create(install_dir, showWarnings = FALSE, recursive = TRUE)
+
+    if (os == "Windows") {
       if (Sys.which("git") != "") {
+        # Clone and build from source using git
         clone_cmd <- paste0(
           "git clone -b msvc --recursive ",
           "https://github.com/kornelski/pngquant.git"
@@ -77,11 +99,12 @@ find_pngquant <- function() {
           paste("Also copied to:", file.path(install_dir, "pngquant.exe"))
         )
       } else {
+        # Download pre-built binary
         cli::cli_alert_info(
           "Git not available. Downloading pre-built pngquant binary..."
         )
         zip_url <- "https://pngquant.org/pngquant-windows.zip"
-        zip_file <- file.path(install_dir, "pngquant-windows.zip")
+        zip_file <- file.path(tempdir(), "pngquant-windows.zip")
         utils::download.file(zip_url, destfile = zip_file, mode = "wb")
         utils::unzip(zip_file, exdir = install_dir)
         files_extracted <- list.files(
@@ -101,8 +124,12 @@ find_pngquant <- function() {
           pngquant_path <- file.path(install_dir, "pngquant.exe")
         }
         cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
+
+        # Add to PATH for current session
+        Sys.setenv(PATH = paste(Sys.getenv("PATH"), install_dir, sep = ";"))
       }
     } else {
+      # Unix-like OS installation
       if (Sys.which("git") != "") {
         clone_cmd <- paste0(
           "git clone --recursive https://github.com/kornelski/pngquant.git"
@@ -136,15 +163,14 @@ find_pngquant <- function() {
   # Final verification
   if (!file.exists(pngquant_path)) {
     cli::cli_alert_danger(
-      "pngquant path exists but file not found at:", pngquant_path
+      paste("pngquant path exists but file not found at:", pngquant_path)
     )
     return(invisible(NULL))
   }
 
-  return(
-    pngquant_path
-  )
+  return(invisible(pngquant_path))
 }
+
 
 
 #' Calculate Compression Statistics
