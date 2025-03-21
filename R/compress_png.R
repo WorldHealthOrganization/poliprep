@@ -11,20 +11,25 @@
 find_pngquant <- function() {
   os <- Sys.info()[["sysname"]]
   pngquant_path <- Sys.which("pngquant")
+  
+  # More extensive search on Windows
   if (pngquant_path == "" && os == "Windows") {
     potential_paths <- c(
       "C:/Program Files/pngquant/pngquant.exe",
       "pngquant_bin/pngquant/pngquant.exe",
-      "C:/Program Files (x86)/pngquant/pngquant.exe"
+      "C:/Program Files (x86)/pngquant/pngquant.exe",
+      file.path(getwd(), "pngquant_bin/pngquant.exe"),
+      file.path(getwd(), "pngquant/target/release/pngquant.exe")
     )
     for (p in potential_paths) {
       if (file.exists(p)) {
         pngquant_path <- p
+        cli::cli_alert_info(paste("Found pngquant at:", pngquant_path))
         break
       }
     }
   }
-
+  
   if (pngquant_path == "") {
     ans <- readline(
       "pngquant is not installed. Install automatically? (y/n): "
@@ -35,8 +40,15 @@ find_pngquant <- function() {
       )
       return(invisible(NULL))
     }
-
+    
     if (os == "Windows") {
+      install_dir <- if (os == "Windows") {
+        "C:/Program Files/pngquant"
+      } else {
+        "/usr/local/bin"
+      }
+      dir.create(install_dir, showWarnings = FALSE, recursive = TRUE)
+      
       if (Sys.which("git") != "") {
         clone_cmd <- paste0(
           "git clone -b msvc --recursive ",
@@ -58,22 +70,33 @@ find_pngquant <- function() {
         if (!file.exists(pngquant_path)) {
           stop("pngquant binary not found after build.")
         }
-        cli::cli_alert_info(paste("pngquant installed at", pngquant_path))
+        # Copy to a more predictable location
+        file.copy(pngquant_path, file.path(install_dir, "pngquant.exe"))
+        cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
+        cli::cli_alert_info(
+          paste("Also copied to:", file.path(install_dir, "pngquant.exe")))
       } else {
-        message("Git not available. Downloading pre-built pngquant binary...")
+        cli::cli_alert_info(
+          "Git not available. Downloading pre-built pngquant binary...")
         zip_url <- "https://pngquant.org/pngquant-windows.zip"
-        zip_file <- "pngquant-windows.zip"
+        zip_file <- file.path(install_dir, "pngquant-windows.zip")
         utils::download.file(zip_url, destfile = zip_file, mode = "wb")
-        utils::unzip(zip_file, exdir = "pngquant_bin")
+        utils::unzip(zip_file, exdir = install_dir)
         files_extracted <- list.files(
-          "pngquant_bin",
+          install_dir,
           pattern = "pngquant\\.exe$", full.names = TRUE, recursive = TRUE
         )
         if (length(files_extracted) == 0) {
           stop("Pre-built pngquant binary not found after extraction.")
         }
         pngquant_path <- files_extracted[1]
-        cli::cli_alert_info(paste("pngquant installed at", pngquant_path))
+        # Ensure it's in a predictable location
+        if (pngquant_path != file.path(install_dir, "pngquant.exe")) {
+          file.copy(pngquant_path, 
+                    file.path(install_dir, "pngquant.exe"), overwrite = TRUE)
+          pngquant_path <- file.path(install_dir, "pngquant.exe")
+        }
+        cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
       }
     } else {
       if (Sys.which("git") != "") {
@@ -102,12 +125,22 @@ find_pngquant <- function() {
       if (!file.exists(pngquant_path)) {
         stop("pngquant binary not found after build.")
       }
-      cli::cli_alert_info(paste("pngquant installed at", pngquant_path))
+      cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
     }
   }
-
-  return(pngquant_path)
+  
+  # Final verification
+  if (!file.exists(pngquant_path)) {
+    cli::cli_alert_danger(
+      "pngquant path exists but file not found at:", pngquant_path)
+    return(invisible(NULL))
+  }
+  
+  return(
+    normalizePath(pngquant_path)
+  )
 }
+
 
 #' Calculate Compression Statistics
 #'
@@ -117,7 +150,7 @@ find_pngquant <- function() {
 #' @param filename String, The name of the file being compressed
 #' @param init_size Numeric. Initial file size in bytes before compression.
 #' @param final_size Numeric. Final file size in bytes after compression.
-#' @param verbosity Integer. Controls output verbosity. 0 = silent, >0 = verbose.
+#' @param verbosity Integer. Controls output verbosity. 0 = silent, 1 = verbose.
 #'
 #' @return A list containing compression statistics:
 #'   \item{initial_size}{Original file size in bytes}
