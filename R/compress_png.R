@@ -11,7 +11,7 @@
 find_pngquant <- function() {
   os <- Sys.info()[["sysname"]]
   pngquant_path <- Sys.which("pngquant")
-  
+
   # More extensive search on Windows
   if (pngquant_path == "" && os == "Windows") {
     potential_paths <- c(
@@ -29,7 +29,7 @@ find_pngquant <- function() {
       }
     }
   }
-  
+
   if (pngquant_path == "") {
     ans <- readline(
       "pngquant is not installed. Install automatically? (y/n): "
@@ -40,7 +40,7 @@ find_pngquant <- function() {
       )
       return(invisible(NULL))
     }
-    
+
     if (os == "Windows") {
       install_dir <- if (os == "Windows") {
         "C:/Program Files/pngquant"
@@ -48,7 +48,7 @@ find_pngquant <- function() {
         "/usr/local/bin"
       }
       dir.create(install_dir, showWarnings = FALSE, recursive = TRUE)
-      
+
       if (Sys.which("git") != "") {
         clone_cmd <- paste0(
           "git clone -b msvc --recursive ",
@@ -74,10 +74,12 @@ find_pngquant <- function() {
         file.copy(pngquant_path, file.path(install_dir, "pngquant.exe"))
         cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
         cli::cli_alert_info(
-          paste("Also copied to:", file.path(install_dir, "pngquant.exe")))
+          paste("Also copied to:", file.path(install_dir, "pngquant.exe"))
+        )
       } else {
         cli::cli_alert_info(
-          "Git not available. Downloading pre-built pngquant binary...")
+          "Git not available. Downloading pre-built pngquant binary..."
+        )
         zip_url <- "https://pngquant.org/pngquant-windows.zip"
         zip_file <- file.path(install_dir, "pngquant-windows.zip")
         utils::download.file(zip_url, destfile = zip_file, mode = "wb")
@@ -92,8 +94,10 @@ find_pngquant <- function() {
         pngquant_path <- files_extracted[1]
         # Ensure it's in a predictable location
         if (pngquant_path != file.path(install_dir, "pngquant.exe")) {
-          file.copy(pngquant_path, 
-                    file.path(install_dir, "pngquant.exe"), overwrite = TRUE)
+          file.copy(pngquant_path,
+            file.path(install_dir, "pngquant.exe"),
+            overwrite = TRUE
+          )
           pngquant_path <- file.path(install_dir, "pngquant.exe")
         }
         cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
@@ -128,16 +132,17 @@ find_pngquant <- function() {
       cli::cli_alert_success(paste("pngquant installed at:", pngquant_path))
     }
   }
-  
+
   # Final verification
   if (!file.exists(pngquant_path)) {
     cli::cli_alert_danger(
-      "pngquant path exists but file not found at:", pngquant_path)
+      "pngquant path exists but file not found at:", pngquant_path
+    )
     return(invisible(NULL))
   }
-  
+
   return(
-    normalizePath(pngquant_path)
+    pngquant_path
   )
 }
 
