@@ -178,7 +178,8 @@ find_pngquant <- function() {
 #' @param filename String, The name of the file being compressed
 #' @param init_size Numeric. Initial file size in bytes before compression.
 #' @param final_size Numeric. Final file size in bytes after compression.
-#' @param verbosity Integer. Controls output verbosity. 0 = silent, 1 = verbose.
+#' @param verbosity Logical. Controls output verbosity. FALSE = silent,
+#'    TRUE = verbose.
 #'
 #' @return A list containing compression statistics:
 #'   \item{initial_size}{Original file size in bytes}
@@ -193,11 +194,11 @@ find_pngquant <- function() {
 #'
 #' # With verbosity to display results
 #' if (interactive()) {
-#'   compression_stats("mylovely.plot.png", 5242880, 3145728, verbosity = 1)
+#'   compression_stats("mylovely.plot.png", 5242880, 3145728, verbosity = TRUE)
 #' }
 #' @export
 compression_stats <- function(filename, init_size, final_size,
-                              verbosity = 0) {
+                              verbosity = FALSE) {
   savings <- init_size - final_size
   pct_saved <- round(100 * savings / init_size, 2)
 
@@ -219,7 +220,7 @@ compression_stats <- function(filename, init_size, final_size,
     percent_saved = pct_saved
   )
 
-  if (verbosity > 0) {
+  if (verbosity) {
     cli::cli_h2("Compression Summary")
 
     cli::cli_alert_success(
@@ -261,7 +262,13 @@ compression_stats <- function(filename, init_size, final_size,
 #' lossy compression to reduce file size while maintaining visual quality.
 #'
 #' @param file Character string specifying the path to the PNG file to compress
-#' @param verbosity Integer. Controls output verbosity. 0 = silent, 1 = verbose.
+#' @param speed Integer. Speed/quality trade-off from 1 (brute-force) to 10
+#' (fastest). Default is 3. Speed 10 has 5% lower quality but is 8 times
+#'    faster.
+#' @param png_overwrite Logical. If TRUE, will overwrite existing files.
+#'    Default is TRUE
+#' @param verbosity Logical. Controls output verbosity. FALSE = silent,
+#'    TRUE = verbose.
 #'
 #' @return A list containing:
 #'   \item{success}{Logical. TRUE if compression was successful, FALSE
@@ -281,8 +288,11 @@ compression_stats <- function(filename, init_size, final_size,
 #' Compresses a single PNG file using the pngquant utility, which performs
 #' lossy compression to reduce file size while maintaining visual quality.
 #'
+#' @param pngquant_path  Character string specifying path to the pngquant
+#'    executable
 #' @param file Character string specifying the path to the PNG file to compress
-#' @param verbosity Integer. Controls output verbosity. 0 = silent, 1 = verbose.
+#' @param verbosity Logical. Controls output verbosity. FALSE = silent,
+#'    TRUE = verbose.
 #' @param speed Integer. Speed/quality trade-off from 1 (brute-force) to 10
 #' (fastest). Default is 3. Speed 10 has 5% lower quality but is 8 times
 #'    faster.
@@ -297,14 +307,15 @@ compression_stats <- function(filename, init_size, final_size,
 #' - pngquant_path: Path to the pngquant executable
 #' - speed: Compression speed (1-11, where 1 is slowest but highest quality)
 #'
-pngquant_compress_single_file <- function(file, speed, verbosity = 0) {
+pngquant_compress_single_file <- function(pngquant_path, file, speed, png_overwrite,
+                                          verbosity = FALSE) {
   # Get initial file size before compression
   init_size <- file.info(file)$size
 
   cmd_parts <- c(
     shQuote(pngquant_path),
     "--speed", as.character(speed),
-    "--force",
+    if (png_overwrite) "--force" else NULL,
     "--ext", ".png",
     shQuote(file)
   )
@@ -324,12 +335,12 @@ pngquant_compress_single_file <- function(file, speed, verbosity = 0) {
 
     # Show compression info
     if (final_size < init_size) {
-      if (verbosity > 0) {
+      if (verbosity) {
         stats <- compression_stats(
           filename, init_size, final_size, verbosity
         )
       }
-    } else if (verbosity > 0) {
+    } else if (verbosity) {
       cli::cli_alert_info(
         paste("File already compressed:", crayon::blue(filename))
       )
@@ -356,13 +367,13 @@ pngquant_compress_single_file <- function(file, speed, verbosity = 0) {
 #'
 #' @param path A string specifying either the path to a single PNG file or
 #' a directory containing PNG files.
-#' @param force Logical. If TRUE, will overwrite existing files. Default is
-#'    FALSE.
+#' @param png_overwrite Logical. If TRUE, will overwrite existing files.
+#'    Default is TRUE
 #' @param speed Integer. Speed/quality trade-off from 1 (brute-force) to 10
 #' (fastest). Default is 3. Speed 10 has 5% lower quality but is 8 times
 #'    faster.
-#' @param verbosity Integer. Controls the amount of information displayed.
-#'    0 = minimal, 1 = basic info, 2 = detailed. Default is 0.
+#' @param verbosity Logical. Controls the amount of information displayed.
+#'    FALSE = minimal, TRUE = detailed. Default is TRUE.
 #' @return For single files, returns a list with compression statistics.
 #'    For directories, returns a data frame with statistics for all files.
 #'    The function also works by side effect, compressing PNG files.
@@ -380,8 +391,8 @@ pngquant_compress_single_file <- function(file, speed, verbosity = 0) {
 #' # compress_png("path/to/your/folder", force = TRUE)
 #'
 #' @export
-compress_png <- function(path, force = FALSE,
-                         speed = 1, verbosity = 1) {
+compress_png <- function(path, png_overwrite = TRUE,
+                         speed = 1, verbosity = TRUE) {
   # Find pngquant executable
   pngquant_path <- find_pngquant()
   if (is.null(pngquant_path)) {
@@ -413,10 +424,15 @@ compress_png <- function(path, force = FALSE,
   # Process files
   if (is_file) {
     # Single file processing
-    result <- pngquant_compress_single_file(png_files, speed, verbosity)
+    result <- pngquant_compress_single_file(
+      pngquant_path, png_files, speed,
+      png_overwrite, verbosity
+    )
     if (result$success) {
       if (!is.null(result$already_compressed) && result$already_compressed) {
-        cli::cli_alert_info("File is already compressed, skipping compression.")
+        cli::cli_alert_info(
+          "File is already compressed, skipping compression."
+        )
       }
       return(invisible(result$stats))
     } else {
@@ -437,7 +453,10 @@ compress_png <- function(path, force = FALSE,
     all_stats <- list()
 
     for (file in png_files) {
-      result <- pngquant_compress_single_file(file, speed, verbosity)
+      result <- pngquant_compress_single_file(
+        pngquant_path, file, speed,
+        png_overwrite, verbosity
+      )
       if (result$success) {
         if (!is.null(result$already_compressed) && result$already_compressed) {
           skipped_count <- skipped_count + 1

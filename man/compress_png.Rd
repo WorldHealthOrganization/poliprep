@@ -4,21 +4,21 @@
 \alias{compress_png}
 \title{Compress PNG Files in a Directory or a Single PNG File with pngquant}
 \usage{
-compress_png(path, force = FALSE, speed = 1, verbosity = 1)
+compress_png(path, png_overwrite = TRUE, speed = 1, verbosity = TRUE)
 }
 \arguments{
 \item{path}{A string specifying either the path to a single PNG file or
 a directory containing PNG files.}
 
-\item{force}{Logical. If TRUE, will overwrite existing files. Default is
-FALSE.}
+\item{png_overwrite}{Logical. If TRUE, will overwrite existing files.
+Default is TRUE}
 
 \item{speed}{Integer. Speed/quality trade-off from 1 (brute-force) to 10
 (fastest). Default is 3. Speed 10 has 5\% lower quality but is 8 times
 faster.}
 
-\item{verbosity}{Integer. Controls the amount of information displayed.
-0 = minimal, 1 = basic info, 2 = detailed. Default is 0.}
+\item{verbosity}{Logical. Controls the amount of information displayed.
+FALSE = minimal, TRUE = detailed. Default is TRUE.}
 }
 \value{
 For single files, returns a list with compression statistics.

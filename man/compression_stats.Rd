@@ -4,7 +4,7 @@
 \alias{compression_stats}
 \title{Calculate Compression Statistics}
 \usage{
-compression_stats(filename, init_size, final_size, verbosity = 0)
+compression_stats(filename, init_size, final_size, verbosity = FALSE)
 }
 \arguments{
 \item{filename}{String, The name of the file being compressed}
@@ -13,7 +13,8 @@ compression_stats(filename, init_size, final_size, verbosity = 0)
 
 \item{final_size}{Numeric. Final file size in bytes after compression.}
 
-\item{verbosity}{Integer. Controls output verbosity. 0 = silent, 1 = verbose.}
+\item{verbosity}{Logical. Controls output verbosity. FALSE = silent,
+TRUE = verbose.}
 }
 \value{
 A list containing compression statistics:
@@ -33,6 +34,6 @@ str(stats)
 
 # With verbosity to display results
 if (interactive()) {
-  compression_stats("mylovely.plot.png", 5242880, 3145728, verbosity = 1)
+  compression_stats("mylovely.plot.png", 5242880, 3145728, verbosity = TRUE)
 }
 }

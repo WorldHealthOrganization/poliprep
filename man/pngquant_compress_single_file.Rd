@@ -4,16 +4,29 @@
 \alias{pngquant_compress_single_file}
 \title{Compress a single PNG file using pngquant}
 \usage{
-pngquant_compress_single_file(file, speed, verbosity = 0)
+pngquant_compress_single_file(
+  pngquant_path,
+  file,
+  speed,
+  png_overwrite,
+  verbosity = FALSE
+)
 }
 \arguments{
+\item{pngquant_path}{Character string specifying path to the pngquant
+executable}
+
 \item{file}{Character string specifying the path to the PNG file to compress}
 
 \item{speed}{Integer. Speed/quality trade-off from 1 (brute-force) to 10
 (fastest). Default is 3. Speed 10 has 5\% lower quality but is 8 times
 faster.}
 
-\item{verbosity}{Integer. Controls output verbosity. 0 = silent, 1 = verbose.}
+\item{png_overwrite}{Logical. If TRUE, will overwrite existing files.
+Default is TRUE}
+
+\item{verbosity}{Logical. Controls output verbosity. FALSE = silent,
+TRUE = verbose.}
 }
 \value{
 A list containing:
