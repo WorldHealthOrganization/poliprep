@@ -51,6 +51,6 @@ globalVariables(
     "Detections to Confirmation (days)", "ADM3_NAME", "download.file",
     "ADM4_NAME", "date_categ", "end", "label", "start", "unzip",
     "ClusterID", "as.dist", "cutree", "dist", "hclust", "round_group",
-    "pngquant_path", "speed"
+    "pngquant_path", "speed", "lower", "upper"
   )
 )
