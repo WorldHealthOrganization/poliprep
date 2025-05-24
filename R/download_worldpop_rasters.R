@@ -44,7 +44,7 @@
 #' download_worldpop(c("GBR", "FRA"), years = 2019:2020, type = "density")
 #'
 #' # Download population count data
-#' download_worldpop(c("GBR", "FRA"), years = 2019:2020, type = "count")
+#' download_worldpop(c("GBR", "COM", "FRA"), years = 2019:2020, type = "count")
 #' }
 #' @export
 download_worldpop <- function(
