@@ -23,20 +23,11 @@
 #'   }
 #'
 #' @details
-#' Global_2000_2020_1km/unconstrained"
 #' Downloads 1km resolution UN-adjusted population rasters from WorldPop. For
 #' density type, values represent persons per square kilometer. For count type,
 #' values represent total population count per pixel. Files are downloaded to
 #' the specified directory, with existing files skipped. Progress is shown
 #' during downloads and a summary is provided upon completion.
-#' 
-#' ## Data Source
-#' This function connects to the WorldPop Unconstrained 1km Age-Sex Structured
-#' Population dataset, publicly available at:
-#'
-#' "https://data.worldpop.org/GIS/Population/Global_2000_2020_1km_UNadj"
-#' 
-#' 
 #'
 #' @examples
 #' \dontrun{
@@ -44,87 +35,86 @@
 #' download_worldpop(c("GBR", "FRA"), years = 2019:2020, type = "density")
 #'
 #' # Download population count data
-#' download_worldpop(c("GBR", "COM", "FRA"), years = 2019:2020, type = "count")
+#' download_worldpop(c("GBR", "FRA"), years = 2019:2020, type = "count")
 #' }
 #' @export
 download_worldpop <- function(
-    country_codes,
-    years = 2000:2020,
-    type = "count",
-    dest_dir = here::here(),
-    quiet = FALSE) {
-  type <- match.arg(type)
-  if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
-  
-  base_url <- "https://data.worldpop.org/GIS/Population"
-  if (type == "density") {
-    base_url <- paste0(base_url, "_Density")
-  }
-  base_url <- paste0(base_url, "/Global_2000_2020_1km_UNadj/")
-  
-  params <- expand.grid(
-    country = country_codes,
-    year = years,
-    stringsAsFactors = FALSE
-  )
-  
-  # download (or skip if exists) one file per row
-  results <- mapply(
-    function(cc, yr) {
-      suffix <- if (type == "density") "pd" else "ppp"
-      fn <- sprintf(
-        "%s_%s_%s_1km_UNadj.tif",
-        tolower(cc), suffix, yr
-      )
-      if (type == "count") {
-        fn <- sprintf(
-          "%s_ppp_%s_1km_Aggregated_UNadj.tif",
-          tolower(cc), yr
-        )
-      }
-      dest <- file.path(dest_dir, fn)
-      if (file.exists(dest)) {
-        if (!quiet) cli::cli_alert_info("Exists: {fn}")
-        return(dest)
-      }
-      url <- sprintf("%s%s/%s/%s", base_url, yr, toupper(cc), fn)
-      httr2::request(url) |>
-        httr2::req_timeout(600) |>
-        httr2::req_progress() |>
-        httr2::req_perform(path = dest)
-      dest
-    },
-    params$country,
-    params$year,
-    USE.NAMES = FALSE
-  )
-  
-  # mark which were truly present on disk
-  success <- !is.na(results) & file.exists(results)
-  params$success <- success
-  
-  # count successes per country
-  counts <- tapply(params$success, params$country, sum)
-  
-  cli::cli_alert_success(
-    "Download of Worldpop {type} rasters is complete!"
-  )
-  
-  # report
-  for (cc in names(counts)) {
-    cli::cli_alert_info(
-      glue::glue(
-        "{cc}: {counts[[cc]]} of {length(years)} years downloaded"
-      )
+  country_codes,
+  years = 2000:2020,
+  type = "count",
+  dest_dir = here::here(),
+  quiet = FALSE) {
+type <- match.arg(type)
+if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+
+base_url <- "https://data.worldpop.org/GIS/Population"
+if (type == "density") {
+  base_url <- paste0(base_url, "_Density")
+}
+base_url <- paste0(base_url, "/Global_2000_2020_1km_UNadj/")
+
+params <- expand.grid(
+  country = country_codes,
+  year = years,
+  stringsAsFactors = FALSE
+)
+
+# download (or skip if exists) one file per row
+results <- mapply(
+  function(cc, yr) {
+    suffix <- if (type == "density") "pd" else "ppp"
+    fn <- sprintf(
+      "%s_%s_%s_1km_UNadj.tif",
+      tolower(cc), suffix, yr
     )
-  }
-  
-  invisible(list(
-    files = results,
-    counts = counts
-  ))
+    if (type == "count") {
+      fn <- sprintf(
+        "%s_ppp_%s_1km_Aggregated_UNadj.tif",
+        tolower(cc), yr
+      )
+    }
+    dest <- file.path(dest_dir, fn)
+    if (file.exists(dest)) {
+      if (!quiet) cli::cli_alert_info("Exists: {fn}")
+      return(dest)
+    }
+    url <- sprintf("%s%s/%s/%s", base_url, yr, toupper(cc), fn)
+    httr2::request(url) |>
+      httr2::req_timeout(600) |>
+      httr2::req_progress() |>
+      httr2::req_perform(path = dest)
+    dest
+  },
+  params$country,
+  params$year,
+  USE.NAMES = FALSE
+)
+
+# mark which were truly present on disk
+success <- !is.na(results) & file.exists(results)
+params$success <- success
+
+# count successes per country
+counts <- tapply(params$success, params$country, sum)
+
+cli::cli_alert_success(
+  "Download of Worldpop {type} rasters is complete!"
+)
+
+# report
+for (cc in names(counts)) {
+  cli::cli_alert_info(
+    glue::glue(
+      "{cc}: {counts[[cc]]} of {length(years)} years downloaded"
+    )
+  )
 }
 
+invisible(list(
+  files = results,
+  counts = counts
+))
+}
 
 #' Download WorldPop Population Raster Data for Specific Age Bands
 #'
@@ -218,7 +208,7 @@ download_worldpop <- function(
 #'
 #' @examples
 #' \dontrun{
-#' # Download Tunisia and Gambia data for ages 1-9 for years 2020-2021
+#' # Download Tunisia and Gambia data for ages 0-9 for years 2020-2021
 #' download_worldpop_age_band(
 #'   country_codes = c("TUN", "GMB")
 #'   years = 2020:2021,
@@ -228,132 +218,132 @@ download_worldpop <- function(
 #' }
 #' @export
 ddownload_worldpop_age_band <- function(
-    country_codes,
-    years,
-    age_range = c(1, 9),
-    out_dir = ".") {
-  
-  url_base <- paste0(
-    "https://data.worldpop.org/GIS/AgeSex_structures/",
-    "Global_2000_2020_1km/unconstrained"
+  country_codes,
+  years,
+  age_range = c(1, 9),
+  out_dir = ".") {
+
+url_base <- paste0(
+  "https://data.worldpop.org/GIS/AgeSex_structures/",
+  "Global_2000_2020_1km/unconstrained"
+)
+
+country_codes_up <- base::toupper(country_codes)
+country_codes_lo <- base::tolower(country_codes)
+base::dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+bands <- base::data.frame(
+  code = c(
+    0, 1, 5, 10, 15, 20, 25, 30, 35, 40,
+    45, 50, 55, 60, 65, 70, 75, 80
+  ),
+  lower = c(
+    0, 1, 5, 10, 15, 20, 25, 30, 35, 40,
+    45, 50, 55, 60, 65, 70, 75, 80
+  ),
+  upper = c(
+    1, 5, 10, 15, 20, 25, 30, 35, 40,
+    45, 50, 55, 60, 65, 70, 75, 80, Inf)
+)
+
+sexes <- c("m", "f")
+
+make_url <- function(country_code, sex, code) {
+  sprintf(
+    "%s/2020/%s/%s_%s_%s_2020_1km.tif",
+    url_base,
+    toupper(country_code),
+    tolower(country_code),
+    sex,
+    code
   )
-  
-  country_codes_up <- base::toupper(country_codes)
-  country_codes_lo <- base::tolower(country_codes)
-  base::dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
-  
-  bands <- base::data.frame(
-    code = c(
-      0, 1, 5, 10, 15, 20, 25, 30, 35, 40,
-      45, 50, 55, 60, 65, 70, 75, 80
-    ),
-    lower = c(
-      0, 1, 5, 10, 15, 20, 25, 30, 35, 40,
-      45, 50, 55, 60, 65, 70, 75, 80
-    ),
-    upper = c(
-      1, 5, 10, 15, 20, 25, 30, 35, 40,
-      45, 50, 55, 60, 65, 70, 75, 80, Inf)
+}
+
+combos <- expand.grid(
+  country_code = country_codes,
+  year = years,
+  stringsAsFactors = FALSE
+)
+
+for (i in seq_len(nrow(combos))) {
+  cc <- combos$country_code[i]
+  yr <- combos$year[i]
+  cc_lo <- tolower(cc)
+
+  matching_bands <- subset(
+    bands,
+    lower < (age_range[2] + 1) & upper > age_range[1]
   )
-  
-  sexes <- c("m", "f")
-  
-  make_url <- function(country_code, sex, code) {
-    sprintf(
-      "%s/2020/%s/%s_%s_%s_2020_1km.tif",
-      url_base,
-      toupper(country_code),
-      tolower(country_code),
-      sex,
-      code
+
+  if (nrow(matching_bands) == 0) {
+    cli::cli_alert_danger(
+      "No bands found covering {age_range[1]}-{age_range[2]} for {cc}"
+    )
+    next
+  }
+
+  adjusted_upper <- ifelse(
+    matching_bands$upper == Inf,
+    matching_bands$upper,
+    matching_bands$upper - 1
+  )
+  band_labels <- paste(matching_bands$lower, adjusted_upper, sep = "-")
+
+  covered_lower <- min(matching_bands$lower)
+  covered_upper <- max(adjusted_upper)
+
+  if (covered_upper < age_range[2]) {
+    cli::cli_alert_warning(
+      paste0(
+        "Requested {age_range[1]}-{age_range[2]} not fully covered. ",
+        "Downloading {covered_lower}-{covered_upper} instead."
+      )
+    )
+  } else {
+    cli::cli_alert_info(
+      "Combining bands: {paste(band_labels, collapse = ', ')}"
     )
   }
-  
-  combos <- expand.grid(
-    country_code = country_codes,
-    year = years,
-    stringsAsFactors = FALSE
+
+  out_fname <- file.path(
+    out_dir,
+    sprintf("%s_total_%02d_%02d_%d.tif",
+            cc_lo, covered_lower, covered_upper, yr)
   )
-  
-  for (i in seq_len(nrow(combos))) {
-    cc <- combos$country_code[i]
-    yr <- combos$year[i]
-    cc_lo <- tolower(cc)
-    
-    matching_bands <- subset(
-      bands,
-      lower < (age_range[2] + 1) & upper > age_range[1]
-    )
-    
-    if (nrow(matching_bands) == 0) {
-      cli::cli_alert_danger(
-        "No bands found covering {age_range[1]}-{age_range[2]} for {cc}"
+
+  if (file.exists(out_fname)) {
+    cli::cli_alert_info("Skipping {basename(out_fname)} (already exists)")
+    next
+  }
+
+  acc <- NULL
+  for (band_code in matching_bands$code) {
+    for (sex in sexes) {
+      temp_fname <- file.path(
+        out_dir,
+        sprintf("%s_%s_%s_%d_1km.tif", cc_lo, sex, band_code, yr)
       )
-      next
-    }
-    
-    adjusted_upper <- ifelse(
-      matching_bands$upper == Inf,
-      matching_bands$upper,
-      matching_bands$upper - 1
-    )
-    band_labels <- paste(matching_bands$lower, adjusted_upper, sep = "-")
-    
-    covered_lower <- min(matching_bands$lower)
-    covered_upper <- max(adjusted_upper)
-    
-    if (covered_upper < age_range[2]) {
-      cli::cli_alert_warning(
-        paste0(
-          "Requested {age_range[1]}-{age_range[2]} not fully covered. ",
-          "Downloading {covered_lower}-{covered_upper} instead."
+
+      if (!file.exists(temp_fname)) {
+        cli::cli_alert_info(
+          "Downloading {sex} band {band_code} for {cc}, {yr}"
         )
-      )
-    } else {
-      cli::cli_alert_info(
-        "Combining bands: {paste(band_labels, collapse = ', ')}"
-      )
-    }
-    
-    out_fname <- file.path(
-      out_dir,
-      sprintf("%s_total_%02d_%02d_%d.tif",
-              cc_lo, covered_lower, covered_upper, yr)
-    )
-    
-    if (file.exists(out_fname)) {
-      cli::cli_alert_info("Skipping {basename(out_fname)} (already exists)")
-      next
-    }
-    
-    acc <- NULL
-    for (band_code in matching_bands$code) {
-      for (sex in sexes) {
-        temp_fname <- file.path(
-          out_dir,
-          sprintf("%s_%s_%s_%d_1km.tif", cc_lo, sex, band_code, yr)
+        utils::download.file(
+          make_url(cc, sex, band_code),
+          temp_fname,
+          mode = "wb",
+          quiet = TRUE
         )
-        
-        if (!file.exists(temp_fname)) {
-          cli::cli_alert_info(
-            "Downloading {sex} band {band_code} for {cc}, {yr}"
-          )
-          utils::download.file(
-            make_url(cc, sex, band_code),
-            temp_fname,
-            mode = "wb",
-            quiet = TRUE
-          )
-        } else {
-          cli::cli_alert_info("Using cached file {basename(temp_fname)}")
-        }
-        
-        r <- terra::rast(temp_fname)
-        acc <- if (is.null(acc)) r else acc + r
+      } else {
+        cli::cli_alert_info("Using cached file {basename(temp_fname)}")
       }
+
+      r <- terra::rast(temp_fname)
+      acc <- if (is.null(acc)) r else acc + r
     }
-    
-    terra::writeRaster(acc, out_fname, overwrite = TRUE)
-    cli::cli_alert_success("Written: {basename(out_fname)}")
   }
+
+  terra::writeRaster(acc, out_fname, overwrite = TRUE)
+  cli::cli_alert_success("Written: {basename(out_fname)}")
+}
 }

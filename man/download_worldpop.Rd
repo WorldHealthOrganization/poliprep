@@ -42,19 +42,11 @@ The function handles downloading multiple files, skips existing files, and
 provides progress updates.
 }
 \details{
-Global_2000_2020_1km/unconstrained"
 Downloads 1km resolution UN-adjusted population rasters from WorldPop. For
 density type, values represent persons per square kilometer. For count type,
 values represent total population count per pixel. Files are downloaded to
 the specified directory, with existing files skipped. Progress is shown
 during downloads and a summary is provided upon completion.
-\subsection{Data Source}{
-
-This function connects to the WorldPop Unconstrained 1km Age-Sex Structured
-Population dataset, publicly available at:
-
-"https://data.worldpop.org/GIS/Population/Global_2000_2020_1km_UNadj"
-}
 }
 \examples{
 \dontrun{
