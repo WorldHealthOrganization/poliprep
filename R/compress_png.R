@@ -429,7 +429,6 @@ pngquant_compress_single_file <- function(pngquant_path, file, speed, png_overwr
 #' @export
 compress_png <- function(path, png_overwrite = TRUE,
                          speed = 1, verbosity = TRUE) {
-  ensure_packages("progress")
 
   # Find pngquant executable
   pngquant_path <- find_pngquant()
